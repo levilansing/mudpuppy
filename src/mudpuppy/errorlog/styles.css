@@ -1,0 +1,115 @@
+body {
+  padding-top: 40px;
+  font-size: 13px;
+}
+.pageHeader {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: #333;
+  color: #fff;
+  height: 38px;
+  z-index: 1;
+}
+.pageHeader > div {
+  line-height: 32px;
+  padding: 6px 8px;
+  z-index: 2;
+}
+.pageHeader span#pageTitle {
+  position: absolute;
+  display: block;
+  width: 34%;
+  margin-left: -17%;
+  top: 0;
+  left: 45%;
+  overflow: hidden;
+  line-height: 38px;
+  height: 38px;
+  text-align: center;
+  z-index: 3;
+}
+.pageHeader a {
+  float: right;
+  margin-right: 10px;
+}
+.pageHeader .btn-group {
+  margin-top: -3px;
+}
+.pageHeader label {
+  padding-top: 5px;
+  font-size: 0.85em;
+  float: left;
+}
+.logHeader {
+  width: 100%;
+  table-layout: fixed;
+}
+.logHeader td {
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.logHeader td:nth-child(1) {
+  width: 40px;
+  overflow: visible;
+}
+.logHeader td:nth-child(2) {
+  width: 25px;
+}
+.logHeader td:nth-child(3) {
+  width: 60px;
+}
+.logHeader td:nth-child(4) {
+  width: 110px;
+}
+.logHeader td:nth-child(6) {
+  width: 70px;
+}
+.logHeader td:nth-child(7) {
+  width: 60px;
+}
+.logHeader .badge {
+  margin-top: -3px;
+  padding: 0 6px;
+}
+#logList .accordion-heading {
+  border-top: 1px solid #eee;
+}
+#logList .accordion-heading:nth-child(1) {
+  border-top: none;
+}
+#logList .accordion-heading:nth-child(odd) {
+  background: rgba(40, 40, 0, 0.02);
+}
+#logList .accordion-heading .accordion-body {
+  background: #f5f5f4;
+}
+#logList .accordion-heading .accordion-body > div {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+}
+#logList .tabbable {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-left: none;
+  position: relative;
+  min-height: 160px;
+}
+#logList .tabbable ul {
+  position: absolute;
+  width: 100px;
+  height: 100%;
+  background: #f5f5f4;
+  margin-bottom: -1px;
+  margin-top: -1px;
+}
+#logList .tabbable ul a {
+  margin-bottom: 1px;
+}
+#logList .tabbable .tab-content {
+  margin-left: 115px;
+  padding: 10px 10px 10px 0px;
+  max-height: 500px;
+  overflow: auto;
+}
