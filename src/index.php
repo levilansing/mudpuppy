@@ -1,5 +1,6 @@
 <?php
 require("mudpuppy/mudpuppy.php");
+$controller = App::getPageController();
 ?>
 <!doctype html>
 <!--[if lt IE 7]>
@@ -16,14 +17,10 @@ require("mudpuppy/mudpuppy.php");
     <meta name="description" content="">
     <meta name="author" content="">
     <title><?php print Config::$appTitle; ?></title>
-
+<?php App::getPageController()->renderHeader(); ?>
 </head>
 <body>
-<?php
-
-//$controller->render();
-
-?>
+<?php App::getPageController()->render(); ?>
 </body>
 </html>
 <?php App::cleanExit(); ?>

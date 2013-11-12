@@ -5,10 +5,13 @@
  */
 
 class ErrorLogController extends Controller {
+    use PageController;
 
     public function __construct() {
         // don't write the log for this request
         Log::dontWrite();
+
+        $this->pageTitle = Config::$appTitle . ' - Error Log';
 
         // disable cache
         header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
@@ -24,6 +27,20 @@ class ErrorLogController extends Controller {
         if (!Config::$debug)
             return array(Permissions::SuperAdmin);
         return array();
+    }
+
+    public function getScripts() {
+        return [
+            'js'=>[],
+            'css'=>[]
+        ];
+    }
+
+    public function render() {
+        // abort the default template, use the error log view fro the entire page
+        ob_clean();
+        include('mudpuppy/errorlog/view.php');
+        App::cleanExit();
     }
 
     public function action_pull() {

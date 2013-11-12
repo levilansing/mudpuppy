@@ -3,9 +3,9 @@
  * @author Levi Lansing
  * Created 8/31/13
  */
-class MessagesModule extends Module {
+class MessagesController extends Controller {
 
-    public function getRequiredPermissions($method, $input) {
+    public function getRequiredPermissions() {
         return array();
     }
 

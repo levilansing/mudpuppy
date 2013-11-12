@@ -3,17 +3,16 @@
  * Created By: Levi
  * Created 7/8/13
  */
-require("../mudpuppy.php");
 if (Config::$debug == false)
     return;
 
 Log::dontWrite();
 
-if (isset($_SERVER['PATH_INFO'])) {
-    if (preg_match('#^/(.+)$#', $_SERVER['PATH_INFO'], $matches)) {
-        File::passThrough('mudpuppy/errorlog/' . $matches[1]);
-    }
-}
+//if (isset($_SERVER['PATH_INFO'])) {
+//    if (preg_match('#^/(.+)$#', $_SERVER['PATH_INFO'], $matches)) {
+//        File::passThrough('mudpuppy/errorlog/' . $matches[1]);
+//    }
+//}
 ?>
 <!doctype html>
 <html>
@@ -22,15 +21,15 @@ if (isset($_SERVER['PATH_INFO'])) {
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes"/>
-    <title><?php print 'ERROR LOG - ' . Config::$appTitle; ?></title>
+    <title><?php print Config::$appTitle . ' - ERROR LOG'; ?></title>
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen"/>
     <link href="bootstrap/css/prettify.css" rel="stylesheet" media="screen"/>
     <link href="styles.css" rel="stylesheet" media="screen"/>
     <script src="jquery-1.10.0.min.js"></script>
+    <script src="desktop-notify-min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="bootstrap/js/prettify.min.js"></script>
     <script src="bootstrap/js/pretty-langs.js"></script>
-    <script src="desktop-notify-min.js"></script>
     <script src="errorlog.js"></script>
     <script type="text/javascript">
         var errorLog = null;

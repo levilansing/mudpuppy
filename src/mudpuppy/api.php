@@ -1,6 +1,6 @@
 <?php
 require('mudpuppy.php');
-require('lib/exceptions.php');
+MPAutoLoad('Exceptions');
 
 header('Content-type: application/json');
 

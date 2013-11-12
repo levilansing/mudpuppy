@@ -6,6 +6,7 @@ class App {
 	private static $dbo = null;
     private static $exited = false;
     private static $completionHandlers = array();
+    /** @var Controller|PageController */
     private static $pageController = null;
 
 	public function __construct() {
@@ -58,6 +59,9 @@ class App {
 
 
         $controller = Controller::getController();
+        if (!$controller) {
+            App::abort(404);
+        }
         if (!Security::hasPermissions($controller->getRequiredPermissions())) {
             App::abort(403);
         }
@@ -67,6 +71,9 @@ class App {
         return true;
 	}
 
+    /**
+     * @return Controller|PageController
+     */
     public static function getPageController() {
         return self::$pageController;
     }
