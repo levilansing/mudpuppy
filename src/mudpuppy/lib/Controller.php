@@ -28,18 +28,16 @@ abstract class Controller {
         $controllerName = 'HomeController';
         if ($name) {
             $controllerName = $name . 'Controller';
-        } else {
-            if (count($parts) > 0) {
-                $controllers = [];
-                $controllerName = '';
-                foreach ($parts as $part) {
-                    $controllerName .= ucfirst($part);
-                    $controllers[] = $controllerName . 'Controller';
-                }
-                $controllerName = end($controllers);
-                while ($controllerName && !class_exists($controllerName)) {
-                    $controllerName = prev($controllers);
-                }
+        } else if (count($parts) > 0 && $parts[0] != '') {
+            $controllers = [];
+            $controllerName = '';
+            foreach ($parts as $part) {
+                $controllerName .= ucfirst($part);
+                $controllers[] = $controllerName . 'Controller';
+            }
+            $controllerName = end($controllers);
+            while ($controllerName && !class_exists($controllerName)) {
+                $controllerName = prev($controllers);
             }
         }
         if (!class_exists($controllerName)) {
@@ -86,13 +84,15 @@ abstract class Controller {
     /**
      * run an action on this controller
      * @param $actionName
+     * @return mixed
+     * @throws UnsupportedMethodException
      */
     public function runAction($actionName) {
         $action = Request::cleanValue($actionName, '', 'cmd');
         if ($action && method_exists($this, 'action_' . $action)) {
             return call_user_func(array($this, 'action_' . $action));
         }
-        return null;
+        throw new UnsupportedMethodException('Request method ' . $_SERVER['REQUEST_METHOD'] . ' is invalid for this URL');
     }
 
 

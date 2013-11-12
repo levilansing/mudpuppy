@@ -6,13 +6,16 @@ header('Content-type: application/json');
 
 try {
 	$requestMethod = $_SERVER['REQUEST_METHOD'];
-//	if (count($_REQUEST) > 0 && ($requestMethod == 'POST' || $requestMethod == 'PUT' || $requestMethod == 'DELETE')) {
-//		throw new UnsupportedMethodException('Cannot ' . $_SERVER['REQUEST_METHOD'] . ' with query string');
-//	}
 	$response = null;
 	$path = $_SERVER['PATH_INFO'];
 	if (preg_match('/^\/([a-zA-Z]+)\/?$/', $path, $matches)) {
+        /** @var DataObjectController|Controller $controller */
         $controller = Controller::getController($matches[1]);
+
+        // to use this API URL Scheme the controller must implement the DataObjectController trait
+        if (!in_array('DataObjectController', class_uses($controller)))
+            throw new UnsupportedMethodException('Request method ' . $_SERVER['REQUEST_METHOD'] . ' is invalid for this URL');
+
 		switch ($requestMethod) {
 		case 'GET':
 			// Retrieve a collection of objects: GET /api/<module>?<params>
@@ -33,10 +36,13 @@ try {
 			throw new UnsupportedMethodException('Request method ' . $_SERVER['REQUEST_METHOD'] . ' is invalid for this URL');
 		}
 	} elseif (preg_match('/^\/([a-zA-Z]+)\/([0-9]+)\/?$/', $path, $matches)) {
-//		if (count($_REQUEST) > 0) {
-//			throw new UnsupportedMethodException('Query strings are not allowed for this URL');
-//		}
+        /** @var DataObjectController|Controller $controller */
         $controller = Controller::getController($matches[1]);
+
+        // to use this API URL scheme the controller must implement the DataObjectController trait
+        if (!in_array('DataObjectController', class_uses($controller)))
+            throw new UnsupportedMethodException('Request method ' . $_SERVER['REQUEST_METHOD'] . ' is invalid for this URL');
+
 		switch ($requestMethod) {
 		case 'GET':
 			// Retrieve a single object: GET /api/<module>/id
@@ -60,7 +66,7 @@ try {
 			$db && $db->beginTransaction();
             $params = array('id' => (int)$matches[2]);
             Request::setParams($params);
-			$response = $controller->delete((int)$matches[2]);
+			$controller->delete((int)$matches[2]);
 			$db && $db->commitTransaction();
 			break;
 		default:
@@ -95,12 +101,13 @@ try {
 	    print json_encode($response);
 
 } catch (ApiException $e) {
+    Log::error('API Exception: ' . $e->getMessage());
     $db = App::getDBO();
 	$db && $db->rollBackTransaction();
 	http_response_code($e->getCode());
 	print json_encode(array('message' => $e->getMessage()));
 } catch (Exception $e) {
-	// TODO: do log the error
+	Log::error('Exception in API: ' . $e->getMessage());
     $db = App::getDBO();
 	$db && $db->rollBackTransaction();
 	http_response_code(500);

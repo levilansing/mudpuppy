@@ -3,6 +3,8 @@
  * Created By: Levi
  * Created 7/8/13
  */
+defined('MUDPUPPY') or die('Restricted');
+
 if (Config::$debug == false)
     return;
 
