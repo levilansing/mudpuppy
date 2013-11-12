@@ -1,5 +1,7 @@
 <?php
-define('MUDPUPPY', 'running');
+define('MUDPUPPY', true);
+define('MUDPUPPY_VERSION', '1.0.0');
+
 
 // switch to root directory
 chdir(__DIR__);

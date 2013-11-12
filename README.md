@@ -1,2 +1,3 @@
-muddpuppy
+mudpuppy
 =========
+version 1.0.0 beta

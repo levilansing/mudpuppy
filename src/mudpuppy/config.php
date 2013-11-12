@@ -1,7 +1,7 @@
 <?php
 defined('MUDPUPPY') or die('Restricted');
 
-define('APP_VERSION', '1.1.0');
+define('APP_VERSION', '1.0.0');
 
 // Base configuration
 class Config {
@@ -21,7 +21,7 @@ class Config {
     public static $dateFormat = 'd M Y H:i:s \\G\\M\\TO';
 
     // Application Configuration
-    public static $autoloadFolders = array('controllers/');     // array, must include trailing /
+    public static $autoloadFolders = array();     // array, must include trailing /
     public static $randomSeedOffset = 0x5C7474D1;
 
     // Debugging
@@ -29,7 +29,7 @@ class Config {
     public static $logQueries = true;
     public static $logLevel = LOG_LEVEL_ALWAYS;
 
-    public static $awsConfig = 'mudpuppy/aws-config.php';
+    public static $awsConfig = '';
 }
 
 
