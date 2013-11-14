@@ -15,7 +15,7 @@ class HomeController extends Controller {
     public function getScripts() {
         return [
             'js' => [],
-            'css' => []
+            'css' => ['css/style.css']
         ];
     }
 
@@ -24,6 +24,19 @@ class HomeController extends Controller {
     }
 
     public function render() {
+        if (sizeof($this->options) > 0) {
+            App::abort(404);
+        }
+
         include('views/home.php');
+    }
+
+    public function action_getJson() {
+        $title = Request::get('title');
+        $message = Request::get('message', '');
+        if (!$title)
+            throw new InvalidInputException('Title field is missing');
+
+        return array('title'=>$title, 'message'=>$message);
     }
 }

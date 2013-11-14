@@ -64,11 +64,7 @@ abstract class Controller {
     }
 
     public function __construct($options) {
-        $this->options = explode('/', Request::get('options', ''));
-        if (is_array($this->options)) {
-            $this->view = reset($this->options);
-            $this->id = (int)next($this->options);
-        }
+        $this->options = $options;
     }
 
     /** @returns array */

@@ -14,6 +14,7 @@ RewriteCond %{REQUEST_URI} !^/mudpuppy/dataobjects/_updateDataObjects.php
 
 # these folders will be directly accessible without user authentication
 RewriteCond %{REQUEST_URI} !^/(js|css|fonts|html|images)/
+RewriteCond %{REQUEST_URI} !^/(favicon.ico|robots.txt)$
 
 #RewriteCond %{REQUEST_URI} !^/[0-9]+/      ????
 RewriteCond %{REQUEST_URI} !^/mudpuppy/api.php/

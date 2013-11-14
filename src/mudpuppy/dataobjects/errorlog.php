@@ -17,6 +17,8 @@ defined('MUDPUPPY') or die('Restricted');
  * @property array log
  * @property array errors
  * @property int responseCode
+ * 
+ * Foreign Key Lookup Properties
  * #END MAGIC PROPERTIES
  */
 class ErrorLog extends DataObject {
@@ -36,6 +38,8 @@ class ErrorLog extends DataObject {
 		$this->createColumn('log', DATATYPE_JSON, NULL, false);
 		$this->createColumn('errors', DATATYPE_JSON, NULL, false);
 		$this->createColumn('responseCode', DATATYPE_INT, NULL, true);
+
+		// Foreign Key Lookups
         // #END DEFAULTS
 
         // change defaults here if you want user-defined default values

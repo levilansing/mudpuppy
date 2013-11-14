@@ -450,6 +450,10 @@ abstract class DataObject implements JsonSerializable {
             $query .= (empty($fieldSet) ? '' : ' AND ') . $condition;
         }
 
+        if (empty($fieldSet) && empty($condition)) {
+            $query .= '1=1';
+        }
+
         if ($start != 0 || $limit != 0) {
             $query .= ' LIMIT '.(int)$start.','.(int)$limit;
         }

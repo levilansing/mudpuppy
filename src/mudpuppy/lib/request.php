@@ -17,7 +17,7 @@ class Request {
      * @param $params
      */
     static function setParams(&$params) {
-        self::$params = & $params;
+        self::$params = &$params;
     }
 
     static function &getParams() {
