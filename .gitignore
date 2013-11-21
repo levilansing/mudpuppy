@@ -1,3 +1,4 @@
 .DS_Store
 .elasticbeanstalk/
 .idea/
+src/mudpuppy/cache/
