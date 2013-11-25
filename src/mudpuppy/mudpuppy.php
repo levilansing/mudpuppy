@@ -110,7 +110,6 @@ function MPAutoLoad($className) {
 	) {
 		File::putContents($classCacheFile, _refreshAutoLoadClasses($classes));
 		$reloadedCache = true;
-		Log::displayFullLog();
 	}
 
 	// Try to locate the class file
