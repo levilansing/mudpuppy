@@ -135,7 +135,7 @@ function _refreshAutoLoadClasses(&$classes) {
 	$classes = array();
 
 	// Standard non-namespaced classes, optionally in a directory structure (if * is specified for recursive loading)
-	$folders = array_merge(Config::$autoloadFolders, array('mudpuppy/dataobjects/', 'mudpuppy/admin/', 'mudpuppy/lib/'));
+	$folders = array_merge(Config::$autoloadFolders, array('dataobjects/', 'mudpuppy/dataobjects/', 'mudpuppy/admin/', 'mudpuppy/lib/'));
 	foreach ($folders as $folder) {
 		$recursive = false;
 		if (substr($folder, -1) == '*') {

@@ -18,6 +18,10 @@ class AdminController extends Controller {
 	public function action_updateDataObjects() {
 		$output = '<pre>';
 
+		if (!file_exists('dataobjects')) {
+			mkdir('dataobjects');
+		}
+
 		$db = App::getDBO();
 		$result = $db->query("SHOW TABLES");
 		$tables = $result->fetchAll(PDO::FETCH_COLUMN, 0);
@@ -25,10 +29,14 @@ class AdminController extends Controller {
 		$updates = 0;
 		$creates = 0;
 		foreach ($tables as $table) {
+			if (strtolower($table) == 'debuglogs') {
+				continue;
+			}
+
 			// Create class name from table name
 			$class = self::getClassName($table);
 
-			$file = "mudpuppy/dataobjects/$class.php";
+			$file = "dataobjects/$class.php";
 			$exists = File::exists($file);
 			if ($exists) {
 				$content = file_get_contents($file);
