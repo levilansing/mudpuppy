@@ -20,8 +20,8 @@ class Session {
 	}
 
 	/**
-     * to be called by app initialization
-     */
+	 * to be called by app initialization
+	 */
 	static function start() {
 		session_start();
 		if (isset($_SERVER['HTTP_HOST']) || isset($_SERVER['SERVER_NAME'])) {
@@ -71,22 +71,22 @@ class Session {
 	//////////////////////////////
 	// session variable functions
 
-    /**
-     * set a key value pair in the session
-     * @param $key
-     * @param $value
-     */
-    static function set($key, $value) {
+	/**
+	 * set a key value pair in the session
+	 * @param $key
+	 * @param $value
+	 */
+	static function set($key, $value) {
 		Session::$_data[$key] = $value;
 	}
 
-    /**
-     * Get a value from the session by a key or return $default if it does not exist
-     * @param $key
-     * @param null $default
-     * @return mixed
-     */
-    static function &get($key, $default = null) {
+	/**
+	 * Get a value from the session by a key or return $default if it does not exist
+	 * @param $key
+	 * @param null $default
+	 * @return mixed
+	 */
+	static function &get($key, $default = null) {
 		if (isset(Session::$_data[$key])) {
 			return Session::$_data[$key];
 		}
@@ -95,64 +95,64 @@ class Session {
 		return Session::$_data[$key];
 	}
 
-    /**
-     * get a value from the session and delete it from the session object
-     * @param $key
-     * @param null $default
-     * @return mixed
-     */
-    static function extract($key, $default = null) {
+	/**
+	 * get a value from the session and delete it from the session object
+	 * @param $key
+	 * @param null $default
+	 * @return mixed
+	 */
+	static function extract($key, $default = null) {
 		$value = self::get($key, $default);
 		self::delete($key);
 		return $value;
 	}
 
-    /**
-     * Check if the session contains a value referenced by $key
-     * @param $key
-     * @return bool
-     */
-    static function has($key) {
+	/**
+	 * Check if the session contains a value referenced by $key
+	 * @param $key
+	 * @return bool
+	 */
+	static function has($key) {
 		return isset(Session::$_data[$key]);
 	}
 
-    /**
-     * Delete a value from the session by the key
-     * @param $key
-     */
-    static function delete($key) {
-        unset(Session::$_data[$key]);
-    }
+	/**
+	 * Delete a value from the session by the key
+	 * @param $key
+	 */
+	static function delete($key) {
+		unset(Session::$_data[$key]);
+	}
 
-    /**
-     * clear the regular session data
-     * excludes temp and flash data
-     */
-    static function clear() {
+	/**
+	 * clear the regular session data
+	 * excludes temp and flash data
+	 */
+	static function clear() {
 		foreach (array_keys(Session::$_data) as $key) {
 			unset(Session::$_data[$key]);
 		}
 	}
 
-    /**
-     *
-     * @param $key
-     * @param $value
-     * @param int $ttl time to live in seconds
-     */
-    static function setTemp($key, $value, $ttl = 1800) {
-        $key = &self::getTemp($key, $value, $ttl);
-        $key = $value;
-    }
+	/**
+	 *
+	 * @param $key
+	 * @param $value
+	 * @param int $ttl time to live in seconds
+	 */
+	static function setTemp($key, $value, $ttl = 1800) {
+		$key = & self::getTemp($key, $value, $ttl);
+		$key = $value;
+	}
 
-    /**
-     * get a reference to a temporary variable that will expire in ttl seconds of last use
-     * @param $id
-     * @param null $default
-     * @param int $ttl time to live in seconds
-     * @return mixed
-     */
-    static function &getTemp($id, $default = null, $ttl = 1800) {
+	/**
+	 * get a reference to a temporary variable that will expire in ttl seconds of last use
+	 * @param $id
+	 * @param null $default
+	 * @param int $ttl time to live in seconds
+	 * @return mixed
+	 */
+	static function &getTemp($id, $default = null, $ttl = 1800) {
 		if (!isset(Session::$_data['_temp'][$id])) {
 			Session::$_data['_temp'][$id] = array('exp' => time() + $ttl, 'data' => $default);
 		} else {
@@ -162,33 +162,33 @@ class Session {
 		return Session::$_data['_temp'][$id]['data'];
 	}
 
-    /**
-     * clear the temp/short term data from the session
-     * @param $id
-     */
-    static function clearTemp($id) {
+	/**
+	 * clear the temp/short term data from the session
+	 * @param $id
+	 */
+	static function clearTemp($id) {
 		unset(Session::$_data['_temp'][$id]);
 	}
 
 	//////////////////////////////
 	// Flash functions
 
-    /**
-     * Set a flash variable
-     * @param $key
-     * @param $val
-     */
-    static function setFlash($key, $val) {
+	/**
+	 * Set a flash variable
+	 * @param $key
+	 * @param $val
+	 */
+	static function setFlash($key, $val) {
 		Session::$_data['flash_data'][$key] = $val;
 	}
 
-    /**
-     * Get a flash variable or return $default if it doesn't exist
-     * @param $key
-     * @param null $default
-     * @return *
-     */
-    static function getFlash($key, $default = null) {
+	/**
+	 * Get a flash variable or return $default if it doesn't exist
+	 * @param $key
+	 * @param null $default
+	 * @return *
+	 */
+	static function getFlash($key, $default = null) {
 		if (isset(Session::$lastFlashData[$key])) {
 			return Session::$lastFlashData[$key];
 		}
@@ -196,26 +196,26 @@ class Session {
 		return $default;
 	}
 
-    /**
-     * check if a flash variable exists
-     * @param $key
-     * @return bool
-     */
-    static function isFlash($key) {
+	/**
+	 * check if a flash variable exists
+	 * @param $key
+	 * @return bool
+	 */
+	static function isFlash($key) {
 		return isset(Session::$lastFlashData[$key]);
 	}
 
-    /**
-     * free flash data from previous page
-     */
-    static function freeFlash() {
+	/**
+	 * free flash data from previous page
+	 */
+	static function freeFlash() {
 		Session::$lastFlashData = array();
 	}
 
-    /**
-     * clear current flash data - will not pass to next page
-     */
-    static function cancelFlash() {
+	/**
+	 * clear current flash data - will not pass to next page
+	 */
+	static function cancelFlash() {
 		Session::$_data['flash_data'] = array();
 	}
 }

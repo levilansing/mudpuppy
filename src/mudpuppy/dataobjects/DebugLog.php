@@ -17,7 +17,7 @@ defined('MUDPUPPY') or die('Restricted');
  * @property array log
  * @property array errors
  * @property int responseCode
- * 
+ *
  * Foreign Key Lookup Properties
  * #END MAGIC PROPERTIES
  */
@@ -26,18 +26,18 @@ class DebugLog extends DataObject {
 	protected function loadDefaults() {
 		// Auto-generated code to create columns with default values based on DB schema. DO NOT EDIT.
 		// #BEGIN DEFAULTS
-		$this->createColumn('id', DATATYPE_INT, NULL, true);
-		$this->createColumn('date', DATATYPE_DATETIME, NULL, true);
-		$this->createColumn('requestMethod', DATATYPE_STRING, NULL, true);
-		$this->createColumn('requestPath', DATATYPE_STRING, NULL, true);
-		$this->createColumn('request', DATATYPE_JSON, NULL, false);
-		$this->createColumn('memoryUsage', DATATYPE_INT, NULL, true);
-		$this->createColumn('startTime', DATATYPE_DOUBLE, NULL, true);
-		$this->createColumn('executionTime', DATATYPE_DOUBLE, NULL, true);
-		$this->createColumn('queries', DATATYPE_JSON, NULL, false);
-		$this->createColumn('log', DATATYPE_JSON, NULL, false);
-		$this->createColumn('errors', DATATYPE_JSON, NULL, false);
-		$this->createColumn('responseCode', DATATYPE_INT, NULL, true);
+		$this->createColumn('id', DATATYPE_INT, null, true);
+		$this->createColumn('date', DATATYPE_DATETIME, null, true);
+		$this->createColumn('requestMethod', DATATYPE_STRING, null, true);
+		$this->createColumn('requestPath', DATATYPE_STRING, null, true);
+		$this->createColumn('request', DATATYPE_JSON, null, false);
+		$this->createColumn('memoryUsage', DATATYPE_INT, null, true);
+		$this->createColumn('startTime', DATATYPE_DOUBLE, null, true);
+		$this->createColumn('executionTime', DATATYPE_DOUBLE, null, true);
+		$this->createColumn('queries', DATATYPE_JSON, null, false);
+		$this->createColumn('log', DATATYPE_JSON, null, false);
+		$this->createColumn('errors', DATATYPE_JSON, null, false);
+		$this->createColumn('responseCode', DATATYPE_INT, null, true);
 
 		// Foreign Key Lookups
 		// #END DEFAULTS

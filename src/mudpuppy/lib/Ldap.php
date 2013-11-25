@@ -161,7 +161,7 @@ class Ldap {
 
 	public static function ldapDatestampToDate($datestamp) {
 		return strtotime(substr($datestamp, 0, 4) . '-' . substr($datestamp, 4, 2) . '-' . substr($datestamp, 6, 2)
-		. ' ' . substr($datestamp, 8, 2) . ':' . substr($datestamp, 10, 2) . ':' . substr($datestamp, 12, 2) . ' GMT');
+			. ' ' . substr($datestamp, 8, 2) . ':' . substr($datestamp, 10, 2) . ':' . substr($datestamp, 12, 2) . ' GMT');
 	}
 }
 

@@ -119,8 +119,8 @@ class Database {
 			Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => 'PDO::beginTransaction()');
 		}
 		$result = $this->pdo->beginTransaction();
-        Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
-        return $result;
+		Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
+		return $result;
 	}
 
 	/**
@@ -128,33 +128,33 @@ class Database {
 	 * @return bool success
 	 */
 	function rollBackTransaction() {
-        if (!$this->pdo->inTransaction()) {
-            return false;
-        }
-        if (Config::$debug && Config::$logQueries) {
-            Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => 'PDO::rollback()');
-        }
-        $result = $this->pdo->rollBack();
-        Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
-        return $result;
-    }
+		if (!$this->pdo->inTransaction()) {
+			return false;
+		}
+		if (Config::$debug && Config::$logQueries) {
+			Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => 'PDO::rollback()');
+		}
+		$result = $this->pdo->rollBack();
+		Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
+		return $result;
+	}
 
 	/**
 	 * cancel a transaction
 	 * @return bool success
 	 */
 	function commitTransaction() {
-        if (!$this->pdo->inTransaction()) {
-            return false;
-        }
+		if (!$this->pdo->inTransaction()) {
+			return false;
+		}
 		if (Config::$debug && Config::$logQueries) {
 			Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => 'PDO::commit()');
 		}
 
 		$result = $this->pdo->commit();
-        Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
-        return $result;
-    }
+		Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
+		return $result;
+	}
 
 	/**
 	 * perform the specified query, or query the prepared statement if $query = NULL
@@ -212,139 +212,139 @@ class Database {
 		return false;
 	}
 
-    function execute($query, $argArray = null) {
-        try {
+	function execute($query, $argArray = null) {
+		try {
 
-            if (!$query) {
-                throw new Exception('Prepared Statement does not exist', 0);
-            }
+			if (!$query) {
+				throw new Exception('Prepared Statement does not exist', 0);
+			}
 
+			if (Config::$debug && Config::$logQueries) {
+				Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => $query->queryString);
+				if ($argArray != null) {
+					Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => json_encode($argArray));
+				}
+			}
+			if ($argArray != null) {
+				$query->execute($argArray);
+			} else {
+				$query->execute();
+			}
 
-            if (Config::$debug && Config::$logQueries) {
-                Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => $query->queryString);
-                if ($argArray != null) {
-                    Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => json_encode($argArray));
-                }
-            }
-            if ($argArray != null) {
-                $query->execute($argArray);
-            }
-            else {
-                $query->execute();
-            }
+			if (Config::$debug && Config::$logQueries) {
+				Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
+			}
 
+			if ($this->hasError()) {
+				$error = $query->getLastError();
+				Log::error($error);
+				if (Config::$debug && Config::$logQueries) {
+					Database::$queryLog[sizeof(Database::$queryLog) - 1]['error'] = $error;
+					Database::$errorCount++;
+				} else if (Config::$debug) {
+					Log::error('SQL Error: ' . $error);
+					Database::$errorCount++;
+				}
+				return false;
+			}
 
-            if (Config::$debug && Config::$logQueries) {
-                Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
-            }
+			return $query;
+		} catch (Exception $e) {
+			$file = $e->getFile();
+			$line = $e->getLine();
+			$message = $e->getMessage();
+			Log::error("Error: <b>$message</b> in $file on line $line");
+		}
+		return false;
+	}
 
-            if ($this->hasError()) {
-                $error = $query->getLastError();
-                Log::error($error);
-                if (Config::$debug && Config::$logQueries) {
-                    Database::$queryLog[sizeof(Database::$queryLog) - 1]['error'] = $error;
-                    Database::$errorCount++;
-                } else if (Config::$debug) {
-                    Log::error('SQL Error: ' . $error);
-                    Database::$errorCount++;
-                }
-                return false;
-            }
-
-            return $query;
-        }
-        catch (Exception $e) {
-            $file = $e->getFile();
-            $line = $e->getLine();
-            $message = $e->getMessage();
-            Log::error("Error: <b>$message</b> in $file on line $line");
-        }
-        return false;
-    }
-
-    /**
-     * fetch the first value of the next result
-     * @return int|null
-     */
-    function fetchFirstValue() {
+	/**
+	 * fetch the first value of the next result
+	 * @return int|null
+	 */
+	function fetchFirstValue() {
 		if (!$this->lastResult) {
 			return null;
 		}
 		$row = $this->lastResult->fetch(PDO::FETCH_NUM);
-        if (!empty($row))
-            return $row[0];
-        return null;
+		if (!empty($row)) {
+			return $row[0];
+		}
+		return null;
 	}
 
-    /**
-     * fetch into a data object of type $type
-     * @param $type string Class name of the data object
-     * @return null
-     */
-    function fetchObject($type) {
-        if (!$this->lastResult) {
-            return null;
-        }
-        $row = $this->lastResult->fetch(PDO::FETCH_ASSOC);
-        if (!empty($row))
-            return new $type($row);
-        return null;
-    }
+	/**
+	 * fetch into a data object of type $type
+	 * @param $type string Class name of the data object
+	 * @return null
+	 */
+	function fetchObject($type) {
+		if (!$this->lastResult) {
+			return null;
+		}
+		$row = $this->lastResult->fetch(PDO::FETCH_ASSOC);
+		if (!empty($row)) {
+			return new $type($row);
+		}
+		return null;
+	}
 
-    /**
-     * perform an assoc fetch (required for DataObject)
-     * @param PDOStatement $result
-     * @return mixed
-     */
-    function fetchRowAssoc($result = -1) {
-        if ($result === -1) {
-            $result = $this->lastResult;
-        }
-        if (!$result) {
-            return null;
-        }
-        return $result->fetch(PDO::FETCH_ASSOC);
-    }
+	/**
+	 * perform an assoc fetch (required for DataObject)
+	 * @param PDOStatement $result
+	 * @return mixed
+	 */
+	function fetchRowAssoc($result = -1) {
+		if ($result === -1) {
+			$result = $this->lastResult;
+		}
+		if (!$result) {
+			return null;
+		}
+		return $result->fetch(PDO::FETCH_ASSOC);
+	}
 
-    function fetchAllWithKey($type, $key, $result = -1) {
-        if ($result === -1) {
-            $result = $this->lastResult;
-        }
-        if (!$result)
-            return array();
+	function fetchAllWithKey($type, $key, $result = -1) {
+		if ($result === -1) {
+			$result = $this->lastResult;
+		}
+		if (!$result) {
+			return array();
+		}
 
-        $list = array();
-        if ($type == 'array') {
-            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-                $list[$row[$key]] = $row;
-            }
-        } else {
-            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-                $list[$row[$key]] = new $type($row);
-            }
-        }
-        return $list;
-    }
+		$list = array();
+		if ($type == 'array') {
+			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+				$list[$row[$key]] = $row;
+			}
+		} else {
+			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+				$list[$row[$key]] = new $type($row);
+			}
+		}
+		return $list;
+	}
 
-    function fetchAll($type, $result = -1) {
-        if ($result === -1) {
-            $result = $this->lastResult;
-        }
-        if (!$result)
-            return array();
+	function fetchAll($type, $result = -1) {
+		if ($result === -1) {
+			$result = $this->lastResult;
+		}
+		if (!$result) {
+			return array();
+		}
 
-        $list = array();
-        if ($type == 'array') {
-            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-                $list[] = $row;
-            }
-        } else {
-            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-                $list[] = new $type($row);
-            }
-        }
-        return $list;
-    }
+		$list = array();
+		if ($type == 'array') {
+			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+				$list[] = $row;
+			}
+		} else {
+			while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+				$list[] = new $type($row);
+			}
+		}
+		return $list;
+	}
 
 	function hasError() {
 		return ($this->pdo->errorCode() != "00000") || ($this->lastResult && $this->lastResult->errorCode() != "00000");
@@ -444,13 +444,13 @@ class Database {
 			} else if ($type == DATATYPE_DATE) {
 				$queryp2 .= self::formatDateAndEscape($val->getValue(), false) . ',';
 			} else if ($type == DATATYPE_JSON) {
-                $value = $val->getValue();
-                if (empty($value)) {
-                    $queryp2 .= 'NULL,';
-                } else if (is_string($val->getValue())) {
-                    $queryp2 .= $this->formatString($val->getValue()) . ',';
+				$value = $val->getValue();
+				if (empty($value)) {
+					$queryp2 .= 'NULL,';
+				} else if (is_string($val->getValue())) {
+					$queryp2 .= $this->formatString($val->getValue()) . ',';
 				} else {
-                    $queryp2 .= $this->formatString(json_encode($val->getValue())) . ',';
+					$queryp2 .= $this->formatString(json_encode($val->getValue())) . ',';
 				}
 			} else {
 				$queryp2 .= $this->formatString($val->getValue()) . ',';
@@ -477,14 +477,14 @@ class Database {
 		}
 	}
 
-    /**
-     * @todo switch to prepared statements
-     * @param $table
-     * @param $colvals DataValue[]
-     * @param null $where
-     * @return PDOStatement
-     */
-    function update($table, $colvals, $where = null) {
+	/**
+	 * @todo switch to prepared statements
+	 * @param $table
+	 * @param $colvals DataValue[]
+	 * @param null $where
+	 * @return PDOStatement
+	 */
+	function update($table, $colvals, $where = null) {
 		$query = "UPDATE `$this->prefix$table` SET ";
 		foreach ($colvals as $val) {
 			$col = $val->getColumn();
@@ -498,13 +498,13 @@ class Database {
 			} else if ($type == DATATYPE_DATE) {
 				$query .= "`$col`=" . self::formatDateAndEscape($val->getValue(), false) . ',';
 			} else if ($type == DATATYPE_JSON) {
-                $value = $val->getValue();
-                if (empty($value)) {
-                    $query .= "`$col`=" . 'NULL,';
-                } else if (is_string($val->getValue())) {
-                    $query .= "`$col`=" . $this->formatString($val->getValue()) . ',';
+				$value = $val->getValue();
+				if (empty($value)) {
+					$query .= "`$col`=" . 'NULL,';
+				} else if (is_string($val->getValue())) {
+					$query .= "`$col`=" . $this->formatString($val->getValue()) . ',';
 				} else {
-                    $query .= "`$col`=" . $this->formatString(json_encode($val->getValue())) . ',';
+					$query .= "`$col`=" . $this->formatString(json_encode($val->getValue())) . ',';
 				}
 			} else {
 				$query .= "`$col`=" . $this->formatString($val->getValue()) . ',';
@@ -531,9 +531,10 @@ class Database {
 		if (strncmp($mysqltime, '0000-00-00', 10) == 0) {
 			return 0;
 		}
-        if ($time)
-    		return strtotime($mysqltime . ' GMT');
-        return strtotime($mysqltime);
+		if ($time) {
+			return strtotime($mysqltime . ' GMT');
+		}
+		return strtotime($mysqltime);
 	}
 
 	public static function formatDateAndEscape($datetime, $time = true) {

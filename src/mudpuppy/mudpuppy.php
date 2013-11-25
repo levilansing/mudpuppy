@@ -1,6 +1,6 @@
 <?php
 define('MUDPUPPY', true);
-define('MUDPUPPY_VERSION', '1.0.0');
+define('MUDPUPPY_VERSION', '2.0.0 beta');
 
 // Switch to root directory
 chdir(__DIR__);
@@ -64,7 +64,7 @@ MPAutoLoad('DebugLog');
 MPAutoLoad('Request');
 
 // Also pre-load the exceptions, which are kind of special because they're combined in a single file
-MPAutoLoad('Exceptions');
+MPAutoLoad('MudpuppyException');
 
 // Initialize the application
 App::initialize();
@@ -80,7 +80,7 @@ function MPAutoLoad($className) {
 	if (!file_exists($cacheDir)) {
 		mkdir($cacheDir);
 	}
-	$classCacheFile = "$cacheDir/classlocationcache.php";
+	$classCacheFile = "$cacheDir/ClassLocationCache.json";
 
 	$parts = explode('\\', $className);
 	$class = strtolower($parts[sizeof($parts) - 1]);
@@ -92,7 +92,7 @@ function MPAutoLoad($className) {
 
 	// Load class location cache
 	if (is_null($classes) && file_exists($classCacheFile)) {
-		require($classCacheFile);
+		$classes = json_decode(file_get_contents($classCacheFile), true);
 	}
 
 	// Automatically load aws.phar if we're trying to use a class from the AWS SDK
@@ -160,7 +160,7 @@ function _refreshAutoLoadClasses(&$classes) {
 		}
 	}
 
-	return "<?php \$classes = " . var_export($classes, true) . "; ?>";
+	return json_encode($classes);
 }
 
 function _ralc_parseFiles(&$classes, &$files, $folder) {
