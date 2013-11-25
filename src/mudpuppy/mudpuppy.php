@@ -2,31 +2,27 @@
 define('MUDPUPPY', true);
 define('MUDPUPPY_VERSION', '1.0.0');
 
-// switch to root directory
+// Switch to root directory
 chdir(__DIR__);
 chdir('../');
 
+// Report all errors
 error_reporting(E_ALL);
 
+// Add in a couple compatibility fixes if needed
 if (!function_exists('http_response_code')) {
-	include_once('mudpuppy/lib/compatibility/httpstatuscode.php');
+	require_once('mudpuppy/lib/compatibility/httpstatuscode.php');
 }
-
 if (!defined('PASSWORD_DEFAULT')) {
-	include_once('mudpuppy/lib/compatibility/password.php');
+	require_once('mudpuppy/lib/compatibility/password.php');
 }
 
-// required for exceptions & config options
-require_once('lib/log.php');
+// Load the configuration, logging system, and file system helper
+require_once('app/Config.php');
+require_once('mudpuppy/lib/log.php');
+require_once('mudpuppy/lib/file.php');
 
-if (!include_once('mudpuppy/config.php')) {
-	if (Config::$debug) {
-		echo 'Cannot start application! Config file is missing.';
-	}
-	http_response_code(500);
-	die();
-}
-
+// Must have PHP >= 5.4.0
 if (version_compare(PHP_VERSION, '5.4.0', '<')) {
 	if (Config::$debug) {
 		echo "PHP 5.4.0 or greater is required";
@@ -35,9 +31,10 @@ if (version_compare(PHP_VERSION, '5.4.0', '<')) {
 	die();
 }
 
+// Setup the random number generator
 mt_srand((microtime(true) * Config::$randomSeedOffset & 0xFFF) ^ Config::$randomSeedOffset);
 
-// disable error reporting and displaying when not in debug
+// Disable error reporting and displaying when not in debug
 if (!Config::$debug) {
 	ini_set('display_errors', '0');
 	error_reporting(0);
@@ -45,6 +42,7 @@ if (!Config::$debug) {
 	ini_set('display_errors', '1');
 }
 
+// Set the default timezone
 date_default_timezone_set(Config::$timezone);
 
 // Activate assert and make it quiet
@@ -52,18 +50,29 @@ assert_options(ASSERT_ACTIVE, 1);
 assert_options(ASSERT_WARNING, 0);
 assert_options(ASSERT_QUIET_EVAL, 1);
 
-// Set up error/assertion handlers (functions at bottom of file)
+// Setup error/assertion handlers (functions at bottom of file)
 assert_options(ASSERT_CALLBACK, '_assert_handler');
 set_exception_handler('exception_handler');
 set_error_handler('error_handler');
 register_shutdown_function('shutdown_handler');
 
-// required for autoload
-require_once('lib/file.php');
+// Register the autoloader function
+spl_autoload_register('MPAutoLoad');
 
-/////////////////////////////////////
-// autoload classes on demand
-/////////////////////////////////////
+// Pre-load the DebugLog and Request classes to ensure they're available during shutdown
+MPAutoLoad('DebugLog');
+MPAutoLoad('Request');
+
+// Also pre-load the exceptions, which are kind of special because they're combined in a single file
+MPAutoLoad('Exceptions');
+
+// Initialize the application
+App::initialize();
+
+//======================================================================================================================
+// Automatic class loading functions
+//======================================================================================================================
+
 function MPAutoLoad($className) {
 	static $classes = null;
 	static $reloadedCache = false;
@@ -77,37 +86,34 @@ function MPAutoLoad($className) {
 	$class = strtolower($parts[sizeof($parts) - 1]);
 	array_pop($parts);
 	$namespace = strtolower(implode('/', $parts));
-
-	if (is_null($classes)) {
-		// load class location cache
-		if (file_exists($classCacheFile)) {
-			include($classCacheFile);
-		}
+	if (!empty($namespace)) {
+		$namespace .= '/';
 	}
 
-	// first check if it is part of a lib with its own autoloader
-	if (strncasecmp($class, 'PHPExcel_', 9) == 0) {
-		return false;
+	// Load class location cache
+	if (is_null($classes) && file_exists($classCacheFile)) {
+		require($classCacheFile);
 	}
 
+	// Automatically load aws.phar if we're trying to use a class from the AWS SDK
 	if (sizeof($parts) > 0 && in_array(strtolower($parts[0]), array('aws', 'guzzle', 'symfony', 'doctrine', 'psr', 'monolog'))) {
-		// aws.phar must be in the root of the web server
-		// mudpuppy should also be running from the root
+		// Both mudpuppy and aws.phar must be in the root of the web server
 		require_once($_SERVER['DOCUMENT_ROOT'] . '/aws.phar');
+
+		// The SDK has its own autoloader, so we'll bail and let that handle it
 		return false;
 	}
 
-	if (($namespace && (!isset($classes[$namespace]) || !isset($classes[$namespace][$class]) || !file_exists($classes[$namespace][$class])))
-		|| (!$namespace && (!isset($classes[$class]) || !file_exists($classes[$class])))
+	// Refresh the class cache if we can't find the class
+	if ((($namespace && (!isset($classes[$namespace]) || !isset($classes[$namespace][$class]) || !file_exists($classes[$namespace][$class])))
+			|| (!$namespace && (!isset($classes[$class]) || !file_exists($classes[$class])))) && !$reloadedCache && Config::$debug
 	) {
-		// can't find the class, refresh class list
-		if (!$reloadedCache && Config::$debug) {
-			$code = _refreshAutoLoadClasses($classes);
-			File::putContents($classCacheFile, $code);
-			$reloadedCache = true;
-		}
+		File::putContents($classCacheFile, _refreshAutoLoadClasses($classes));
+		$reloadedCache = true;
+		Log::displayFullLog();
 	}
 
+	// Try to locate the class file
 	$file = null;
 	if ($namespace && isset($classes[$namespace]) && isset($classes[$namespace][$class]) && file_exists($classes[$namespace][$class])) {
 		$file = $classes[$namespace][$class];
@@ -115,27 +121,22 @@ function MPAutoLoad($className) {
 		$file = $classes[$class];
 	}
 
+	// And load it if found
 	if ($file) {
 		require_once($file);
 		return true;
 	}
 
-	// we failed, this class is not locatable
-	//exception_handler(new Exception("failed to locate class: $className"));
+	// We failed, this class is not locatable
 	return false;
 }
-
-spl_autoload_register('MPAutoLoad');
 
 function _refreshAutoLoadClasses(&$classes) {
 	Log::add('Refreshing auto-load cache');
 	$classes = array();
 
-	// note, modules do not need to be cached as they are loaded on demand without __autoload()
-	// also, if a model has the same class name as a class in the library or system,
-	// the library or system class will take precedence
-
-	$folders = array_merge(array('mudpuppy/dataobjects/', 'controllers/*', 'mudpuppy/system/', 'mudpuppy/lib/'), Config::$autoloadFolders);
+	// Standard non-namespaced classes, optionally in a directory structure (if * is specified for recursive loading)
+	$folders = array_merge(Config::$autoloadFolders, array('mudpuppy/dataobjects/', 'mudpuppy/admin/', 'mudpuppy/lib/'));
 	foreach ($folders as $folder) {
 		$recursive = false;
 		if (substr($folder, -1) == '*') {
@@ -143,24 +144,26 @@ function _refreshAutoLoadClasses(&$classes) {
 			$recursive = true;
 		}
 		$files = File::getFileList($folder, $recursive, true, false, '#.*\.php$#');
-		_ralc_parsefiles($classes, $files, $folder);
+		_ralc_parseFiles($classes, $files, $folder);
 	}
 
-	// assume all folders inside dataobjects are a namespace
-	$folder = 'mudpuppy/dataobjects/';
-	$namespaces = File::getFileList('mudpuppy/dataobjects/', false, false, true);
-	foreach ($namespaces as $namespace) {
-		$nsClasses = array();
-		$files = File::getFileList($folder . $namespace, false, true, false, '#.*\.php$#');
-		_ralc_parsefiles($nsClasses, $files, $folder . $namespace . '/');
-		$classes[$namespace] = $nsClasses;
+	// Namespaced classes in a directory structure
+	$folders = array('app/');
+	foreach ($folders as $folder) {
+		$paths = array_merge([''], File::getFileList($folder, true, false, true));
+		foreach ($paths as $path) {
+			$path = $folder . $path;
+			$nsClasses = array();
+			$files = File::getFileList($path, false, true, false, '#.*\.php$#');
+			_ralc_parseFiles($nsClasses, $files, $path);
+			$classes[$path] = $nsClasses;
+		}
 	}
 
-	$code = "<?php \$classes = " . var_export($classes, true) . "; ?>";
-	return $code;
+	return "<?php \$classes = " . var_export($classes, true) . "; ?>";
 }
 
-function _ralc_parsefiles(&$classes, &$files, $folder) {
+function _ralc_parseFiles(&$classes, &$files, $folder) {
 	foreach ($files as $file) {
 		$class = strtolower(File::getTitle($file, false));
 		if ($class) {
@@ -169,26 +172,21 @@ function _ralc_parsefiles(&$classes, &$files, $folder) {
 	}
 }
 
-// need to pre-load ErrorLog data object in order to write to DB during a shutdown
-MPAutoLoad('ErrorLog');
+//======================================================================================================================
+// Error handling functions
+//======================================================================================================================
 
-App::initialize();
-
-// some error handling
-
-// assertion handling
+// Assertion handler function
 function _assert_handler($file, $line, $code) {
 	if (Config::$debug) {
 		throw(new Exception("Assertion failed in file $file($line).\nCode: $code"));
 	}
 }
 
-// error handler function
+// Error handler function
 function error_handler($errNo, $errStr, $errFile, $errLine) {
-	// define an assoc array of error string
-	// in reality the only entries we should
-	// consider are E_WARNING, E_NOTICE, E_USER_ERROR,
-	// E_USER_WARNING and E_USER_NOTICE
+	// Define an associative array of error strings. In reality, the only entries we should consider are:
+	// E_WARNING, E_NOTICE, E_USER_ERROR, E_USER_WARNING and E_USER_NOTICE
 	$errorType = array(
 		E_ERROR => 'Error',
 		E_WARNING => 'Warning',
@@ -205,6 +203,7 @@ function error_handler($errNo, $errStr, $errFile, $errLine) {
 		E_RECOVERABLE_ERROR => 'Catchable Fatal Error'
 	);
 
+	// Handle the error
 	$err = $errorType[$errNo] . ": $errStr in $errFile ($errLine)";
 	switch ($errNo) {
 	case E_ERROR:
@@ -212,38 +211,49 @@ function error_handler($errNo, $errStr, $errFile, $errLine) {
 	case E_CORE_ERROR:
 	case E_COMPILE_ERROR:
 	case E_USER_ERROR:
+		// For serious errors, use the exception handler
 		exception_handler(new Exception($err));
 		break;
 	default:
+		// Otherwise, just log it
 		Log::error($err);
 	}
 
-	// Don't execute PHP internal error handler
+	// Don't execute PHP's internal error handler
 	return true;
 }
 
-// exception handler
+// Exception handler function
 function exception_handler(Exception $exception) {
-	Log::error('An exception has occurred in ' . $exception->getFile() . '(' . $exception->getLine() . "). \nMessage: " . $exception->getMessage());
-
+	Log::exception($exception);
 	if (Config::$debug) {
-		Log::write();
+		if (!empty(Config::$dbHost)) {
+			Log::displayFullLog();
+		}
+		App::cleanExit();
 	} else {
-		/* redirect to error page */
-		print('A Fatal Error Occurred.');
+		$statusCode = 500;
+		if ($exception instanceof MudpuppyException) {
+			$statusCode = $exception->getCode();
+		}
+		App::abort($statusCode);
 	}
-
-	App::cleanExit();
 }
 
-// the shutdown handler to make sure we write out to the log or display any serious errors
+// Shutdown handler to make sure we write out to the log or display any serious errors
 function shutdown_handler() {
 	$error = error_get_last();
-	if ($error !== null && Config::$debug) {
-		print 'SHUTDOWN in file:' . $error['file'] . "(" . $error['line'] . ") - Message:" . $error['message'] . '<br />' . PHP_EOL;
-		Log::displayFullLog();
+	if ($error !== null) {
+		Log::error('SHUTDOWN: ' . $error['file'] . '(' . $error['line'] . ') ' . $error['message']);
+		if (Config::$debug) {
+			if (!empty(Config::$dbHost)) {
+				Log::displayFullLog();
+			}
+			App::cleanExit();
+		} else {
+			App::abort(500);
+		}
 	}
-	Log::write();
 }
 
 ?>

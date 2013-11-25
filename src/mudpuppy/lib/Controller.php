@@ -4,18 +4,17 @@
  * Created 8/28/13
  */
 defined('MUDPUPPY') or die('Restricted');
-MPAutoLoad('Exceptions');
 
 abstract class Controller {
-	var $options = array();
-	var $view;
-	var $id;
 
 	/**
-	 * @param string $name optional name of the controller
+	 * Parses the request and returns an instance of the associated controller.
+	 *
 	 * @return Controller
+	 * @throws PageNotFoundException if no controller exists
 	 */
-	public static function getController($name = '') {
+	public static function getController() {
+		// Carve up the path info into an array of parts
 		$path = pathinfo($_SERVER['PATH_INFO']);
 		if (isset($path['dirname']) && strlen($path['dirname']) > 1) {
 			$parts = explode('/', substr($path['dirname'], 1));
@@ -26,81 +25,209 @@ abstract class Controller {
 			$parts[] = $path['basename'];
 		}
 
-		$controllerName = 'HomeController';
-		if ($name) {
-			$controllerName = $name . 'Controller';
-		} else if (count($parts) > 0 && $parts[0] != '') {
-			$controllers = [];
-			$controllerName = '';
-			foreach ($parts as $part) {
-				$controllerName .= ucfirst($part);
-				$controllers[] = $controllerName . 'Controller';
+		// Try to find the controller
+		$controllerName = 'app\\HomeController';
+		$options = [];
+		if (count($parts) > 0 && $parts[0] != '') {
+			// Parse out the controller name
+			$nameIndex = -1;
+			if ($parts[0] == 'mudpuppy') {
+				$controllerName = 'AdminController';
+				$nameIndex = 0;
+				if (count($parts) > 1 && $parts[1] == 'log') {
+					$controllerName = 'LogController';
+					$nameIndex = 1;
+				}
+			} else {
+				$searchPath = 'app/';
+				for ($i = 0; $i < count($parts); $i++) {
+					// Give precedence to existing directories
+					if (file_exists($searchPath . $parts[$i] . '/')) {
+						// Append that directory to the current search and continue along
+						$searchPath .= $parts[$i] . '/';
+					} else {
+						// Otherwise, check for the class file
+						if (file_exists($searchPath . ucfirst($parts[$i]) . 'Controller.php')) {
+							// Use that fully qualified class name, in which directories equal namespaces
+							$controllerName = implode('\\', array_merge(['app'], array_slice($parts, 0, $i), [ucfirst($parts[$i] . 'Controller')]));
+							$nameIndex = $i;
+						}
+						// And stop the search either way
+						break;
+					}
+				}
 			}
-			$controllerName = end($controllers);
-			while ($controllerName && !class_exists($controllerName)) {
-				$controllerName = prev($controllers);
+
+			// Grab the input options
+			$options = array_slice($parts, $nameIndex + 1);
+			if (isset($path['extension'])) {
+				$options[] = $path['basename'];
 			}
-		}
-		if (!class_exists($controllerName)) {
-			if (Config::$debug) {
-				Log::error("Controller does not exist for request: " . $_SERVER['PATH_INFO']);
-			}
-			App::abort(404);
 		}
 
-		$options = $parts;
-		$cName = '';
-		$index = 1;
-		foreach ($parts as $part) {
-			$cName .= $part;
-			if (strcasecmp($cName . 'Controller', $controllerName) == 0) {
-				$options = array_slice($parts, $index);
-				break;
-			}
+		// Make sure the class exists and is a subclass of Controller
+		if (!class_exists($controllerName) || !(new ReflectionClass($controllerName))->isSubclassOf('Controller')) {
+			throw new PageNotFoundException('No controller found for request: ' . $_SERVER['PATH_INFO']);
 		}
 
-		if ($controllerName == 'Controller') {
-			return null;
-		}
-
+		// Instantiate and return the controller
 		return new $controllerName($options);
 	}
 
-	public function __construct($options) {
-		$this->options = $options;
+	public function __construct($pathOptions) {
+		$this->pathOptions = $pathOptions;
 	}
 
 	/** @returns array */
 	abstract public function getRequiredPermissions();
 
-	public function processPost() {
-		$action = Request::getCmd('action', null, 'POST');
-		if ($action && method_exists($this, 'action_' . $action)) {
-			call_user_func(array($this, 'action_' . $action));
+	public function processRequest() {
+		$response = null;
+		try {
+			$method = $_SERVER['REQUEST_METHOD'];
+			$reflection = new ReflectionClass($this);
+			$traits = $reflection->getTraitNames();
+			$isPage = in_array('PageController', $traits);
+			$isDataObject = in_array('DataObjectController', $traits);
+			$option = $this->getOption(0);
+			if ($option === null) {
+				if (!$isDataObject) {
+					if ($isPage) {
+						return;
+					}
+					throw new UnsupportedMethodException("Request method $method is invalid for this URL");
+				}
+				$isApi = true;
+				switch ($method) {
+				case 'GET':
+					// Retrieve a collection of objects: GET <module>?<params>
+					Request::setParams($_GET);
+					$response = $this->getCollection($_GET);
+					break;
+				case 'POST':
+					// Create an object: POST <module>
+					$db = App::getDBO();
+					$db && $db->beginTransaction();
+					$params = json_decode(file_get_contents('php://input'), true);
+					$params = $params != null ? $params : $_POST;
+					Request::setParams($params);
+					$response = $this->create($params);
+					$db && $db->commitTransaction();
+					break;
+				default:
+					throw new UnsupportedMethodException("Request method $method is invalid for this URL");
+				}
+			} else if (preg_match('/[0-9]+/', $option)) {
+				if (!$isDataObject) {
+					if ($isPage) {
+						return;
+					}
+					throw new UnsupportedMethodException("Request method $method is invalid for this URL");
+				}
+				$id = (int)$option;
+				switch ($method) {
+				case 'GET':
+					// Retrieve a single object: GET <module>/<id>
+					$response = $this->get($id);
+					break;
+				case 'PUT':
+					// Update an object: PUT <module>/<id>
+					$db = App::getDBO();
+					$db && $db->beginTransaction();
+					$params = json_decode(file_get_contents('php://input'), true);
+					$params = $params != null ? $params : $_POST;
+					Request::setParams($params);
+					$response = $this->update($id, $params);
+					$db && $db->commitTransaction();
+					break;
+				case 'DELETE':
+					// Delete an object: DELETE <module>/<id>
+					$db = App::getDBO();
+					$db && $db->beginTransaction();
+					$this->delete((int)$id);
+					$db && $db->commitTransaction();
+					break;
+				default:
+					throw new UnsupportedMethodException("Request method $method is invalid for this URL");
+				}
+			} else {
+				$actionName = Request::cleanValue($option, '', 'cmd');
+				if (!$reflection->hasMethod('action_' . $actionName)) {
+					if ($isPage) {
+						return;
+					}
+					throw new UnsupportedMethodException("The method action_$actionName does not exist in {$reflection->getName()}");
+				}
+				switch ($method) {
+				case 'GET':
+					// Call an action: GET <module>/<action>?<params>
+					Request::setParams($_GET);
+					$response = $this->runAction($actionName, $_GET);
+					break;
+				case 'POST':
+					// Call an action: POST <module>/<action>
+					$db = App::getDBO();
+					$db && $db->beginTransaction();
+					$params = json_decode(file_get_contents('php://input'), true);
+					$params = $params != null ? $params : $_POST;
+					Request::setParams($params);
+					$response = $this->runAction($actionName, $params);
+					$db && $db->commitTransaction();
+					break;
+				default:
+					throw new UnsupportedMethodException("Request method $method is invalid for this URL");
+				}
+			}
+		} catch (Exception $e) {
+			Log::exception($e);
+			$db = App::getDBO();
+			$db && $db->rollBackTransaction();
+			$statusCode = 500;
+			if ($e instanceof MudpuppyException) {
+				$statusCode = $e->getCode();
+			}
+			http_response_code($statusCode);
+			$message = $e->getMessage();
+			if (!Config::$debug) {
+				switch ($statusCode) {
+				case 400:
+					$message = 'Invalid input';
+					break;
+				case 403:
+					$message = 'You do not have permission to perform this request';
+					break;
+				case 404:
+					$message = 'Object not found';
+					break;
+				default:
+					$message = 'Request method not supported in this context';
+				}
+			}
+			$response = array('error' => $statusCode, 'message' => $message);
 		}
+
+		header('Content-type: application/json');
+		if ($response != null) {
+			print json_encode($response);
+		}
+		App::cleanExit();
 	}
 
 	/**
-	 * run an action on this controller
-	 * @param $actionName
+	 * Runs an action on this controller.
+	 *
+	 * @param string $actionName
 	 * @return mixed
 	 * @throws UnsupportedMethodException
 	 * @throws InvalidInputException
 	 */
-	public function runAction($actionName) {
-		$action = Request::cleanValue($actionName, '', 'cmd');
-
-		// verify the action exists in this controller
+	private function runAction($actionName) {
+		// Get the method and PhpDoc
 		$reflection = new ReflectionClass($this);
-		if (!$reflection->hasMethod('action_' . $action)) {
-			throw new UnsupportedMethodException("The method action_$action does not exist in {$reflection->getName()}");
-		}
-
-		// get the method and PhpDoc
-		$method = $reflection->getMethod('action_' . $action);
+		$method = $reflection->getMethod('action_' . $actionName);
 		$documentation = $method->getDocComment();
 
-		// validate, clean, and list the parameters
+		// Validate, clean, and list the parameters
 		$parameters = array();
 		foreach ($method->getParameters() as $parameter) {
 			$parameterName = $parameter->getName();
@@ -116,8 +243,8 @@ abstract class Controller {
 			$className = $parameter->getClass();
 			$isArray = false;
 			if (!$className) {
-				// use the doc comments to clean the input parameter
-				if (!preg_match('/\* +@param (\w+)(\[\])? \$' . $parameterName . '(?= |\n)/i', $documentation, $matches)) {
+				// Use the doc comments to clean the input parameter
+				if (!preg_match('/\*\s+@param\s+(\w+)(\[\])?\s+\$' . $parameterName . '\s/i', $documentation, $matches)) {
 					throw new InvalidInputException("{$reflection->getName()}::{$method->getName()}($$parameterName) is not documented with proper types");
 				}
 				// $matches[1] is the type name
@@ -127,7 +254,7 @@ abstract class Controller {
 				}
 			}
 
-			// support arrays of specific types: int[] or DataObject[]
+			// Support arrays of specific types: int[] or DataObject[]
 			if ($isArray) {
 				$values = Request::getArray($parameterName, $default);
 			} else {
@@ -146,7 +273,6 @@ abstract class Controller {
 					}
 					break;
 
-					// do we throw exceptions if it is non-numeric? i think we should.
 				case 'int':
 				case 'integer':
 					if (!is_numeric($parameterValue) || (!is_int($parameterValue) && !preg_match('/^-?[0-9]+$/', $parameterValue))) {
@@ -163,9 +289,9 @@ abstract class Controller {
 					$parameterValue = (double)$parameterValue;
 					break;
 
-					// non-typed arrays will assume string values
 				case 'array':
 				case 'string':
+					// Non-typed arrays will assume string values
 					break;
 
 				default:
@@ -205,7 +331,7 @@ abstract class Controller {
 
 		// verify the class is a DataObject
 		$parameterClass = new ReflectionClass($className);
-		if (!$parameterClass->isSubclassOf("DataObject")) {
+		if (!$parameterClass->isSubclassOf('DataObject')) {
 			throw new UnsupportedMethodException("$className does not extend DataObject", 500);
 		}
 
@@ -220,9 +346,12 @@ abstract class Controller {
 	}
 
 	protected function getOption($index) {
-		if (isset($this->options[$index])) {
-			return $this->options[$index];
+		if (isset($this->pathOptions[$index])) {
+			return $this->pathOptions[$index];
 		}
 		return null;
 	}
+
+	protected $pathOptions = array();
+
 }

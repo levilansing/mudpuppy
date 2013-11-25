@@ -1,46 +1,31 @@
 <?php
-/**
- * @author Levi Lansing
- * Created 7/8/13
- */
+defined('MUDPUPPY') or die('Restricted');
 
-class ErrorLogController extends Controller {
+class LogController extends Controller {
 	use PageController;
 
-	public function __construct() {
-		// don't write the log for this request
+	public function __construct($pathOptions) {
+		// Don't write the log for this request
 		Log::dontWrite();
 
-		$this->pageTitle = Config::$appTitle . ' - Error Log';
-
-		// disable cache
+		// Disable browser caching
 		header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 		header("Cache-Control: no-store, no-cache, must-revalidate"); // HTTP/1.1
 		header("Cache-Control: post-check=0, pre-check=0", false);
 		header("Pragma: no-cache"); // HTTP/1.0
 		header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
 
-		parent::__construct('ErrorLog');
+		parent::__construct($pathOptions);
 	}
 
 	public function getRequiredPermissions() {
-		if (!Config::$debug) {
-			return array(Permissions::SuperAdmin);
-		}
 		return array();
 	}
 
-	public function getScripts() {
-		return [
-			'js' => [],
-			'css' => []
-		];
-	}
-
 	public function render() {
-		// abort the default template, use the error log view fro the entire page
+		// Abort the default template, use the debug log view for the entire page
 		ob_clean();
-		include('mudpuppy/errorlog/view.php');
+		include('mudpuppy/admin/LogView.php');
 		App::cleanExit();
 	}
 
@@ -52,9 +37,9 @@ class ErrorLogController extends Controller {
 	public function action_pull($lastId = -1) {
 		Log::dontWrite();
 		if ($lastId >= 0) {
-			$results = ErrorLog::getByFields(array(), "id > $lastId ORDER BY id ASC");
+			$results = DebugLog::getByFields(array(), "id > $lastId ORDER BY id ASC");
 		} else {
-			$results = ErrorLog::getByFields(array(), "id > $lastId ORDER BY id DESC LIMIT 50");
+			$results = DebugLog::getByFields(array(), "id > $lastId ORDER BY id DESC LIMIT 50");
 			$results = array_reverse($results);
 		}
 		if (!empty($results)) {
@@ -73,13 +58,13 @@ class ErrorLogController extends Controller {
 		session_write_close();
 		set_time_limit(60 * 5);
 
-		$pipe = 'mudpuppy/cache/mudpuppy_errorLogPipe';
+		$pipe = 'mudpuppy/cache/mudpuppy_debugLogPipe';
 		if (!file_exists($pipe)) {
 			posix_mkfifo($pipe, 0777);
 		}
 
 		if ($lastId >= 0) {
-			$results = ErrorLog::getByFields(array(), "id > $lastId ORDER BY id ASC");
+			$results = DebugLog::getByFields(array(), "id > $lastId ORDER BY id ASC");
 			if (!empty($results)) {
 				return DataObject::objectListToArrayList($results);
 			}
@@ -96,9 +81,9 @@ class ErrorLogController extends Controller {
 		unlink($pipe);
 
 		if ($triggered && $lastId == -1) {
-			return array(ErrorLog::getLast()->toArray());
+			return array(DebugLog::getLast()->toArray());
 		} else if ($lastId >= 0) {
-			$results = ErrorLog::getByFields(array(), "id > $lastId ORDER BY id ASC");
+			$results = DebugLog::getByFields(array(), "id > $lastId ORDER BY id ASC");
 			if (!empty($results)) {
 				return DataObject::objectListToArrayList($results);
 			}
@@ -112,14 +97,14 @@ class ErrorLogController extends Controller {
 	 * @return array
 	 */
 	public function action_getLast() {
-		return ErrorLog::getLast()->toArray();
+		return DebugLog::getLast()->toArray();
 	}
 
 	/**
 	 * signal a new log entry was recorded
 	 */
 	public function action_trigger() {
-		$pipe = 'mudpuppy/cache/mudpuppy_errorLogPipe';
+		$pipe = 'mudpuppy/cache/mudpuppy_debugLogPipe';
 		if (!file_exists($pipe)) {
 			return;
 		}
@@ -135,8 +120,6 @@ class ErrorLogController extends Controller {
 	 * clear the log
 	 */
 	public function action_clearLog() {
-		if (Config::$debug) {
-			ErrorLog::deleteAll();
-		}
+		DebugLog::deleteAll();
 	}
 }

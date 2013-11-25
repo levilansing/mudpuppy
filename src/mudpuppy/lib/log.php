@@ -5,7 +5,7 @@
  */
 defined('MUDPUPPY') or die('Restricted');
 
-define('LOG_LEVEL_ALWAYS',3);
+define('LOG_LEVEL_ALWAYS', 3);
 define('LOG_LEVEL_ERROR', 2);
 define('LOG_LEVEL_NONE', 1);
 
@@ -13,9 +13,9 @@ class Log {
 	private static $startTime;
 	private static $log;
 	private static $errors;
-    private static $writeCompleted = false;
+	private static $writeCompleted = false;
 
-	static function initialize() {
+	public static function initialize() {
 		if (Log::$startTime) {
 			return;
 		}
@@ -23,63 +23,65 @@ class Log {
 		Log::$log = array();
 	}
 
-    static function getElapsedTime($time=null) {
-        if (empty($time))
-            $time = microtime();
-        list($u1, $s1) = explode(' ', self::$startTime);
-        list($u2, $s2) = explode(' ', $time);
-        $s = $s2-$s1;
-        $u = $u2-$u1;
-        if ($u < 0) {
-            $u += 1;
-            $s -= 1;
-        }
-        return $s.substr($u, 1);
-    }
+	public static function getElapsedTime($time = null) {
+		if (empty($time)) {
+			$time = microtime();
+		}
+		list($u1, $s1) = explode(' ', self::$startTime);
+		list($u2, $s2) = explode(' ', $time);
+		$s = $s2 - $s1;
+		$u = $u2 - $u1;
+		if ($u < 0) {
+			$u += 1;
+			$s -= 1;
+		}
+		return $s . substr($u, 1);
+	}
 
-	static function add($text) {
+	public static function add($text) {
 		Log::$log[] = array('title' => $text, 'time' => self::getElapsedTime(), 'mem' => memory_get_usage());
 	}
 
-    static function getBacktrace($start = 1) {
-        ob_start();
-        $outputTrace = function ($a, $b) {
-            $path = (isset($a['file']) ? $a['file'] : '');
-            $docRoot = $_SERVER['DOCUMENT_ROOT'];
-            if (strncasecmp($path, $docRoot, strlen($docRoot)) == 0) {
-                $path = substr($path, strlen($docRoot));
-            }
-            $class = (isset($a['class']) ? $a['class'] . $a['type'] : '');
-            $line = (isset($a['line']) ? "($a[line])" : '');
-            print "\n" . str_pad("$path $line > ", 55, ' ', STR_PAD_LEFT) . "$class$a[function]()";
-        };
-        $stack = debug_backtrace();
-        while ($start-- > 0 && sizeof($stack) > 0) {
-            array_shift($stack);
-        }
-        $first = reset($stack);
-        if ($first && $first['function'] == 'error_handler')
-            array_shift($stack);
-        array_walk($stack, $outputTrace);
-        $trace = ob_get_clean();
-        return $trace;
-    }
+	public static function getBacktrace($start = 1) {
+		ob_start();
+		$outputTrace = function ($a, $b) {
+			$path = (isset($a['file']) ? $a['file'] : '');
+			$docRoot = $_SERVER['DOCUMENT_ROOT'];
+			if (strncasecmp($path, $docRoot, strlen($docRoot)) == 0) {
+				$path = substr($path, strlen($docRoot));
+			}
+			$class = (isset($a['class']) ? $a['class'] . $a['type'] : '');
+			$line = (isset($a['line']) ? "($a[line])" : '');
+			print "\n" . str_pad("$path $line > ", 55, ' ', STR_PAD_LEFT) . "$class$a[function]()";
+		};
+		$stack = debug_backtrace();
+		while ($start-- > 0 && sizeof($stack) > 0) {
+			array_shift($stack);
+		}
+		$first = reset($stack);
+		if ($first && $first['function'] == 'error_handler') {
+			array_shift($stack);
+		}
+		array_walk($stack, $outputTrace);
+		$trace = ob_get_clean();
+		return $trace;
+	}
 
-	static function error($error) {
-        $error .= self::getBacktrace(2);
+	public static function error($error) {
+		$error .= self::getBacktrace(2);
 		Log::$errors[] = array('time' => Log::getElapsedTime(), 'error' => $error);
 	}
 
-	static function exception(Exception $e) {
-        $error = $e->getFile() . '(' . $e->getLine() . ') ' . $e->getMessage();
+	public static function exception(Exception $e) {
+		$error = $e->getFile() . '(' . $e->getLine() . ') ' . $e->getMessage();
 		self::error($error);
 	}
 
-	static function getErrors() {
+	public static function getErrors() {
 		return Log::$errors;
 	}
 
-	static function formatMemory($mem) {
+	public static function formatMemory($mem) {
 		$u = array('B', 'KB', 'MB', 'GB', 'TB'); // TB? why not?
 		$i = 0;
 		while ($mem > 1024) {
@@ -89,97 +91,98 @@ class Log {
 		return number_format($mem, 2) . ' ' . $u[$i];
 	}
 
-    static function dontWrite() {
-        self::$writeCompleted = true;
-    }
+	public static function dontWrite() {
+		self::$writeCompleted = true;
+	}
 
-    static function write() {
-        if (self::$writeCompleted) {
-            return;
-        }
-        $tend = microtime();
-        if (Config::$logLevel == LOG_LEVEL_NONE)
-            return;
-        if (!Config::$dbHost && Config::$debug) {
-            if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
-                Log::displayFullLog();
-                self::$writeCompleted = true;
-            }
-            return;
-        }
-        if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
-            try {
-                // delete old logs once in a while
-                if (rand(0, 100) == 3) {
-                    $oldAge = strtotime('7 days ago');
-                    $db = App::getDBO();
-                    $result = $db->query("DELETE FROM ErrorLogs WHERE `date` < '" . Database::formatDate($oldAge, false) . "'");
-                }
+	public static function write() {
+		if (self::$writeCompleted) {
+			return;
+		}
+		$tend = microtime();
+		if (Config::$logLevel == LOG_LEVEL_NONE) {
+			return;
+		}
+		if (!Config::$dbHost && Config::$debug) {
+			if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
+				Log::displayFullLog();
+				self::$writeCompleted = true;
+			}
+			return;
+		}
+		if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
+			try {
+				// delete old logs once in a while
+				if (rand(0, 100) == 3) {
+					$oldAge = strtotime('7 days ago');
+					$db = App::getDBO();
+					$result = $db->query("DELETE FROM DebugLogs WHERE `date` < '" . Database::formatDate($oldAge, false) . "'");
+				}
 
-                list($u, $s) = explode(' ', self::$startTime);
-                $startTime = $s.substr($u, 1);
+				list($u, $s) = explode(' ', self::$startTime);
+				$startTime = $s . substr($u, 1);
 
-                $log = new ErrorLog();
-                $log->date = $s;
-                $log->requestMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '';
-                $log->requestPath = (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '');
-                $log->request = Request::getParams();
-                $log->memoryUsage = memory_get_peak_usage();
-                $log->startTime = $startTime;
-                $log->executionTime = self::getElapsedTime($tend);
-                $log->queries = array('errors'=>Database::$errorCount, 'queries'=>Database::$queryLog);
-                $log->log = self::$log;
-                $log->errors = self::$errors;
-                $log->responseCode = http_response_code();
+				$log = new DebugLog();
+				$log->date = $s;
+				$log->requestMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '';
+				$log->requestPath = (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '');
+				$log->request = Request::getParams();
+				$log->memoryUsage = memory_get_peak_usage();
+				$log->startTime = $startTime;
+				$log->executionTime = self::getElapsedTime($tend);
+				$log->queries = array('errors' => Database::$errorCount, 'queries' => Database::$queryLog);
+				$log->log = self::$log;
+				$log->errors = self::$errors;
+				$log->responseCode = http_response_code();
 
-                if (!$log->save()) {
-                    self::displayFullLog();
-                }
+				if (!$log->save()) {
+					self::displayFullLog();
+				}
 
-                self::$writeCompleted = true;
+				self::$writeCompleted = true;
 
-                // notify listeners that we logged something
-                $pipe = 'mudpuppy/cache/mudpuppy_errorLogPipe';
-                if (!file_exists($pipe)) {
-                    return;
-                }
+				// notify listeners that we logged something
+				$pipe = 'mudpuppy/cache/mudpuppy_debugLogPipe';
+				if (!file_exists($pipe)) {
+					return;
+				}
 
-                $fp = fopen($pipe, 'r+');
-                if ($fp) {
-                    stream_set_timeout($fp, 10);
-                    fwrite($fp, '1');
-                    fclose($fp);
-                    unlink($fp);
-                }
+				$fp = fopen($pipe, 'r+');
+				if ($fp) {
+					stream_set_timeout($fp, 10);
+					fwrite($fp, '1');
+					fclose($fp);
+					unlink($fp);
+				}
 
-            } catch (Exception $e) {
-                if (Config::$debug) {
-                    print "Exception while attempting to record the log: ";
-                    print $e->getMessage();
-                }
-            }
-        }
-    }
+			} catch (Exception $e) {
+				if (Config::$debug) {
+					print "Exception while attempting to record the log: ";
+					print $e->getMessage();
+				}
+			}
+		}
+	}
 
-	static function getFullLog() {
+	public static function getFullLog() {
 		ob_start();
 		self::displayFullLog();
 		return ob_get_clean();
 	}
 
-	static function displayFullLog() {
+	public static function displayFullLog() {
 		$tend = microtime();
 
 		$nErrors = sizeof(Log::$errors);
 		if (!Config::$logQueries || !Config::$dbHost) {
 			$nQueries = "Log Queries Off";
 		} else {
-            $nQueries = sizeof(Database::$queryLog) . " Queries";
-        }
+			$nQueries = sizeof(Database::$queryLog) . " Queries";
+		}
 		$executionTime = sprintf("%0.4fs", Log::getElapsedTime($tend));
 
 		print "<div id=\"debug_preview\" style=\"background:#CCC; color:#335533; padding:2px 10px; font-size: 13px; line-height: 18px; height: 18px; cursor:pointer\" onclick=\"if (window.jQuery) $('#debug_details').toggle(500); else document.getElementById('debug_details').style.display='';\">";
-		print "Error Log (<span" . ($nErrors > 0 ? ' style="color:#C20; font-weight:bold;"' : '') . ">$nErrors Errors</span> | $nQueries | Execution Time: $executionTime)";
+		print "Debug Log (<span" . ($nErrors > 0 ? ' style="color:#C20; font-weight:bold;"' : '') . ">$nErrors Errors</span> | $nQueries | Execution Time: $executionTime)";
 		print "</div>\n";
 		print "<div id=\"debug_details\" style=\"display:none; background:#EEE; padding:1em 0;\">\n";
 		print "<div id=\"debug_info\" style=\"font-family: Courier New; margin-left: 1em; padding-left: 1em;\">";

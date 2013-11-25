@@ -28,17 +28,17 @@ trait DataObjectController {
      * Gets the data object for the given id.
      * @param int $id the object id
      * @return array that represents the object (sanitized)
-     * @throws InvalidIdentifierException if no object is found for the given id
-     * @throws ApiException if retrieved object is not a DataObject
+     * @throws ObjectNotFoundException if no object is found for the given id
+     * @throws MudpuppyException if retrieved object is not a DataObject
      */
     public function get($id) {
         /** @var $dataObject DataObject */
         $dataObject = call_user_func(array($this->dataObjectName, 'get'), $id);
         if ($dataObject === null) {
-            throw new InvalidIdentifierException("No object found for id: $id");
+            throw new ObjectNotFoundException("No object found for id: $id");
         }
         if (!is_subclass_of($dataObject, 'DataObject')) {
-            throw new ApiException('Failed to retrieve object');
+            throw new MudpuppyException('Failed to retrieve object');
         }
         return $this->sanitize($dataObject->toArray());
     }
@@ -48,18 +48,18 @@ trait DataObjectController {
      * retrieveDataObjects method to support filtering based on the given query parameters.
      * @param array $params array of query parameters that came in with the request
      * @return array of arrays that represent the data objects (sanitized)
-     * @throws ApiException if retrieveDataObjects doesn't return an array of DataObjects
+     * @throws MudpuppyException if retrieveDataObjects doesn't return an array of DataObjects
      */
     public function getCollection($params) {
         $dataObjects = $this->retrieveDataObjects($params);
         if ($dataObjects === null || !is_array($dataObjects)) {
-            throw new ApiException('Failed to retrieve objects');
+            throw new MudpuppyException('Failed to retrieve objects');
         }
         $output = array();
         foreach ($dataObjects as $dataObject) {
             /** @var $dataObject DataObject */
             if (!($dataObject instanceof DataObject)) {
-                throw new ApiException('Failed to retrieve objects');
+                throw new MudpuppyException('Failed to retrieve objects');
             }
             $output[] = $this->sanitize($dataObject->toArray());
         }
@@ -71,8 +71,8 @@ trait DataObjectController {
      * @param array $object array representation of the object
      * @return array that represents the newly created object
      * @throws InvalidInputException if the input object does not validate
-     * @throws InvalidIdentifierException if the object already exists
-     * @throws ApiException if the object fails to create
+     * @throws ObjectNotFoundException if the object already exists
+     * @throws MudpuppyException if the object fails to create
      */
     public function create($object) {
         $object = self::cleanArray($object, $this->getStructureDefinition());
@@ -85,11 +85,11 @@ trait DataObjectController {
             $dataObject->$field = $value;
         }
         if ($dataObject->exists()) {
-            throw new InvalidIdentifierException('The specified object already exists');
+            throw new ObjectNotFoundException('The specified object already exists');
         }
         $this->prepForCreate($dataObject);
         if (!$dataObject->save()) {
-            throw new ApiException('Failed to create object');
+            throw new MudpuppyException('Failed to create object');
         }
         $this->objectCreated($dataObject);
         return $this->sanitize($dataObject->toArray());
@@ -101,8 +101,8 @@ trait DataObjectController {
      * @param array $object array representation of the object
      * @return array that represents the updated object
      * @throws InvalidInputException if the input object does not validate
-     * @throws InvalidIdentifierException if the object doesn't exists
-     * @throws ApiException if the object fails to update
+     * @throws ObjectNotFoundException if the object doesn't exists
+     * @throws MudpuppyException if the object fails to update
      */
     public function update($id, $object) {
         $object = self::cleanArray($object, $this->getStructureDefinition());
@@ -112,14 +112,14 @@ trait DataObjectController {
         /** @var $dataObject DataObject */
         $dataObject = call_user_func(array($this->dataObjectName, 'get'), $id);
         if ($dataObject === null) {
-            throw new InvalidIdentifierException('The specified object does not exist');
+            throw new ObjectNotFoundException('The specified object does not exist');
         }
         foreach ($object as $field => $value) {
             $dataObject->$field = $value;
         }
         $this->prepForUpdate($dataObject);
         if (!$dataObject->save()) {
-            throw new ApiException('Failed to update object');
+            throw new MudpuppyException('Failed to update object');
         }
         $this->objectUpdated($dataObject);
         return $this->sanitize($dataObject->toArray());
@@ -128,17 +128,17 @@ trait DataObjectController {
     /**
      * Deletes a data object for the given id.
      * @param int $id the object id
-     * @throws InvalidIdentifierException if no object is found for the given id
-     * @throws ApiException if the object fails to delete
+     * @throws ObjectNotFoundException if no object is found for the given id
+     * @throws MudpuppyException if the object fails to delete
      */
     public function delete($id) {
         /** @var $dataObject DataObject */
         $dataObject = new $this->dataObjectName($id);
         if (!$dataObject->exists()) {
-            throw new InvalidIdentifierException("No object found for id: $id");
+            throw new ObjectNotFoundException("No object found for id: $id");
         }
         if (!$dataObject->delete()) {
-            throw new ApiException("Failed to delete object with id: $id");
+            throw new MudpuppyException("Failed to delete object with id: $id");
         }
     }
 
@@ -249,17 +249,17 @@ trait DataObjectController {
      * @param array $structure structure definition array
      * @param string $parentPath field path prefix used when recursing into sub-arrays.
      * @return array cleaned version of $input
-     * @throws ApiException if there is something wrong with the structure definition
+     * @throws MudpuppyException if there is something wrong with the structure definition
      * @throws InvalidInputException if the input doesn't match the required structure
      */
     public static function cleanArray($input, $structure, $parentPath = '') {
         $cleaned = array();
         if (!is_array($structure)) {
-            throw new ApiException("No structure defined at path '$parentPath'.");
+            throw new MudpuppyException("No structure defined at path '$parentPath'.");
         }
         foreach ($structure as $key => $meta) {
             if (!isset($meta['type'])) {
-                throw new ApiException("Invalid structure definition. Field '$parentPath$key' must define 'type'.");
+                throw new MudpuppyException("Invalid structure definition. Field '$parentPath$key' must define 'type'.");
             }
             if (isset($input[$key])) {
                 $cleaned[$key] = self::cleanValue($input[$key], $meta, "$parentPath$key");
@@ -282,12 +282,12 @@ trait DataObjectController {
      * @param array $meta structure definition for this field
      * @param string $fieldPath path string that fully identifies the field (used for error strings)
      * @return mixed cleaned version of $value
-     * @throws ApiException if there is something wrong with the structure definition
+     * @throws MudpuppyException if there is something wrong with the structure definition
      * @throws InvalidInputException if the input doesn't match required structure
      */
     public static function cleanValue($value, $meta, $fieldPath) {
         if (!isset($meta['type'])) {
-            throw new ApiException("Invalid structure definition. Field '$fieldPath' must define 'type'.");
+            throw new MudpuppyException("Invalid structure definition. Field '$fieldPath' must define 'type'.");
         }
         $type = $meta['type'];
         switch ($type) {
@@ -359,12 +359,12 @@ trait DataObjectController {
                     if (isset($meta['keys'])) {
                         return self::cleanArray($value, $meta['keys'], "$fieldPath.");
                     }
-                    throw new ApiException("Invalid structure definition. Field '$fieldPath' must define either 'children' or 'keys'.");
+                    throw new MudpuppyException("Invalid structure definition. Field '$fieldPath' must define either 'children' or 'keys'.");
                 }
                 break;
 
             default:
-                throw new ApiException("Invalid structure definition. Field '$fieldPath' defined with unknown type '$type'.");
+                throw new MudpuppyException("Invalid structure definition. Field '$fieldPath' defined with unknown type '$type'.");
         }
         throw new InvalidInputException("Field '$fieldPath' must be of type '$type'.");
     }

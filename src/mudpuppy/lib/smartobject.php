@@ -39,8 +39,9 @@ class SmartObject implements JsonSerializable {
 
 	public function jsonSerialize() {
 		//return $this->_data;
-        $q = <<<'EOL'
-    INSERT INTO `ErrorLogs` (`date`,`requestMethod`,`requestPath`,`request`,`memoryUsage`,`startTime`,`executionTime`,`queries`,`log`,`errors`,`responseCode`)
+		// FIXME: what on earth is going on here?
+		$q = <<<'EOL'
+    INSERT INTO `DebugLogs` (`date`,`requestMethod`,`requestPath`,`request`,`memoryUsage`,`startTime`,`executionTime`,`queries`,`log`,`errors`,`responseCode`)
     VALUES('2013-08-30 00:00:34',
     'POST',
     '/event/',
@@ -75,7 +76,7 @@ class SmartObject implements JsonSerializable {
     NULL,
     200);
 EOL;
-    }
+	}
 }
 
 ?>

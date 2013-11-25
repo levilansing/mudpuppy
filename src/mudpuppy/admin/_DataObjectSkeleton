@@ -1,0 +1,55 @@
+<?php
+defined('MUDPUPPY') or die('Restricted');
+
+/**
+ * The data object for $[CLASS]. This class was auto generated, DO NOT remove or edit # comments.
+ *
+ * #BEGIN MAGIC PROPERTIES
+ * #END MAGIC PROPERTIES
+ */
+class $[CLASS] extends DataObject {
+
+	protected function loadDefaults() {
+		// Auto-generated code to create columns with default values based on DB schema. DO NOT EDIT.
+		// #BEGIN DEFAULTS
+		// #END DEFAULTS
+
+		// Change defaults here if you want user-defined default values
+		// $this->updateColumnDefault('column', DEFAULT_VALUE, NOT_NULL);
+	}
+
+	public static function getTableName() {
+		return '$[TABLE]';
+	}
+
+	/**
+	 * @param int $id
+	 * @return $[CLASS]
+	 */
+	public static function get($id) {
+		return forward_static_call(array('DataObject', 'get'), $id);
+	}
+
+	/**
+	 * @param int $start first index of results
+	 * @param int $limit max number of results to return
+	 * @return $[CLASS][]
+	 */
+	public static function getAll($start, $limit) {
+		return forward_static_call(array('DataObject', 'getByFields'), null, 1, $start, $limit);
+	}
+
+    /**
+	  * @param array $fieldSet in format { fieldName => value }
+	  * @param string $condition conditional logic in addition to $fieldSet
+	  * @param int $start first index of results
+     * @param int $limit max number of results to return
+	  * @return $[CLASS][]
+	  */
+    public static function getByFields($fieldSet, $condition = '', $start = 0, $limit = 0) {
+		return forward_static_call(array('DataObject', 'getByFields'), $fieldSet, $condition, $start, $limit);
+	}
+
+}
+
+?>

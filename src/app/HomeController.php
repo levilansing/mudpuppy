@@ -1,12 +1,9 @@
 <?php
-/**
- * @author Levi Lansing
- * Created 8/28/13
- */
+namespace app;
 defined('MUDPUPPY') or die('Restricted');
 
-class HomeController extends Controller {
-	use PageController;
+class HomeController extends \Controller {
+	use \PageController;
 
 	public function getRequiredPermissions() {
 		return array();
@@ -19,16 +16,12 @@ class HomeController extends Controller {
 		];
 	}
 
-	public function processPost() {
-
-	}
-
 	public function render() {
-		if (sizeof($this->options) > 0) {
-			App::abort(404);
+		if (sizeof($this->pathOptions) > 0) {
+			throw new \PageNotFoundException();
 		}
 
-		include('views/home.php');
+		include('app/HomeView.php');
 	}
 
 	/**
