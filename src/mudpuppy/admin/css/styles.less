@@ -4,6 +4,7 @@ body {
 }
 
 .pageHeader {
+	min-width: 500px;
 	position: fixed;
 	top: 0;
 	width: 100%;
@@ -24,7 +25,7 @@ body {
 		width: 34%;
 		margin-left: -17%;
 		top: 0;
-		left: 45%;
+		left: 50%;
 		overflow: hidden;
 		line-height: 38px;
 		height: 38px;
@@ -132,4 +133,49 @@ body {
 		max-height: 500px;
 		overflow: auto;
 	}
+}
+
+.adminPage {
+	width: 850px;
+	margin: auto;
+}
+
+.logo {
+	background: url(/mudpuppy/admin/images/mudpuppy.png) center center no-repeat;
+	height: 150px;
+	width: 100%;
+	min-width: 850px;
+	margin: 1em 0 4em 0;
+}
+
+a.adminButton:hover {
+	color:#fff;
+	text-decoration: none;
+	background: #b81160;
+}
+.adminButton {
+	display: block;
+	background: #902b51;
+	color: #fff;
+	border-radius: 2px;
+	width: 200px;
+	height: 150px;
+	text-align: center;
+	margin: 5px;
+	float:left;
+
+	span.icon {
+		display: block;
+		width: 200px;
+		height: 110px;
+	}
+	span.icon.log {
+		background: url(/mudpuppy/admin/images/debugIcon.png) center center no-repeat;
+	}
+	span.icon.database {
+		background: url(/mudpuppy/admin/images/databaseIcon.png) center center no-repeat;
+	}
+}
+div.adminButton {
+	background: #EEE;
 }

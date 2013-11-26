@@ -11,7 +11,7 @@
 	window.AdminPage = AdminPage;
 
 	AdminPage.prototype.updateDataObjects = function() {
-		showResults('/mudpuppy/updateDataObjects', 'Create/Update DataObjects');
+		showResults('/mudpuppy/updateDataObjects', 'Synchronize DataObjects');
 	};
 
 	function showResults(url, title) {
