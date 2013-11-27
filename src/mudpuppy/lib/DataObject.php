@@ -1,8 +1,7 @@
 <?php
-/**
- * @author Levi Lansing
- * Created 2008
- */
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
 defined('MUDPUPPY') or die('Restricted');
 
 // dataTypes defined in database.php
@@ -11,6 +10,7 @@ define("DATAFLAG_CHANGED", 2);
 define("DATAFLAG_NOTNULL", 4);
 
 class DataValue {
+
 	var $dataType;
 	var $value;
 	var $flags;
@@ -33,9 +33,11 @@ class DataValue {
 	function isLoaded() {
 		return $this->flags & DATAFLAG_LOADED;
 	}
+
 }
 
 class DataLookup {
+
 	var $column;
 	var $values = array();
 	var $type;
@@ -84,9 +86,11 @@ class DataLookup {
 			unset($this->values[$id]);
 		}
 	}
+
 }
 
 abstract class DataObject implements JsonSerializable {
+
 	/** @var DataValue[] $_lookup */
 	protected $_data; // array of DataValue; key = col name
 	/** @var DataValue[] $_defaults */
@@ -432,8 +436,10 @@ abstract class DataObject implements JsonSerializable {
 	}
 
 	/**
-	 * @param $fieldSet array in format { fieldName => value }
-	 * @param $condition string conditional logic in addition to $fieldSet
+	 * @param array $fieldSet in format { fieldName => value }
+	 * @param string $condition conditional logic in addition to $fieldSet
+	 * @param int $start
+	 * @param int $limit
 	 * @return DataObject[]
 	 */
 	public static function getByFields($fieldSet, $condition = '', $start = 0, $limit = 0) {
@@ -649,9 +655,11 @@ abstract class DataObject implements JsonSerializable {
 	}
 
 	/**
-	 * convert an array of data objects to an array of arrays
+	 * Convert an array of data objects to an array of arrays
 	 *
 	 * @param array $array of data objects (can be nested in arrays)
+	 * @param null $dateFormat
+	 * @return array
 	 */
 	public static function objectListToArrayList($array, $dateFormat = null) {
 		if (empty($dateFormat)) {
@@ -710,6 +718,7 @@ abstract class DataObject implements JsonSerializable {
 		}
 		return $definition;
 	}
+
 }
 
 ?>

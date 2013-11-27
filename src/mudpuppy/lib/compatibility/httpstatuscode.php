@@ -1,9 +1,11 @@
 <?php
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
+defined('MUDPUPPY') or die('Restricted');
+
 /**
  * Compatibility code for http_response_code / PHP < 5.4
- *
- * @author Levi Lansing
- * Created 11/10/13
  */
 if (!function_exists('http_response_code')) {
 	function http_response_code($code = null) {

@@ -1,4 +1,7 @@
 <?php
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
 define('MUDPUPPY', true);
 define('MUDPUPPY_VERSION', '2.0.0 beta');
 

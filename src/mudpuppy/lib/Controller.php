@@ -1,8 +1,7 @@
 <?php
-/**
- * @author Levi Lansing
- * Created 8/28/13
- */
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
 defined('MUDPUPPY') or die('Restricted');
 
 abstract class Controller {

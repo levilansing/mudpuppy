@@ -1,7 +1,11 @@
 <?php
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
 defined('MUDPUPPY') or die('Restricted');
 
 class DateHelper {
+
 	public static function firstDayOfMonth($date) {
 		return strtotime(date('m/\\0\\1/Y', $date));
 	}

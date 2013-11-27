@@ -1,9 +1,7 @@
 <?php
-/**
- *
- * @author Levi Lansing
- * Created 2008
- */
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
 defined('MUDPUPPY') or die('Restricted');
 MPAutoLoad('DateHelper');
 
@@ -25,6 +23,7 @@ define('DATATYPE_DATETIME', 13);
 define('DATATYPE_DATE', 14);
 
 class ColVal {
+
 	var $column;
 	var $dataType;
 	var $value;
@@ -62,24 +61,20 @@ class ColVal {
 	function isNull() {
 		return is_null($this->value);
 	}
+
 }
 
 class Database {
-	/**
-	 * @var PDO
-	 */
+
+	/** @var PDO */
 	private $pdo = null;
 	static $queryLog = array();
 	static $errorCount = 0;
 	var $prefix = "";
 
-	/**
-	 * @var PDOStatement
-	 */
+	/** @var PDOStatement */
 	var $lastResult = null;
-	/**
-	 * @var PDOStatement
-	 */
+	/** @var PDOStatement */
 	var $statement = null;
 
 	function __construct() {
@@ -421,6 +416,7 @@ class Database {
 	 * perform an insert using column values from a dataobject
 	 * @param string $table
 	 * @param ColVal $colvals
+	 * @throws Exception
 	 * @return int the inserted id OR false if failed
 	 */
 	function insert($table, $colvals) {
@@ -591,6 +587,7 @@ class Database {
 		$q = preg_replace('#(\sFROM\s|\sWHERE\s|\sORDER BY\s|\sVALUES)#i', "<br />\n&nbsp; &nbsp; $1", htmlentities($query));
 		return "&nbsp; &nbsp; $q";
 	}
+	
 }
 
 ?>

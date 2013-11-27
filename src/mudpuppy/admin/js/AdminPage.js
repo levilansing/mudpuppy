@@ -1,7 +1,6 @@
-/**
- * Author: Levi
- * Created: 7/8/13
- */
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
 (function($) {
 
 	function AdminPage() {

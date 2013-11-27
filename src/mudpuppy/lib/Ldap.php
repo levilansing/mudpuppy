@@ -1,7 +1,11 @@
 <?php
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
 defined('MUDPUPPY') or die('Restricted');
 
 class Ldap {
+
 	public $conn = null;
 	private $host = null;
 	public $baseDn = '';
@@ -163,6 +167,7 @@ class Ldap {
 		return strtotime(substr($datestamp, 0, 4) . '-' . substr($datestamp, 4, 2) . '-' . substr($datestamp, 6, 2)
 			. ' ' . substr($datestamp, 8, 2) . ':' . substr($datestamp, 10, 2) . ':' . substr($datestamp, 12, 2) . ' GMT');
 	}
+
 }
 
 ?>

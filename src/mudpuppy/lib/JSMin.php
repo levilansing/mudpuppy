@@ -1,4 +1,9 @@
 <?php
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
+defined('MUDPUPPY') or die('Restricted');
+
 /**
  * JSMin.php - modified PHP implementation of Douglas Crockford's JSMin.
  *

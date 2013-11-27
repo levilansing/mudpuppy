@@ -1,10 +1,13 @@
 <?php
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
 defined('MUDPUPPY') or die('Restricted');
 
 /**
- * trait to use in any controller that directly represents a DataObject. This class provides default
- * implementations of the core controller methods (get, getCollection, create, update, delete) that should be sufficient for
- * most DataObject types. In support of this, the concrete class must implement three methods (getStructureDefinition,
+ * Trait to use in any controller that directly represents a DataObject. This class provides default implementations of
+ * the core controller methods (get, getCollection, create, update, delete) that should be sufficient for most
+ * DataObject types. In support of this, the concrete class must implement three methods (getStructureDefinition,
  * isValid, and sanitize), which provide the structure definition array, validate input objects (prior to creating and
  * updating), and sanitize objects (prior to returning to the user). Many objects may not need to perform any special
  * validation or sanitization, but no default implementation is provided in order to force the implementer to consider
