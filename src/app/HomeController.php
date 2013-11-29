@@ -15,7 +15,7 @@ class HomeController extends \Controller {
 	public function getScripts() {
 		return [
 			'js' => [],
-			'css' => ['css/style.css']
+			'css' => ['css/styles.css']
 		];
 	}
 
