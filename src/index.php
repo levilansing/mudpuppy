@@ -1,5 +1,6 @@
 <?php
-require("mudpuppy/mudpuppy.php");
+require("Mudpuppy/mudpuppy.php");
+use Mudpuppy\App;
 $controller = App::getPageController();
 ?>
 <!doctype html>

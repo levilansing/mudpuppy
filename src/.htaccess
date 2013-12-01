@@ -9,12 +9,6 @@ RewriteEngine On
 # to be accessible prior to authentication, comment these out and do manual pass-through as needed in your HomeModule.
 RewriteCond %{REQUEST_URI} !^/(js|css|fonts|html|images)/
 
-#=======================================================================================================================
-# !!! Disable in production !!!
-#-----------------------------------------------------------------------------------------------------------------------
-RewriteCond %{REQUEST_URI} !^/mudpuppy/admin/(bootstrap|css|images|js)/
-#=======================================================================================================================
-
 # Always let the favicon and robots.txt through
 RewriteCond %{REQUEST_URI} !^/(favicon.ico|robots.txt)$
 
