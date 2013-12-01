@@ -162,7 +162,7 @@ function _refreshAutoLoadClasses(&$classes) {
 		}
 	}
 
-	return json_encode($classes);
+	return json_encode($classes, JSON_PRETTY_PRINT);
 }
 
 function _ralc_parseFiles(&$classes, &$files, $folder) {

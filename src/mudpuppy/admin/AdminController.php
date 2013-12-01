@@ -81,7 +81,7 @@ class AdminController extends Controller {
 	}
 
 	private static function generateDataObject($table, $class) {
-		$file = file_get_contents('/mudpuppy/admin/_DataObjectSkeleton');
+		$file = file_get_contents('mudpuppy/admin/_DataObjectSkeleton');
 
 		// Update class name, table name, etc
 		$file = str_replace('$[CLASS]', $class, $file);

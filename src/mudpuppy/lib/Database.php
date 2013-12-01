@@ -11,7 +11,7 @@ define('DATATYPE_TINYINT', 1);
 define('DATATYPE_INT', 2);
 define('DATATYPE_FLOAT', 3);
 define('DATATYPE_DOUBLE', 4);
-define('_DATATYPE_END_NUMERICS', 5);
+define('_DATATYPE_END_NUMERIC', 5);
 define('DATATYPE_CHAR', 6);
 define('DATATYPE_DECIMAL', 7);
 define('DATATYPE_STRING', 8);
@@ -22,7 +22,7 @@ define('DATATYPE_JSON', 12);
 define('DATATYPE_DATETIME', 13);
 define('DATATYPE_DATE', 14);
 
-class ColVal {
+class DBColumnValue {
 
 	var $column;
 	var $dataType;
@@ -378,7 +378,7 @@ class Database {
 	////////////////////
 	// fully automated functions for DataObject
 
-	function genSelect($fields, $table, $where = null, $order = null, $limit = null, $offset = null) {
+	private function genSelect($fields, $table, $where = null, $order = null, $limit = null, $offset = null) {
 		if (is_array($fields)) {
 			$f = "`$fields[0]`";
 			for ($i = 1; $i < sizeof($fields); $i++) {
@@ -415,25 +415,25 @@ class Database {
 	 * @todo switch to prepared statements
 	 * perform an insert using column values from a dataobject
 	 * @param string $table
-	 * @param ColVal $colvals
+	 * @param DBColumnValue $columnValues
 	 * @throws Exception
 	 * @return int the inserted id OR false if failed
 	 */
-	function insert($table, $colvals) {
-		if (sizeof($colvals) == 0) {
+	function insert($table, $columnValues) {
+		if (sizeof($columnValues) == 0) {
 			throw new Exception("error: database::add - 2nd parameter colvals is of size 0<br />\n");
 		}
 
 		// insert, return new id
 		$query = "INSERT INTO `$this->prefix$table` (";
 		$queryp2 = " VALUES(";
-		foreach ($colvals as $val) {
+		foreach ($columnValues as $val) {
 			$col = $val->getColumn();
 			$query .= "`$col`,";
 			$type = $val->getDataType();
 			if ($val->isNull()) {
 				$queryp2 .= 'NULL,';
-			} else if ($type < _DATATYPE_END_NUMERICS) {
+			} else if ($type < _DATATYPE_END_NUMERIC) {
 				$queryp2 .= $this->formatNumber($val->getValue()) . ',';
 			} else if ($type == DATATYPE_DATETIME) {
 				$queryp2 .= self::formatDateAndEscape($val->getValue()) . ',';
@@ -487,7 +487,7 @@ class Database {
 			$type = $val->getDataType();
 			if ($val->isNull()) {
 				$query .= "`$col`=" . 'NULL,';
-			} else if ($type <= _DATATYPE_END_NUMERICS) {
+			} else if ($type <= _DATATYPE_END_NUMERIC) {
 				$query .= "`$col`=" . $this->formatNumber($val->getValue()) . ',';
 			} else if ($type == DATATYPE_DATETIME) {
 				$query .= "`$col`=" . self::formatDateAndEscape($val->getValue()) . ',';

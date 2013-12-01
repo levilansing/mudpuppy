@@ -211,7 +211,7 @@ abstract class DataObject implements JsonSerializable {
 
 			if (($value->flags & DATAFLAG_CHANGED)) // only save/update values that have been changed
 			{
-				$fields[] = new ColVal($col, $value->dataType, $value->value);
+				$fields[] = new DBColumnValue($col, $value->dataType, $value->value);
 			}
 		}
 		if (sizeof($fields) == 0) {
