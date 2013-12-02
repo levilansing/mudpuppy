@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
 
@@ -14,17 +15,17 @@ trait PageController {
 	 * specified by getScripts().
 	 */
 	public function renderHeader() {
-		$title = $this->pageTitle ? $this->pageTitle : \Config::$appTitle;
-		print " <title>$title</title>\n";
+		$title = $this->pageTitle ? $this->pageTitle : Config::$appTitle;
+		print "<title>$title</title>\n";
 		$scripts = $this->getScripts();
 		if (isset($scripts['css'])) {
 			foreach ($scripts['js'] as $script) {
-				echo "  <script type=\"text/javascript\" src=\"$script\"></script>\n";
+				echo "\t<script type=\"text/javascript\" src=\"$script\"></script>\n";
 			}
 		}
 		if (isset($scripts['css'])) {
 			foreach ($scripts['css'] as $css) {
-				echo "  <link rel=\"stylesheet\"  type=\"text/css\" href=\"$css\" />\n";
+				echo "\t<link rel=\"stylesheet\" type=\"text/css\" href=\"$css\" />\n";
 			}
 		}
 	}

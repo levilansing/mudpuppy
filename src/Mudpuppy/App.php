@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
 
@@ -44,16 +45,16 @@ class App {
 		Session::start();
 
 		// Setup the database if desired
-		if (\Config::$dbHost) {
+		if (Config::$dbHost) {
 			// Create database object
 			self::$dbo = new Database();
 
 			// Connect to database
-			$connectSuccess = self::$dbo->connect(\Config::$dbHost, \Config::$dbPort, \Config::$dbDatabase, \Config::$dbUser, \Config::$dbPass);
+			$connectSuccess = self::$dbo->connect(Config::$dbHost, Config::$dbPort, Config::$dbDatabase, Config::$dbUser, Config::$dbPass);
 
 			// Display log on failed connection
 			if (!$connectSuccess) {
-				if (\Config::$debug) {
+				if (Config::$debug) {
 					Log::displayFullLog();
 				} else {
 					print 'Database Connection Error. Please contact your administrator or try again later.';
@@ -63,10 +64,10 @@ class App {
 		}
 
 		// Do any application-specific startup tasks
-		forward_static_call(array(\Config::$appClass, 'initialize'));
+		forward_static_call(array(Config::$appClass, 'initialize'));
 
 		/** @var Security $security */
-		$security = self::$security = forward_static_call(array(\Config::$appClass, 'getSecurity'));
+		$security = self::$security = forward_static_call(array(Config::$appClass, 'getSecurity'));
 
 		// Refresh login, check for session expiration
 		$security->refreshLogin();
@@ -135,7 +136,7 @@ class App {
 
 			// If in debug mode and we don't have a database connection, display the log if necessary. Needs to happen
 			// here before the connection is closed.
-			if (\Config::$debug && !\Config::$dbHost) {
+			if (Config::$debug && !Config::$dbHost) {
 				Log::write();
 			}
 

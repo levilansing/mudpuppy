@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
 
@@ -347,7 +348,7 @@ trait DataObjectController {
 					$date = strtotime($value);
 				}
 				if ($date !== false) {
-					return date($date, \Config::$dateFormat);
+					return date($date, Config::$dateFormat);
 				}
 			}
 			break;

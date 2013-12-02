@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
 
@@ -280,7 +281,7 @@ abstract class DataObject implements \JsonSerializable {
 			$cols = array($cols);
 		}
 		$id = $this->getId();
-		if (\Config::$debug) {
+		if (Config::$debug) {
 			// make sure we have an id
 			if ($id == 0) {
 				throw new MudpuppyException("Assertion Error: Cannot load a data object (" . get_called_class() . ") with an id of 0");
@@ -615,7 +616,7 @@ abstract class DataObject implements \JsonSerializable {
 	 */
 	function &toArray($dateFormat = null) {
 		if (empty($dateFormat)) {
-			$dateFormat = \Config::$dateFormat;
+			$dateFormat = Config::$dateFormat;
 		}
 		$a = array();
 		foreach ($this->_data as $k => $v) {
@@ -666,7 +667,7 @@ abstract class DataObject implements \JsonSerializable {
 	 */
 	public static function objectListToArrayList($array, $dateFormat = null) {
 		if (empty($dateFormat)) {
-			$dateFormat = \Config::$dateFormat;
+			$dateFormat = Config::$dateFormat;
 		}
 		if (!is_array($array)) {
 			if (is_object($array) && is_subclass_of($array, 'DataObject')) {

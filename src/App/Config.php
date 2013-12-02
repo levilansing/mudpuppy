@@ -2,6 +2,7 @@
 //======================================================================================================================
 // This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
 //======================================================================================================================
+namespace App;
 defined('MUDPUPPY') or die('Restricted');
 
 define('APP_VERSION', '1.0.0');

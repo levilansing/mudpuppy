@@ -4,7 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
-
+use App\Config;
 use Mudpuppy\Model\DebugLog;
 
 defined('MUDPUPPY') or die('Restricted');
@@ -150,17 +150,17 @@ class Log {
 			return;
 		}
 		$tend = microtime();
-		if (\Config::$logLevel == LOG_LEVEL_NONE) {
+		if (Config::$logLevel == LOG_LEVEL_NONE) {
 			return;
 		}
-		if (!\Config::$dbHost && \Config::$debug) {
-			if (\Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
+		if (!Config::$dbHost && Config::$debug) {
+			if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
 				Log::displayFullLog();
 				self::$writeCompleted = true;
 			}
 			return;
 		}
-		if (\Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
+		if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
 			try {
 				// delete old logs once in a while
 				if (rand(0, 100) == 0) {
@@ -206,7 +206,7 @@ class Log {
 				}
 
 			} catch (\Exception $e) {
-				if (\Config::$debug) {
+				if (Config::$debug) {
 					print "Exception while attempting to record the log: ";
 					print $e->getMessage();
 				}
@@ -221,7 +221,7 @@ class Log {
 		$tend = microtime();
 
 		$nErrors = sizeof(Log::$errors);
-		if (!\Config::$logQueries || !\Config::$dbHost) {
+		if (!Config::$logQueries || !Config::$dbHost) {
 			$nQueries = "Log Queries Off";
 		} else {
 			$nQueries = sizeof(Database::$queryLog) . " Queries";
@@ -246,7 +246,7 @@ class Log {
 		print "<br />\n";
 
 		// print queries n such
-		if (\Config::$logQueries && \Config::$dbHost) {
+		if (Config::$logQueries && Config::$dbHost) {
 			print "<h3>SQL</h3>\n";
 			$totalt = 0;
 			foreach (Database::$queryLog as $q) {

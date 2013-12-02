@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
 MPAutoLoad('Mudpuppy\DateHelper');
@@ -86,7 +87,7 @@ class Database {
 	function connect($server, $port, $database, $user, $pass) {
 		try {
 
-			$this->pdo = new \PDO(sprintf(\Config::$dbProtocol, $server, $port, $database), $user, $pass, array(
+			$this->pdo = new \PDO(sprintf(Config::$dbProtocol, $server, $port, $database), $user, $pass, array(
 				\PDO::ATTR_AUTOCOMMIT => true
 			));
 			// PDO doesn't default to the requested database automatically with MSSQL
@@ -113,7 +114,7 @@ class Database {
 	 * @return bool success
 	 */
 	function beginTransaction() {
-		if (\Config::$debug && \Config::$logQueries) {
+		if (Config::$debug && Config::$logQueries) {
 			Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => 'PDO::beginTransaction()');
 		}
 		$result = $this->pdo->beginTransaction();
@@ -129,7 +130,7 @@ class Database {
 		if (!$this->pdo->inTransaction()) {
 			return false;
 		}
-		if (\Config::$debug && \Config::$logQueries) {
+		if (Config::$debug && Config::$logQueries) {
 			Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => 'PDO::rollback()');
 		}
 		$result = $this->pdo->rollBack();
@@ -145,7 +146,7 @@ class Database {
 		if (!$this->pdo->inTransaction()) {
 			return false;
 		}
-		if (\Config::$debug && \Config::$logQueries) {
+		if (Config::$debug && Config::$logQueries) {
 			Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => 'PDO::commit()');
 		}
 
@@ -171,7 +172,7 @@ class Database {
 				$query = $this->statement->queryString;
 			}
 
-			if (\Config::$debug && \Config::$logQueries) {
+			if (Config::$debug && Config::$logQueries) {
 				Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => $query);
 			}
 
@@ -183,17 +184,17 @@ class Database {
 				$this->lastResult = $this->pdo->query($query);
 			}
 
-			if (\Config::$debug && \Config::$logQueries) {
+			if (Config::$debug && Config::$logQueries) {
 				Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
 			}
 
 			if ($this->hasError()) {
 				$error = $this->getLastError();
 				Log::error($error);
-				if (\Config::$debug && \Config::$logQueries) {
+				if (Config::$debug && Config::$logQueries) {
 					Database::$queryLog[sizeof(Database::$queryLog) - 1]['error'] = $error;
 					Database::$errorCount++;
-				} else if (\Config::$debug) {
+				} else if (Config::$debug) {
 					Log::error('SQL Error: ' . $error);
 					Database::$errorCount++;
 				}
@@ -222,7 +223,7 @@ class Database {
 				throw new \Exception('Prepared Statement does not exist', 0);
 			}
 
-			if (\Config::$debug && \Config::$logQueries) {
+			if (Config::$debug && Config::$logQueries) {
 				Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => $query->queryString);
 				if ($argArray != null) {
 					Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => json_encode($argArray));
@@ -234,17 +235,17 @@ class Database {
 				$query->execute();
 			}
 
-			if (\Config::$debug && \Config::$logQueries) {
+			if (Config::$debug && Config::$logQueries) {
 				Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
 			}
 
 			if ($this->hasError()) {
 				$error = $this->getLastError();
 				Log::error($error);
-				if (\Config::$debug && \Config::$logQueries) {
+				if (Config::$debug && Config::$logQueries) {
 					Database::$queryLog[sizeof(Database::$queryLog) - 1]['error'] = $error;
 					Database::$errorCount++;
-				} else if (\Config::$debug) {
+				} else if (Config::$debug) {
 					Log::error('SQL Error: ' . $error);
 					Database::$errorCount++;
 				}

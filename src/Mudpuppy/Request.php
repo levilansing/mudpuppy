@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
 
@@ -69,7 +70,7 @@ class Request {
 			$input =& self::$params;
 			break;
 		default:
-			if (\Config::$debug) {
+			if (Config::$debug) {
 				throw new MudpuppyException("'$inputLocation' is not a valid input location");
 			}
 			return null;

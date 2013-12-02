@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
 
@@ -204,7 +205,7 @@ abstract class Controller {
 			}
 			http_response_code($statusCode);
 			$message = $e->getMessage();
-			if (!\Config::$debug) {
+			if (!Config::$debug) {
 				if ($e instanceof MudpuppyException) {
 					$message = $e->getProductionMessage();
 				} else {

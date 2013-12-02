@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+use App\Config;
 
 define('MUDPUPPY', true);
 define('MUDPUPPY_VERSION', '2.0.0 beta');
@@ -27,7 +28,7 @@ require_once('Mudpuppy/file.php');
 
 // Must have PHP >= 5.4.0
 if (version_compare(PHP_VERSION, '5.4.0', '<')) {
-	if (\Config::$debug) {
+	if (Config::$debug) {
 		echo "PHP 5.4.0 or greater is required";
 	}
 	http_response_code(500);
@@ -35,10 +36,10 @@ if (version_compare(PHP_VERSION, '5.4.0', '<')) {
 }
 
 // Setup the random number generator
-mt_srand((microtime(true) * \Config::$randomSeedOffset & 0xFFF) ^ \Config::$randomSeedOffset);
+mt_srand((microtime(true) * Config::$randomSeedOffset & 0xFFF) ^ Config::$randomSeedOffset);
 
 // Disable error reporting and displaying when not in debug
-if (!\Config::$debug) {
+if (!Config::$debug) {
 	ini_set('display_errors', '0');
 	error_reporting(0);
 } else {
@@ -46,7 +47,7 @@ if (!\Config::$debug) {
 }
 
 // Set the default timezone
-date_default_timezone_set(\Config::$timezone);
+date_default_timezone_set(Config::$timezone);
 
 // Activate assert and make it quiet
 assert_options(ASSERT_ACTIVE, 1);
@@ -110,7 +111,7 @@ function MPAutoLoad($className) {
 
 	// Refresh the class cache if we can't find the class
 	if ((($namespace && (!isset($classes[$namespace]) || !isset($classes[$namespace][$class]) || !file_exists($classes[$namespace][$class])))
-			|| (!$namespace && (!isset($classes[$class]) || !file_exists($classes[$class])))) && !$reloadedCache && \Config::$debug
+			|| (!$namespace && (!isset($classes[$class]) || !file_exists($classes[$class])))) && !$reloadedCache && Config::$debug
 	) {
 		Log::add('Refreshing auto-load cache for class '.$className);
 		File::putContents($classCacheFile, _refreshAutoLoadClasses($classes));
@@ -153,7 +154,7 @@ function _refreshAutoLoadClasses(&$classes) {
 		}
 	}
 
-	$autoloadFolders = array_merge(\Config::$autoloadFolders, array(
+	$autoloadFolders = array_merge(Config::$autoloadFolders, array(
 		'Mudpuppy' => 'Mudpuppy/',
 		'Mudpuppy/Model' => 'Mudpuppy/Model/',
 		'Mudpuppy/Admin' => 'Mudpuppy/Admin/',
@@ -213,7 +214,7 @@ function _refreshAutoLoadClasses(&$classes) {
 
 // Assertion handler function
 function _assert_handler($file, $line, $code) {
-	if (\Config::$debug) {
+	if (Config::$debug) {
 		throw(new \Exception("Assertion failed in file $file($line).\nCode: $code"));
 	}
 }
@@ -274,8 +275,8 @@ function shutdown_handler() {
 	$error = error_get_last();
 	if ($error !== null) {
 		Log::error('SHUTDOWN: ' . $error['file'] . '(' . $error['line'] . ') ' . $error['message']);
-		if (\Config::$debug) {
-			if (!empty(\Config::$dbHost)) {
+		if (Config::$debug) {
+			if (!empty(Config::$dbHost)) {
 				Log::displayFullLog();
 			}
 			App::cleanExit();

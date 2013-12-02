@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
 
@@ -29,7 +30,7 @@ class Session {
 		if (isset($_SERVER['HTTP_HOST']) || isset($_SERVER['SERVER_NAME'])) {
 			self::$sessionHash = (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']);
 		} else {
-			self::$sessionHash = 'noserver-' . \Config::$appTitle;
+			self::$sessionHash = 'noserver-' . Config::$appTitle;
 		}
 		self::loadSession();
 	}
