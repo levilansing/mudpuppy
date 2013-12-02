@@ -32,7 +32,7 @@ class AdminController extends Controller {
 		// Abort the default template, use the admin view for the entire page
 		ob_clean();
 
-		if (count($this->pathOptions) > 1 && $this->pathOptions[0] == 'admin') {
+		if (count($this->pathOptions) > 1 && strtolower($this->pathOptions[0]) == 'admin') {
 			if (in_array($this->pathOptions[1], array('bootstrap', 'css', 'js', 'images'))) {
 				File::passThrough('Mudpuppy/Admin/'.implode('/', array_slice($this->pathOptions, 1)));
 			}

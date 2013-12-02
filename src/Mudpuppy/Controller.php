@@ -33,10 +33,10 @@ abstract class Controller {
 		if (count($parts) > 0 && $parts[0] != '') {
 			// Parse out the controller name
 			$nameIndex = -1;
-			if ($parts[0] == 'mudpuppy') {
+			if (strtolower($parts[0]) == 'mudpuppy') {
 				$controllerName = 'Mudpuppy\Admin\AdminController';
 				$nameIndex = 0;
-				if (count($parts) > 1 && $parts[1] == 'log') {
+				if (count($parts) > 1 && strtolower($parts[1]) == 'log') {
 					$controllerName = 'Mudpuppy\Admin\LogController';
 					$nameIndex = 1;
 				}
