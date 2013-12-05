@@ -10,11 +10,12 @@ use App\Config;
 defined('MUDPUPPY') or die('Restricted');
 
 abstract class Controller {
+	protected $pathOptions = array();
 
 	/**
 	 * Parses the request and returns an instance of the associated controller.
 	 *
-	 * @return Controller
+	 * @return Controller|PageController|DataObjectController
 	 * @throws PageNotFoundException if no controller exists
 	 */
 	public static function getController() {
@@ -32,9 +33,9 @@ abstract class Controller {
 		// Try to find the controller
 		$controllerName = 'App\\HomeController';
 		$options = [];
+		$nameIndex = -1;
 		if (count($parts) > 0 && $parts[0] != '') {
 			// Parse out the controller name
-			$nameIndex = -1;
 			if (strtolower($parts[0]) == 'mudpuppy') {
 				$controllerName = 'Mudpuppy\Admin\AdminController';
 				$nameIndex = 0;
@@ -83,7 +84,7 @@ abstract class Controller {
 		}
 
 		// Have to filter out the index.php that comes in for root requests (thanks apache)
-		if (count($options) == 1 && $options[0] == 'index.php') {
+		if (count($options) == 1 && ($options[0] == 'index.php' || $options[0] == '')) {
 			$options = [];
 		}
 
@@ -102,6 +103,7 @@ abstract class Controller {
 
 	/** @returns array */
 	abstract public function getRequiredPermissions();
+
 
 	public function processRequest() {
 		$response = null;
@@ -146,7 +148,12 @@ abstract class Controller {
 					}
 					throw new UnsupportedMethodException("Request method $method is invalid for this URL");
 				}
-				/** @var DataObjectController $this */
+
+				if (count($this->pathOptions) > 1) {
+					throw new PageNotFoundException("Additional \$pathOptions are not allowed for DataObjectController api calls");
+				}
+
+					/** @var DataObjectController $this */
 				$id = (int)$option;
 				switch ($method) {
 				case 'GET':
@@ -181,6 +188,11 @@ abstract class Controller {
 					}
 					throw new UnsupportedMethodException("The method action_$actionName does not exist in {$reflection->getName()}");
 				}
+
+				if (count($this->pathOptions) > 1) {
+					throw new PageNotFoundException("Additional \$pathOptions are not allowed for action api calls");
+				}
+
 				switch ($method) {
 				case 'GET':
 					// Call an action: GET <module>/<action>?<params>
@@ -368,7 +380,5 @@ abstract class Controller {
 		}
 		return null;
 	}
-
-	protected $pathOptions = array();
 
 }

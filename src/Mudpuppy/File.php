@@ -120,6 +120,7 @@ END;
 	 * @param int $expires
 	 * @param bool $attachment
 	 * @param bool $deleteAfterDownload
+	 * @throws PageNotFoundException
 	 */
 	static function passThrough($file, $expires = 86400, $attachment = false, $deleteAfterDownload = false) {
 		$file = self::cleanPath($file);
@@ -127,7 +128,7 @@ END;
 			$ext = self::getExtension($file);
 
 			if (self::isRestricted($ext)) {
-				App::cleanExit();
+				throw new PageNotFoundException('passThrough attempting to access restricted file: '.$file);
 			}
 
 			if (isset(self::$mimeTypes[$ext])) {
@@ -159,6 +160,8 @@ END;
 				}
 				ob_end_clean();
 			}
+		} else {
+			throw new PageNotFoundException('passThrough attempting to access restricted file: '.$file);
 		}
 
 		App::cleanExit();

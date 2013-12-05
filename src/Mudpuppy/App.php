@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+
 use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
@@ -37,11 +38,11 @@ class App {
 	public static function start() {
 
 		// Setup the random number generators
-		function _createSeed()
-		{
+		function _createSeed() {
 			list($uSec, $sec) = explode(' ', microtime());
-			return (((float) $sec + ((float) $uSec * 100000)) * Config::$randomSeedOffset & 0xFFF) ^ Config::$randomSeedOffset;
+			return (((float)$sec + ((float)$uSec * 100000)) * Config::$randomSeedOffset & 0xFFF) ^ Config::$randomSeedOffset;
 		}
+
 		srand(_createSeed());
 		mt_srand(_createSeed());
 
@@ -93,6 +94,9 @@ class App {
 
 		// if we got here, there is no request to process
 		// continue to load the page
+		if (!self::$pageController->validatePathOptions()) {
+			throw new PageNotFoundException("PathOptions are not valid");
+		}
 	}
 
 	/**
@@ -140,7 +144,7 @@ class App {
 	 * Exit the app and write to the log if necessary
 	 * @param bool $suppressAdditionalOutput if true, log will not be appended to the output in any case
 	 */
-	public static function cleanExit($suppressAdditionalOutput=false) {
+	public static function cleanExit($suppressAdditionalOutput = false) {
 		// Make sure we only do this once, as it could potentially be triggered multiple times during termination
 		if (!self::$exited) {
 			self::$exited = true;
@@ -239,6 +243,10 @@ class App {
 	}
 
 	public static function abort($statusCode) {
+		// clear any content that may have already been output
+		ob_end_clean();
+		ob_start();
+
 		http_response_code($statusCode);
 		if (file_exists("html/$statusCode.html")) {
 			require_once("html/$statusCode.html");

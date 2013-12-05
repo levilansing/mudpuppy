@@ -25,10 +25,6 @@ class HomeController extends Controller {
 	}
 
 	public function render() {
-		if (sizeof($this->pathOptions) > 0) {
-			throw new PageNotFoundException();
-		}
-
 		include('App/HomeView.php');
 	}
 

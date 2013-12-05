@@ -8,7 +8,14 @@ use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
 
+/**
+ * Class PageController
+ * @package Mudpuppy
+ * @property array pathOptions
+ */
 trait PageController {
+	/** @var string optional page title override */
+	protected $pageTitle;
 
 	/**
 	 * Renders the page header. The default implementation adds the page title and imports any js and css files
@@ -30,6 +37,41 @@ trait PageController {
 		}
 	}
 
+
+	/**
+	 * return a list of regular expressions or strings that the page options must match
+	 * example: a url of "this-controller/get/42" can be validated by array('#^get/[0-9]+$#');
+	 * @return array
+	 */
+	public function getAllowablePathPatterns() {
+		return array();
+	}
+
+	/**
+	 * validate the path options for this controller
+	 * specifically applies to page controllers
+	 * @return bool
+	 */
+	public function validatePathOptions() {
+		$options = implode('/', $this->pathOptions);
+		$patterns = $this->getAllowablePathPatterns();
+
+		if (empty($options)) {
+			return true;
+		}
+
+		if (empty($patterns)) {
+			return false;
+		}
+
+		foreach ($patterns as $pattern) {
+			if (preg_match($pattern, $options)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Renders the page body.
 	 */
@@ -45,9 +87,6 @@ trait PageController {
 			'css' => []
 		];
 	}
-
-	/** @var string optional page title override */
-	protected $pageTitle;
 
 }
 

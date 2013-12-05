@@ -43,6 +43,10 @@ class AdminController extends Controller {
 		App::cleanExit();
 	}
 
+	public function getAllowablePathPatterns() {
+		return array('#^admin/(js/|css/|bootstrap/|images/)#');
+	}
+
 	public function action_updateDataObjects() {
 		$output = '<pre>';
 
