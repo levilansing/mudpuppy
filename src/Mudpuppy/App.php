@@ -35,6 +35,16 @@ class App {
 	 * Called by Mudpuppy when the application starts up.
 	 */
 	public static function start() {
+
+		// Setup the random number generators
+		function _createSeed()
+		{
+			list($uSec, $sec) = explode(' ', microtime());
+			return (((float) $sec + ((float) $uSec * 100000)) * Config::$randomSeedOffset & 0xFFF) ^ Config::$randomSeedOffset;
+		}
+		srand(_createSeed());
+		mt_srand(_createSeed());
+
 		// Construct the single instance, which is necessary to automatically call App::cleanExit() on destruction
 		new App();
 

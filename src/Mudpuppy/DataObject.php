@@ -201,11 +201,19 @@ abstract class DataObject implements \JsonSerializable {
 		self::$_lookups[$this->getObjectName()][$name] = new DataLookup($type, $column);
 	}
 
+	/**
+	 * get the id of this object
+	 * @return int
+	 */
 	function getId() {
 		return (int)$this->id;
 	}
 
-	// save object in db
+	/**
+	 * save changes to database (if there are any)
+	 * update id if this is an insert
+	 * @return bool
+	 */
 	function save() {
 		$id = (int)$this->getId();
 		$fields = array();

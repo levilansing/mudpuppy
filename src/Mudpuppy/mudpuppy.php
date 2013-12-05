@@ -35,9 +35,6 @@ if (version_compare(PHP_VERSION, '5.4.0', '<')) {
 	die();
 }
 
-// Setup the random number generator
-mt_srand((microtime(true) * Config::$randomSeedOffset & 0xFFF) ^ Config::$randomSeedOffset);
-
 // Disable error reporting and displaying when not in debug
 if (!Config::$debug) {
 	ini_set('display_errors', '0');
