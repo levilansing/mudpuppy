@@ -219,7 +219,7 @@ abstract class Controller {
 		if ($response != null) {
 			print json_encode($response);
 		}
-		App::cleanExit();
+		App::cleanExit(true);
 	}
 
 	/**

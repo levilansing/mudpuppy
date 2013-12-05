@@ -138,15 +138,16 @@ class App {
 
 	/**
 	 * Exit the app and write to the log if necessary
+	 * @param bool $suppressAdditionalOutput if true, log will not be appended to the output in any case
 	 */
-	public static function cleanExit() {
+	public static function cleanExit($suppressAdditionalOutput=false) {
 		// Make sure we only do this once, as it could potentially be triggered multiple times during termination
 		if (!self::$exited) {
 			self::$exited = true;
 
 			// If in debug mode and we don't have a database connection, display the log if necessary. Needs to happen
 			// here before the connection is closed.
-			if (Config::$debug && !Config::$dbHost) {
+			if (Config::$debug && !Config::$dbHost && !$suppressAdditionalOutput) {
 				Log::write();
 			}
 
