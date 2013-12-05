@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+
 use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
@@ -60,25 +61,30 @@ abstract class Controller {
 					}
 				}
 
-				// if we didn't find a class, walk backwards and check each folder of the search path for its own controller
+				// If we didn't find a class, walk backwards and check each folder of the search path for its own controller
 				if ($nameIndex == -1) {
-					for ( --$i; $i >= 0; $i--) {
+					for (--$i; $i >= 0; $i--) {
 						if (file_exists($searchPath . ucfirst($parts[$i]) . 'Controller.php')) {
 							// Use that fully qualified class name, in which directories equal namespaces
-							$controllerName = implode('\\', array_merge(['App'], array_slice($parts, 0, $i+1), [ucfirst($parts[$i] . 'Controller')]));
+							$controllerName = implode('\\', array_merge(['App'], array_slice($parts, 0, $i + 1), [ucfirst($parts[$i] . 'Controller')]));
 							$nameIndex = $i;
 							break;
 						}
-						$searchPath = substr($searchPath, 0, strlen($searchPath) - strlen($parts[$i])-1);
+						$searchPath = substr($searchPath, 0, strlen($searchPath) - strlen($parts[$i]) - 1);
 					}
 				}
 			}
+		}
 
-			// Grab the input options
-			$options = array_slice($parts, $nameIndex + 1);
-			if (isset($path['extension'])) {
-				$options[] = $path['basename'];
-			}
+		// Grab the input options
+		$options = array_slice($parts, $nameIndex + 1);
+		if (isset($path['extension'])) {
+			$options[] = $path['basename'];
+		}
+
+		// Have to filter out the index.php that comes in for root requests (thanks apache)
+		if (count($options) == 1 && $options[0] == 'index.php') {
+			$options = [];
 		}
 
 		// Make sure the class exists and is a subclass of Controller
