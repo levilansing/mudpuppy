@@ -26,7 +26,8 @@ class Config {
 	public static $dateFormat = 'd M Y H:i:s \\G\\M\\TO';
 
 	// Application configuration
-	public static $appClass = 'App\\SampleApp';
+	public static $appClass = 'SampleApp';
+	public static $rootControllerName = 'Home';
 	public static $randomSeedOffset = 0x5C7474D1;
 	// array of folders for global classes or key-value pairs for namespace => folder
 	public static $autoloadFolders = array();

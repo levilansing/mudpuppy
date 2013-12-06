@@ -75,10 +75,10 @@ class App {
 		}
 
 		// Do any application-specific startup tasks
-		forward_static_call(array(Config::$appClass, 'initialize'));
+		forward_static_call(array('App\\' . Config::$appClass, 'initialize'));
 
 		/** @var Security $security */
-		$security = self::$security = forward_static_call(array(Config::$appClass, 'getSecurity'));
+		$security = self::$security = forward_static_call(array('App\\' . Config::$appClass, 'getSecurity'));
 
 		// Refresh login, check for session expiration
 		$security->refreshLogin();

@@ -31,7 +31,7 @@ abstract class Controller {
 		}
 
 		// Try to find the controller
-		$controllerName = 'App\\HomeController';
+		$controllerName = 'App\\' . Config::$rootControllerName . 'Controller';
 		$options = [];
 		$nameIndex = -1;
 		if (count($parts) > 0 && $parts[0] != '') {
@@ -104,7 +104,6 @@ abstract class Controller {
 	/** @returns array */
 	abstract public function getRequiredPermissions();
 
-
 	public function processRequest() {
 		$response = null;
 		try {
@@ -153,7 +152,7 @@ abstract class Controller {
 					throw new PageNotFoundException("Additional \$pathOptions are not allowed for DataObjectController api calls");
 				}
 
-					/** @var DataObjectController $this */
+				/** @var DataObjectController $this */
 				$id = (int)$option;
 				switch ($method) {
 				case 'GET':
