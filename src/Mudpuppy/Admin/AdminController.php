@@ -44,7 +44,7 @@ class AdminController extends Controller {
 	}
 
 	public function getAllowablePathPatterns() {
-		return array('#^admin/(js/|css/|bootstrap/|images/)#');
+		return array('#^admin/(js/|css/|bootstrap/|images/)#i');
 	}
 
 	public function action_updateDataObjects() {
