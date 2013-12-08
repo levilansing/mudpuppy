@@ -161,7 +161,7 @@ END;
 				ob_end_clean();
 			}
 		} else {
-			throw new PageNotFoundException('passThrough attempting to access restricted file: '.$file);
+			throw new PageNotFoundException('File::passThrough - file not found: '.$file);
 		}
 
 		App::cleanExit();

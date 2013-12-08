@@ -32,9 +32,9 @@ class AdminController extends Controller {
 		// Abort the default template, use the admin view for the entire page
 		ob_clean();
 
-		if (count($this->pathOptions) > 1 && strtolower($this->pathOptions[0]) == 'admin') {
+		if (count($this->pathOptions) > 1 && strtolower($this->pathOptions[0]) == 'content') {
 			if (in_array($this->pathOptions[1], array('bootstrap', 'css', 'js', 'images'))) {
-				File::passThrough('Mudpuppy/Admin/'.implode('/', array_slice($this->pathOptions, 1)));
+				File::passThrough('Mudpuppy/Admin/content/'.implode('/', array_slice($this->pathOptions, 1)));
 			}
 			throw new PageNotFoundException();
 		}
@@ -44,7 +44,7 @@ class AdminController extends Controller {
 	}
 
 	public function getAllowablePathPatterns() {
-		return array('#^admin/(js/|css/|bootstrap/|images/)#i');
+		return array('#^content/(js/|css/|bootstrap/|images/)#i');
 	}
 
 	public function action_updateDataObjects() {

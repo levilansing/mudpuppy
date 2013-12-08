@@ -119,7 +119,7 @@ body {
   margin: auto;
 }
 .logo {
-  background: url(/mudpuppy/admin/images/mudpuppy.png) center center no-repeat;
+  background: url(../images/mudpuppy.png) center center no-repeat;
   height: 150px;
   width: 100%;
   min-width: 850px;
@@ -147,10 +147,10 @@ a.adminButton:hover {
   height: 110px;
 }
 .adminButton span.icon.log {
-  background: url(/mudpuppy/admin/images/debugIcon.png) center center no-repeat;
+  background: url(../images/debugIcon.png) center center no-repeat;
 }
 .adminButton span.icon.database {
-  background: url(/mudpuppy/admin/images/databaseIcon.png) center center no-repeat;
+  background: url(../images/databaseIcon.png) center center no-repeat;
 }
 div.adminButton {
   background: #EEE;

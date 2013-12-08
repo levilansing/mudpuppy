@@ -35,44 +35,44 @@ abstract class Controller {
 		$options = [];
 		$nameIndex = -1;
 		if (count($parts) > 0 && $parts[0] != '') {
-			// Parse out the controller name
-			if (strtolower($parts[0]) == 'mudpuppy') {
-				$controllerName = 'Mudpuppy\Admin\AdminController';
-				$nameIndex = 0;
-				if (count($parts) > 1 && strtolower($parts[1]) == 'log') {
-					$controllerName = 'Mudpuppy\Admin\LogController';
-					$nameIndex = 1;
+
+			$namespace = 'App';
+			$searchPath = 'App/';
+
+			// Check if we are viewing the admin area
+			if (Config::$debug && strtolower($parts[0]) == 'mudpuppy') {
+				$namespace = 'Mudpuppy';
+				$searchPath = 'Mudpuppy/';
+				array_splice($parts, 0, 1, ['Admin']);
+			}
+
+			for ($i = 0; $i < count($parts); $i++) {
+				// Give precedence to existing directories
+				if (file_exists($searchPath . $parts[$i] . '/')) {
+					// Append that directory to the current search and continue along
+					$searchPath .= $parts[$i] . '/';
+				} else {
+					// Otherwise, check for the class file
+					if (file_exists($searchPath . ucfirst($parts[$i]) . 'Controller.php')) {
+						// Use that fully qualified class name, in which directories equal namespaces
+						$controllerName = implode('\\', array_merge([$namespace], array_slice($parts, 0, $i), [ucfirst($parts[$i] . 'Controller')]));
+						$nameIndex = $i;
+					}
+					// And stop the search either way
+					break;
 				}
-			} else {
-				$searchPath = 'App/';
-				for ($i = 0; $i < count($parts); $i++) {
-					// Give precedence to existing directories
-					if (file_exists($searchPath . $parts[$i] . '/')) {
-						// Append that directory to the current search and continue along
-						$searchPath .= $parts[$i] . '/';
-					} else {
-						// Otherwise, check for the class file
-						if (file_exists($searchPath . ucfirst($parts[$i]) . 'Controller.php')) {
-							// Use that fully qualified class name, in which directories equal namespaces
-							$controllerName = implode('\\', array_merge(['App'], array_slice($parts, 0, $i), [ucfirst($parts[$i] . 'Controller')]));
-							$nameIndex = $i;
-						}
-						// And stop the search either way
+			}
+
+			// If we didn't find a class, walk backwards and check each folder of the search path for its own controller
+			if ($nameIndex == -1) {
+				for (--$i; $i >= 0; $i--) {
+					if (file_exists($searchPath . ucfirst($parts[$i]) . 'Controller.php')) {
+						// Use that fully qualified class name, in which directories equal namespaces
+						$controllerName = implode('\\', array_merge([$namespace], array_slice($parts, 0, $i + 1), [ucfirst($parts[$i] . 'Controller')]));
+						$nameIndex = $i;
 						break;
 					}
-				}
-
-				// If we didn't find a class, walk backwards and check each folder of the search path for its own controller
-				if ($nameIndex == -1) {
-					for (--$i; $i >= 0; $i--) {
-						if (file_exists($searchPath . ucfirst($parts[$i]) . 'Controller.php')) {
-							// Use that fully qualified class name, in which directories equal namespaces
-							$controllerName = implode('\\', array_merge(['App'], array_slice($parts, 0, $i + 1), [ucfirst($parts[$i] . 'Controller')]));
-							$nameIndex = $i;
-							break;
-						}
-						$searchPath = substr($searchPath, 0, strlen($searchPath) - strlen($parts[$i]) - 1);
-					}
+					$searchPath = substr($searchPath, 0, strlen($searchPath) - strlen($parts[$i]) - 1);
 				}
 			}
 		}

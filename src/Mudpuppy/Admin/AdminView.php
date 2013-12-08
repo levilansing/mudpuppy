@@ -12,11 +12,11 @@ use App\Config;
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php print Config::$appTitle; ?> | Admin</title>
-	<link href="/mudpuppy/admin/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen"/>
-	<link href="/mudpuppy/admin/css/styles.css" rel="stylesheet" media="screen"/>
-	<script src="/mudpuppy/admin/js/jquery-1.10.0.min.js"></script>
-	<script src="/mudpuppy/admin/bootstrap/js/bootstrap.min.js"></script>
-	<script src="/mudpuppy/admin/js/AdminPage.js"></script>
+	<link href="/mudpuppy/content/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen"/>
+	<link href="/mudpuppy/content/css/styles.css" rel="stylesheet" media="screen"/>
+	<script src="/mudpuppy/content/js/jquery-1.10.0.min.js"></script>
+	<script src="/mudpuppy/content/bootstrap/js/bootstrap.min.js"></script>
+	<script src="/mudpuppy/content/js/AdminPage.js"></script>
 	<script></script>
 </head>
 <body>
