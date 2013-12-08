@@ -248,10 +248,10 @@ class App {
 		ob_start();
 
 		http_response_code($statusCode);
-		if (file_exists("html/$statusCode.html")) {
-			require_once("html/$statusCode.html");
+		if (file_exists("content/html/$statusCode.html")) {
+			require_once("content/html/$statusCode.html");
 		} else {
-			require_once('html/500.html');
+			require_once('content/html/500.html');
 		}
 		App::cleanExit();
 	}

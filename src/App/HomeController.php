@@ -20,7 +20,7 @@ class HomeController extends Controller {
 	public function getScripts() {
 		return [
 			'js' => [],
-			'css' => ['css/styles.css']
+			'css' => ['content/css/styles.css']
 		];
 	}
 

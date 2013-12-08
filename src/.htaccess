@@ -6,8 +6,8 @@ Options +FollowSymLinks
 RewriteEngine On
 
 # These folders will be directly accessible without any interference from Mudpuppy. If you don't want anything
-# to be accessible prior to authentication, comment these out and do manual pass-through as needed in your HomeModule.
-RewriteCond %{REQUEST_URI} !^/(js|css|fonts|html|images)/
+# to be accessible prior to authentication, comment this out and do manual pass-through as needed.
+RewriteCond %{REQUEST_URI} !^/content/
 
 # Always let the favicon and robots.txt through
 RewriteCond %{REQUEST_URI} !^/(favicon.ico|robots.txt)$
