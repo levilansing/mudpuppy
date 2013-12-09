@@ -13,7 +13,7 @@ class Config {
 	public static $dbProtocol = 'mysql:host=%s;port=%s;dbname=%s';
 	public static $dbHost = 'localhost';
 	public static $dbPort = '3306';
-	public static $dbDatabase = 'mudpuppy_sample';
+	public static $dbDatabase = 'MudpuppySample';
 	public static $dbUser = 'root';
 	public static $dbPass = 'root';
 
