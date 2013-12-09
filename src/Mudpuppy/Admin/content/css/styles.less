@@ -1,6 +1,9 @@
 //======================================================================================================================
 // This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
 //======================================================================================================================
+
+@pageHeaderHeight: 38px;
+
 body {
 	padding-top: 40px;
 	font-size: 13px;
@@ -13,7 +16,7 @@ body {
 	width: 100%;
 	background: #333;
 	color: #fff;
-	height: 38px;
+	height: @pageHeaderHeight;
 	z-index: 1;
 
 	> div {
@@ -30,8 +33,8 @@ body {
 		top: 0;
 		left: 50%;
 		overflow: hidden;
-		line-height: 38px;
-		height: 38px;
+		line-height: @pageHeaderHeight;
+		height: @pageHeaderHeight;
 		text-align: center;
 		z-index: 3;
 	}
@@ -52,6 +55,15 @@ body {
 	}
 	input[type="checkbox"] {
 	}
+}
+
+.noSelect {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 
 .logHeader {
@@ -138,13 +150,37 @@ body {
 	}
 }
 
+a.adminBackButton {
+	float: left;
+	color: #fff;
+	margin-left: 2em;
+	line-height: @pageHeaderHeight;
+	height: @pageHeaderHeight;
+
+	&:before {
+		content: "";
+		display: inline-block;
+		position:relative;
+		top:.2em;
+		left: -.8em;
+		width: 0;
+		height: 0;
+		border-style: solid;
+		border-width: 7px 8px 7px 0;
+		border-color: transparent #ffffff transparent transparent;
+	}
+	&:visited,&:active,&:hover {
+		color: #fff;
+	}
+}
+
 .adminPage {
 	width: 850px;
 	margin: auto;
 }
 
 .logo {
-	background: url(/mudpuppy/admin/images/mudpuppy.png) center center no-repeat;
+	background: url(../images/mudpuppy.png) center center no-repeat;
 	height: 150px;
 	width: 100%;
 	min-width: 850px;
@@ -152,10 +188,11 @@ body {
 }
 
 a.adminButton:hover {
-	color:#fff;
+	color: #fff;
 	text-decoration: none;
 	background: #b81160;
 }
+
 .adminButton {
 	display: block;
 	background: #902b51;
@@ -165,7 +202,7 @@ a.adminButton:hover {
 	height: 150px;
 	text-align: center;
 	margin: 5px;
-	float:left;
+	float: left;
 
 	span.icon {
 		display: block;
@@ -173,12 +210,13 @@ a.adminButton:hover {
 		height: 110px;
 	}
 	span.icon.log {
-		background: url(/mudpuppy/admin/images/debugIcon.png) center center no-repeat;
+		background: url(../images/debugIcon.png) center center no-repeat;
 	}
 	span.icon.database {
-		background: url(/mudpuppy/admin/images/databaseIcon.png) center center no-repeat;
+		background: url(../images/databaseIcon.png) center center no-repeat;
 	}
 }
+
 div.adminButton {
-	background: #EEE;
+	background: #eee;
 }

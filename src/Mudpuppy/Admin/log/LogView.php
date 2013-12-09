@@ -24,6 +24,7 @@ use App\Config;
 </head>
 <body>
 <div class="pageHeader">
+	<a href="/mudpuppy/" class="adminBackButton">Admin</a>
 	<span id="pageTitle"><?php print Config::$appTitle; ?> | Debug Log</span>
 	<div>
 		<div class="btn-group" style="float:left">

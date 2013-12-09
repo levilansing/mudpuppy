@@ -154,7 +154,7 @@ function _refreshAutoLoadClasses(&$classes) {
 	$autoloadFolders = array_merge(Config::$autoloadFolders, array(
 		'Mudpuppy' => 'Mudpuppy/',
 		'Mudpuppy/Model' => 'Mudpuppy/Model/',
-		'Mudpuppy/Admin' => 'Mudpuppy/Admin/',
+		'Mudpuppy/Admin' => 'Mudpuppy/Admin/*',
 		'App' => 'App/*',
 		'Model' => 'Model/*'
 	));

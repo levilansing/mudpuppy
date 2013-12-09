@@ -1,0 +1,181 @@
+.appListHeader {
+  background: #333;
+  color: #fff;
+  line-height: 38px;
+  font-size: 1.2em;
+}
+.appListHeader .title {
+  padding-left: 10px;
+}
+#structureList {
+  padding: 10px 0 10px 0;
+  margin: 0;
+  background: #f2f2f2;
+  border-right: 1px solid #ddd;
+  height: 600px;
+  overflow: auto;
+}
+#structureList,
+#structureList ul {
+  list-style: none;
+  margin: 0;
+}
+#structureList li {
+  position: relative;
+  line-height: 32px;
+  min-height: 32px;
+  padding-left: 20px;
+  cursor: pointer;
+}
+#structureList li.selected {
+  background: #902b51;
+  color: #fff;
+}
+#structureList li.selected > div:hover {
+  background: #902b51;
+}
+#structureList li > div:hover {
+  background: rgba(255, 255, 255, 0.75);
+}
+#structureList li.folder:before {
+  content: "";
+  position: absolute;
+  display: block;
+  width: 0px;
+  height: 0px;
+  left: 8px;
+  top: 11px;
+  border-style: solid;
+  border-width: 5px 0 5px 6px;
+  border-color: transparent transparent transparent #000000;
+}
+#structureList li.folder.open:before {
+  border-width: 0 0 8px 8px;
+  border-color: transparent transparent #000000 transparent;
+  left: 8px;
+  top: 12px;
+}
+.fileIcon {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  margin-bottom: -11px;
+  margin-right: 6px;
+  background: url(../images/fileIcons.png);
+}
+.fileIcon.app {
+  background-position: 0px 0px;
+}
+.fileIcon.config {
+  background-position: -32px 0px;
+}
+.fileIcon.controller {
+  background-position: -64px 0px;
+}
+.fileIcon.file {
+  background-position: -96px 0px;
+}
+.fileIcon.fileAdd {
+  background-position: 0px -32px;
+}
+.fileIcon.folder {
+  background-position: -32px -32px;
+}
+.fileIcon.folderAdd {
+  background-position: -64px -32px;
+}
+.fileIcon.folderOpen {
+  background-position: -96px -32px;
+}
+.fileIcon.permissions {
+  background-position: 0px -64px;
+}
+.fileIcon.phpClass {
+  background-position: -32px -64px;
+}
+.fileIcon.view {
+  background-position: -64px -64px;
+}
+.fileIcon.pageController {
+  background-position: -96px -64px;
+}
+.fileIcon.dataObjectController {
+  background-position: 0px -96px;
+}
+.fileIcon.white.app {
+  background-position: 0px -128px;
+}
+.fileIcon.white.config {
+  background-position: -32px -128px;
+}
+.fileIcon.white.controller {
+  background-position: -64px -128px;
+}
+.fileIcon.white.file {
+  background-position: -96px -128px;
+}
+.fileIcon.white.fileAdd {
+  background-position: 0px -160px;
+}
+.fileIcon.white.folder {
+  background-position: -32px -160px;
+}
+.fileIcon.white.folderAdd {
+  background-position: -64px -160px;
+}
+.fileIcon.white.folderOpen {
+  background-position: -96px -160px;
+}
+.fileIcon.white.permissions {
+  background-position: 0px -192px;
+}
+.fileIcon.white.phpClass {
+  background-position: -32px -192px;
+}
+.fileIcon.white.view {
+  background-position: -64px -192px;
+}
+.fileIcon.white.pageController {
+  background-position: -96px -192px;
+}
+.fileIcon.white.dataObjectController {
+  background-position: 0px -234px;
+}
+#details {
+  height: 620px;
+  padding: 10px 0;
+  overflow: auto;
+}
+a#newFolder,
+a#newFile {
+  float: right;
+  cursor: pointer;
+  padding-left: .3em;
+  margin-left: 4px;
+}
+a#newFolder.disabled,
+a#newFile.disabled {
+  opacity: 0.25;
+}
+a#newFolder:hover,
+a#newFile:hover {
+  background-color: #555;
+}
+.objectDetails label {
+  color: #555;
+}
+.objectDetails .controls {
+  padding-top: 5px;
+  font-weight: bold;
+}
+.objectDetails ul {
+  margin: 0;
+  padding: 0;
+}
+.objectDetails li {
+  list-style: none;
+}
+.objectDetails pre {
+  font-size: 0.85em;
+  font-weight: normal;
+}

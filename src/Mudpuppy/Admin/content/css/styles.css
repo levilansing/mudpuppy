@@ -42,6 +42,14 @@ body {
   font-size: 0.85em;
   float: left;
 }
+.noSelect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 .logHeader {
   width: 100%;
   table-layout: fixed;
@@ -114,6 +122,30 @@ body {
   max-height: 500px;
   overflow: auto;
 }
+a.adminBackButton {
+  float: left;
+  color: #fff;
+  margin-left: 2em;
+  line-height: 38px;
+  height: 38px;
+}
+a.adminBackButton:before {
+  content: "";
+  display: inline-block;
+  position: relative;
+  top: .2em;
+  left: -0.8em;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 7px 8px 7px 0;
+  border-color: transparent #ffffff transparent transparent;
+}
+a.adminBackButton:visited,
+a.adminBackButton:active,
+a.adminBackButton:hover {
+  color: #fff;
+}
 .adminPage {
   width: 850px;
   margin: auto;
@@ -150,8 +182,11 @@ a.adminButton:hover {
   background: url(../images/debugIcon.png) center center no-repeat;
 }
 .adminButton span.icon.database {
-  background: url(../images/databaseIcon.png) center center no-repeat;
+	background: url(../images/databaseIcon.png) center center no-repeat;
+}
+.adminButton span.icon.structure {
+	background: url(../images/appStructureIcon.png) center center no-repeat;
 }
 div.adminButton {
-  background: #EEE;
+  background: #eee;
 }

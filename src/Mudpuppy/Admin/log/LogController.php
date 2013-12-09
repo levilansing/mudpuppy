@@ -3,7 +3,7 @@
 // This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
 //======================================================================================================================
 
-namespace Mudpuppy\Admin;
+namespace Mudpuppy\Admin\log;
 use Mudpuppy\Controller;
 use Mudpuppy\PageController;
 use Mudpuppy\App;
@@ -37,7 +37,7 @@ class LogController extends Controller {
 	public function render() {
 		// Abort the default template, use the debug log view for the entire page
 		ob_clean();
-		include('Mudpuppy/Admin/LogView.php');
+		include('Mudpuppy/Admin/log/LogView.php');
 		App::cleanExit();
 	}
 

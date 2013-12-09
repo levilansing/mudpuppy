@@ -1,0 +1,9 @@
+<?php
+defined('MUDPUPPY') or die('Restricted');
+
+use Mudpuppy\App;
+
+// get the current page controller to provide data for rendering our view
+$controller = App::getPageController();
+
+?>

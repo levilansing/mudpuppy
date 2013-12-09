@@ -1,0 +1,44 @@
+<?php
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
+
+namespace ___NAMESPACE___;
+
+use Mudpuppy\Controller;
+use Mudpuppy\DataObjectController;
+
+defined('MUDPUPPY') or die('Restricted');
+
+class ___CLASS_NAME___ extends Controller {
+	use DataObjectController;
+
+	public function getRequiredPermissions() {
+		// TODO add specific required permissions if any to access this controller
+		return array();
+	}
+
+	/**
+	 * Determines whether an input object is valid prior to creating or updating it. Note: the input array has already
+	 * been cleaned and validated against the structure definition.
+	 * @param $object array representation of the object
+	 * @return boolean true if valid
+	 */
+	protected function isValid($object) {
+		// TODO validate the object
+		return false;
+	}
+
+	/**
+	 * Sanitizes the array representation of the object prior to returning to the user.
+	 * @param array $object array representation of the object
+	 * @return array that represents the sanitized object
+	 */
+	protected function sanitize($object) {
+		// TODO sanitize the object if necessary
+		return $object;
+	}
+
+	// TODO add actions as desired
+
+}

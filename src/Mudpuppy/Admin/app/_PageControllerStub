@@ -1,0 +1,50 @@
+<?php
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
+
+namespace ___NAMESPACE___;
+
+use Mudpuppy\Controller;
+use Mudpuppy\PageController;
+
+defined('MUDPUPPY') or die('Restricted');
+
+class ___CLASS_NAME___ extends Controller {
+	use PageController;
+
+	public function getRequiredPermissions() {
+		// TODO add specific required permissions if any to access this controller
+		return array();
+	}
+
+	/**
+	 * @return array associative array with two keys, 'js' and 'css', each being an array of script paths for use by the
+	 * default implementation of renderHeader()
+	 */
+	public function getScripts() {
+		return [
+			'js' => [],
+			'css' => []
+		];
+	}
+
+	/**
+	 * Renders the page body.
+	 */
+	public function render() {
+		include('___VIEW_FILE_PATH___');
+	}
+
+	/**
+	 * return a list of regular expressions or strings that the page options must match
+	 * example: a url of "this-controller/get/42" can be validated by array('#^get/[0-9]+$#');
+	 * @return array
+	 */
+	public function getAllowablePathPatterns() {
+		return array();
+	}
+
+	// TODO add actions as desired
+
+}

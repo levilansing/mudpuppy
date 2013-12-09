@@ -224,7 +224,7 @@ abstract class Controller {
 			$message = $e->getMessage();
 			if (!Config::$debug) {
 				if ($e instanceof MudpuppyException) {
-					$message = $e->getProductionMessage();
+					$message = $e->getResponseMessage();
 				} else {
 					$message = 'Internal Sever Error';
 				}
@@ -233,7 +233,7 @@ abstract class Controller {
 		}
 
 		header('Content-type: application/json');
-		if ($response != null) {
+		if ($response !== null) {
 			print json_encode($response);
 		}
 		App::cleanExit(true);
