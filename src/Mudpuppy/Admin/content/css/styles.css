@@ -182,10 +182,10 @@ a.adminButton:hover {
   background: url(../images/debugIcon.png) center center no-repeat;
 }
 .adminButton span.icon.database {
-	background: url(../images/databaseIcon.png) center center no-repeat;
+  background: url(../images/databaseIcon.png) center center no-repeat;
 }
 .adminButton span.icon.structure {
-	background: url(../images/appStructureIcon.png) center center no-repeat;
+  background: url(../images/appStructureIcon.png) center center no-repeat;
 }
 div.adminButton {
   background: #eee;

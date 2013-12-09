@@ -9,6 +9,7 @@ use Mudpuppy\Controller, Mudpuppy\PageController;
 use App\Config;
 use Mudpuppy\File;
 use Mudpuppy\InvalidInputException;
+use Mudpuppy\Log;
 use Mudpuppy\MudpuppyException;
 use Mudpuppy\Request;
 
@@ -18,6 +19,7 @@ class AppController extends Controller {
 	use PageController;
 
 	public function __construct($pathOptions) {
+		Log::dontWrite();
 		$this->pageTitle = Config::$appTitle . ' | App Structure';
 		parent::__construct($pathOptions);
 	}
