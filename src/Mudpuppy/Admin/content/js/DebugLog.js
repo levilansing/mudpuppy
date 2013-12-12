@@ -10,7 +10,7 @@
 
 		/** @var XMLHttpRequest this.request */
 		this.request = null;
-		this.lastId = -1;
+		this.lastId = null;
 		this.logTemplate = $('#logTemplate').attr('id', null);
 
 		this.loading = true;
@@ -126,7 +126,7 @@
 		for (var i = 0; i < data.length; i++) {
 			var log = data[i];
 			if (!this.logs[log.id]) {
-				if (log.id > this.lastId) {
+				if (this.lastId == null || log.id > this.lastId) {
 					this.lastId = log.id;
 				}
 				this.logs[log.id] = log;
@@ -135,14 +135,13 @@
 			}
 		}
 		this.loading = false;
-		;
 	};
 
 	DebugLog.prototype.update = function() {
 		var now = new Date();
 		var self = this;
 		$('#debugLog .logHeader td:nth-child(4)').each(function(index, td) {
-			$td = $(td);
+			var $td = $(td);
 			var id = $td.parents('.accordion-toggle').attr('href').substr(4);
 			var time = getTimeDifference(new Date(self.logs[id].date), now);
 			if (time != $td.text()) {
@@ -320,4 +319,4 @@
 var debugLog = null;
 $(document).ready(function() {
 	debugLog = new DebugLog();
-})
+});

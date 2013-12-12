@@ -273,7 +273,10 @@ function shutdown_handler() {
 	if ($error !== null) {
 		Log::error('SHUTDOWN: ' . $error['file'] . '(' . $error['line'] . ') ' . $error['message']);
 		if (Config::$debug) {
-			if (!empty(Config::$dbHost)) {
+			// We want to display the full log on the page for shutdowns in debug mode. The Log::write() function already
+			// does this if logs are not being stored anywhere. So if they are stored somewhere, we need to explicitly
+			// show the full log here.
+			if (Log::hasStorageOption()) {
 				Log::displayFullLog();
 			}
 			App::cleanExit();

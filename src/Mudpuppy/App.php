@@ -149,9 +149,9 @@ class App {
 		if (!self::$exited) {
 			self::$exited = true;
 
-			// If in debug mode and we don't have a database connection, display the log if necessary. Needs to happen
+			// If in debug mode and we don't have any way of storing logs, display the log if necessary. Needs to happen
 			// here before the connection is closed.
-			if (Config::$debug && !Config::$dbHost && !$suppressAdditionalOutput) {
+			if (Config::$debug && !Log::hasStorageOption()) {
 				Log::write();
 			}
 

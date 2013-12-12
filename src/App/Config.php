@@ -36,6 +36,8 @@ class Config {
 	public static $debug = true;
 	public static $logQueries = true;
 	public static $logLevel = LOG_LEVEL_ALWAYS;
+	public static $logToDatabase = true;
+	public static $logFileDir = '';
 
 	// AWS configuration
 	public static $awsConfig = '';

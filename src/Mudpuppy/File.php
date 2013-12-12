@@ -52,7 +52,7 @@ class File {
 		if ($lastPath === false) {
 			return $file;
 		}
-		return substr($file, $lastPath+1);
+		return substr($file, $lastPath + 1);
 	}
 
 	/**
@@ -128,7 +128,7 @@ END;
 			$ext = self::getExtension($file);
 
 			if (self::isRestricted($ext)) {
-				throw new PageNotFoundException('passThrough attempting to access restricted file: '.$file);
+				throw new PageNotFoundException('passThrough attempting to access restricted file: ' . $file);
 			}
 
 			if (isset(self::$mimeTypes[$ext])) {
@@ -161,7 +161,7 @@ END;
 				ob_end_clean();
 			}
 		} else {
-			throw new PageNotFoundException('File::passThrough - file not found: '.$file);
+			throw new PageNotFoundException('File::passThrough - file not found: ' . $file);
 		}
 
 		App::cleanExit();
@@ -186,6 +186,20 @@ END;
 		// remove any leading /'s and any get parameters
 		$file = preg_replace('#(^\/+)|(\?.*$)#', '', $file);
 		return file_exists($file);
+	}
+
+	/**
+	 * Deletes all standard files in the specified directory, but leaves the directory itself in tact. Note that this
+	 * will not delete "hidden" files (eg, .htaccess) or sub-directories.
+	 *
+	 * @param string $dir directory to empty, must include trailing /
+	 */
+	public static function deleteAllFiles($dir) {
+		foreach (glob("$dir*") as $file) {
+			if (is_file($file)) {
+				unlink($file);
+			}
+		}
 	}
 
 	/**

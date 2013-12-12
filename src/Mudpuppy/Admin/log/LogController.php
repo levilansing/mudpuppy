@@ -4,12 +4,16 @@
 //======================================================================================================================
 
 namespace Mudpuppy\Admin\log;
-use Mudpuppy\Controller;
-use Mudpuppy\PageController;
+
+use App\Config;
 use Mudpuppy\App;
+use Mudpuppy\Controller;
+use Mudpuppy\DataObject;
+use Mudpuppy\File;
 use Mudpuppy\Log;
 use Mudpuppy\Model\DebugLog;
-use Mudpuppy\DataObject;
+use Mudpuppy\PageController;
+use Mudpuppy\Request;
 
 defined('MUDPUPPY') or die('Restricted');
 
@@ -41,95 +45,141 @@ class LogController extends Controller {
 		App::cleanExit();
 	}
 
-	/**
-	 * check for new log entries and retrieve them
-	 * @param int $lastId
-	 * @return array
-	 */
-	public function action_pull($lastId = -1) {
-		if ($lastId >= 0) {
+	private static function getNewLogs($lastId) {
+		$results = [];
+		if (Config::$logToDatabase) {
 			$results = DebugLog::getByFields(array(), "id > $lastId ORDER BY id ASC");
-		} else {
-			$results = DebugLog::getByFields(array(), "id > $lastId ORDER BY id DESC LIMIT 50");
+			if (!empty($results)) {
+				$results = DataObject::objectListToArrayList($results);
+			}
+		} else if (!empty(Config::$logFileDir)) {
+			foreach (scandir(Config::$logFileDir, SCANDIR_SORT_DESCENDING) as $file) {
+				if ($file == "$lastId.json") {
+					break;
+				}
+				if ($file != '.' && $file != '..') {
+					$results[] = json_decode(file_get_contents(Config::$logFileDir . $file));
+				}
+			}
 			$results = array_reverse($results);
 		}
-		if (!empty($results)) {
-			return DataObject::objectListToArrayList($results);
+		return $results;
+	}
+
+	/**
+	 * check for new log entries and retrieve them
+	 * @param string $lastId
+	 * @return array
+	 */
+	public function action_pull($lastId = null) {
+		$results = [];
+		if (Config::$logToDatabase) {
+			$lastId = Request::cleanValue($lastId, -1, 'int');
+			if ($lastId >= 0) {
+				$results = self::getNewLogs($lastId);
+			} else {
+				$results = DataObject::objectListToArrayList(array_reverse(DebugLog::getByFields(array(), "id > $lastId ORDER BY id DESC LIMIT 100")));
+			}
+		} else if (!empty(Config::$logFileDir)) {
+			if (!empty($lastId)) {
+				$results = self::getNewLogs($lastId);
+			} else {
+				foreach (array_reverse(array_slice(scandir(Config::$logFileDir, SCANDIR_SORT_DESCENDING), 0, 100)) as $file) {
+					if ($file != '.' && $file != '..') {
+						$results[] = json_decode(file_get_contents(Config::$logFileDir . $file));
+					}
+				}
+			}
 		}
-		return array();
+		return $results;
 	}
 
 	/**
 	 * wait for a new log entry and retrieve it/them
-	 * @param int $lastId
+	 * @param string $lastId
 	 * @return array
 	 */
-	public function action_waitForNext($lastId = -1) {
+	public function action_waitForNext($lastId = null) {
+		// Release the session object so we're not holding up other requests
 		session_write_close();
+
+		// Timeout after 5 minutes
 		set_time_limit(60 * 5);
 
-		$pipe = 'Mudpuppy/cache/mudpuppy_debugLogPipe';
-		if (!file_exists($pipe)) {
-			posix_mkfifo($pipe, 0777);
-		}
-
-		if ($lastId >= 0) {
-			$results = DebugLog::getByFields(array(), "id > $lastId ORDER BY id ASC");
-			if (!empty($results)) {
-				return DataObject::objectListToArrayList($results);
+		// If we can, create a pipe to allow for notification from the next request that writes a log
+		$pipesSupported = function_exists('posix_mkfifo');
+		if ($pipesSupported) {
+			$pipe = 'Mudpuppy/cache/mudpuppy_debugLogPipe';
+			if (!file_exists($pipe)) {
+				posix_mkfifo($pipe, 0777);
 			}
 		}
 
-		$fp = fopen($pipe, 'r+');
-		stream_set_timeout($fp, 60);
-
-		$read = array($fp);
-		$write = null;
-		$except = null;
-		$triggered = stream_select($read, $write, $except, 30);
-		fclose($fp);
-		unlink($pipe);
-
-		if ($triggered && $lastId == -1) {
-			return array(DebugLog::getLast()->toArray());
-		} else if ($lastId >= 0) {
-			$results = DebugLog::getByFields(array(), "id > $lastId ORDER BY id ASC");
-			if (!empty($results)) {
-				return DataObject::objectListToArrayList($results);
+		// First check for any new logs and just return those right away if there are any
+		$results = [];
+		$hasLastId = false;
+		if (Config::$logToDatabase) {
+			$lastId = Request::cleanValue($lastId, -1, 'int');
+			if ($lastId >= 0) {
+				$hasLastId = true;
 			}
+		} else if (!empty(Config::$logFileDir) && !empty($lastId)) {
+			$hasLastId = true;
 		}
-		Log::add('nothing');
-
-		return array();
-	}
-
-	/**
-	 * @return array
-	 */
-	public function action_getLast() {
-		return DebugLog::getLast()->toArray();
-	}
-
-	/**
-	 * signal a new log entry was recorded
-	 */
-	public function action_trigger() {
-		$pipe = 'Mudpuppy/cache/mudpuppy_debugLogPipe';
-		if (!file_exists($pipe)) {
-			return;
+		if ($hasLastId) {
+			$results = self::getNewLogs($lastId);
+		}
+		if (!empty($results)) {
+			return $results;
 		}
 
-		$fp = fopen($pipe, 'r+');
-		stream_set_timeout($fp, 10);
-		fwrite($fp, '1');
-		fclose($fp);
-		unlink($fp);
+		// Nothing new right now, so do long polling and wait for notification from the pipe if possible
+		if ($pipesSupported) {
+			$fp = fopen($pipe, 'r+');
+			stream_set_timeout($fp, 60);
+
+			$read = array($fp);
+			$write = null;
+			$except = null;
+			$triggered = stream_select($read, $write, $except, 30);
+			fclose($fp);
+			unlink($pipe);
+		} else {
+			// Can't do long polling without the notification pipe, so just fallback to a simple 10 second interval
+			sleep(10);
+			$triggered = true;
+		}
+
+		// Now get the latest logs
+		if ($triggered && !$hasLastId) {
+			if (Config::$logToDatabase) {
+				$log = DebugLog::getLast();
+				if ($log) {
+					$results[] = $log->toArray();
+				}
+			} else if (!empty(Config::$logFileDir)) {
+				$files = scandir(Config::$logFileDir, SCANDIR_SORT_DESCENDING);
+				if (!empty($files)) {
+					if ($files[0] != '.' && $files[0] != '..') {
+						$results[] = json_decode(file_get_contents(Config::$logFileDir . $files[0]));
+					}
+				}
+			}
+		} else if ($hasLastId) {
+			$results = self::getNewLogs($lastId);
+		}
+		return $results;
 	}
 
 	/**
 	 * clear the log
 	 */
 	public function action_clearLog() {
-		DebugLog::deleteAll();
+		if (Config::$logToDatabase) {
+			DebugLog::deleteAll();
+		}
+		if (!empty(Config::$logFileDir)) {
+			File::deleteAllFiles(Config::$logFileDir);
+		}
 	}
 }

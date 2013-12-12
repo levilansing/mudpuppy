@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+
 use App\Config;
 use Mudpuppy\Model\DebugLog;
 
@@ -140,10 +141,13 @@ class Log {
 		self::$writeCompleted = true;
 	}
 
+	public static function hasStorageOption() {
+		return Config::$logToDatabase || !empty(Config::$logFileDir);
+	}
+
 	/**
-	 * write the log out
-	 * writes to the database if possible, if not, and if we are in debug,
-	 * then display the log because something has gone awry
+	 * Writes the log to the configured storage option(s). If the log can't be stored (due to error or configuration), it
+	 * is instead displayed on the page for debug mode.
 	 */
 	public static function write() {
 		if (self::$writeCompleted) {
@@ -153,20 +157,32 @@ class Log {
 		if (Config::$logLevel == LOG_LEVEL_NONE) {
 			return;
 		}
-		if (!Config::$dbHost && Config::$debug) {
+		if (Config::$debug && !self::hasStorageOption()) {
 			if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
-				Log::displayFullLog();
+				self::displayFullLog();
 				self::$writeCompleted = true;
 			}
 			return;
 		}
 		if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
 			try {
-				// delete old logs once in a while
-				if (rand(0, 100) == 0) {
+				// Delete old logs once in a while
+				if (rand(0, 1000) == 0) {
 					$oldAge = strtotime('7 days ago');
-					$db = App::getDBO();
-					$db->query("DELETE FROM DebugLogs WHERE `date` < '" . Database::formatDate($oldAge, false) . "'");
+					if (Config::$logToDatabase) {
+						$db = App::getDBO();
+						$db->query("DELETE FROM DebugLogs WHERE `date` < '" . Database::formatDate($oldAge, false) . "'");
+					}
+					if (!empty(Config::$logFileDir)) {
+						foreach (scandir(Config::$logFileDir) as $file) {
+							if ($file != '.' && $file != '..') {
+								if (filemtime(Config::$logFileDir . $file) > $oldAge) {
+									break;
+								}
+								unlink(Config::$logFileDir . $file);
+							}
+						}
+					}
 				}
 
 				list($u, $s) = explode(' ', self::$startTime);
@@ -185,8 +201,23 @@ class Log {
 				$log->errors = self::$errors;
 				$log->responseCode = http_response_code();
 
-				if (!$log->save()) {
+				if (Config::$logToDatabase && !$log->save() && Config::$debug) {
 					self::displayFullLog();
+				}
+				if (!empty(Config::$logFileDir)) {
+					list($uSec, $sec) = explode(' ', microtime());
+					$uSec = substr($uSec, 2, -2);
+					$baseName = "$sec$uSec-";
+					$index = 0;
+					while (file_exists(Config::$logFileDir . $baseName . $index . '.json')) {
+						$index++;
+					}
+					$baseName .= $index;
+					$log = $log->toArray();
+					$log['id'] = $baseName;
+					if (!File::putContents(Config::$logFileDir . $baseName . '.json', json_encode($log)) && Config::$debug) {
+						self::displayFullLog();
+					}
 				}
 
 				self::$writeCompleted = true;
@@ -207,8 +238,8 @@ class Log {
 
 			} catch (\Exception $e) {
 				if (Config::$debug) {
-					print "Exception while attempting to record the log: ";
-					print $e->getMessage();
+					self::exception($e);
+					self::displayFullLog();
 				}
 			}
 		}
