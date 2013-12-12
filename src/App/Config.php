@@ -29,7 +29,7 @@ class Config {
 	public static $appClass = 'SampleApp';
 	public static $rootControllerName = 'Home';
 	public static $randomSeedOffset = 0x5C7474D1;
-	// array of folders for global classes or key-value pairs for namespace => folder
+	// Array of folders for global classes or key-value pairs for namespace => folder
 	public static $autoloadFolders = array();
 
 	// Debugging
@@ -37,6 +37,7 @@ class Config {
 	public static $logQueries = true;
 	public static $logLevel = LOG_LEVEL_ALWAYS;
 	public static $logToDatabase = true;
+	// Path to directory for storing local log files (must include trailing slash). Leave blank or null to disable.
 	public static $logFileDir = '';
 
 	// AWS configuration
