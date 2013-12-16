@@ -18,6 +18,7 @@ defined('MUDPUPPY') or die('Restricted');
  * @property string requestMethod
  * @property string requestPath
  * @property array request
+ * @property bool https
  * @property string ip
  * @property string userAgent
  * @property string sessionHash
@@ -42,6 +43,7 @@ class DebugLog extends DataObject {
 		$this->createColumn('requestMethod', DATATYPE_STRING, null, true);
 		$this->createColumn('requestPath', DATATYPE_STRING, null, true);
 		$this->createColumn('request', DATATYPE_JSON, null, false);
+		$this->createColumn('https', DATATYPE_BOOL, null, true);
 		$this->createColumn('ip', DATATYPE_STRING, null, true);
 		$this->createColumn('userAgent', DATATYPE_STRING, null, true);
 		$this->createColumn('sessionHash', DATATYPE_STRING, null, true);
@@ -121,6 +123,7 @@ class DebugLog extends DataObject {
   `requestMethod` varchar(16) NOT NULL,
   `requestPath` text NOT NULL,
   `request` text COMMENT 'JSON',
+  `https` bit NOT NULL,
   `ip` varchar(50) NOT NULL,
   `userAgent` text NOT NULL,
   `sessionHash` char(32) NOT NULL,
