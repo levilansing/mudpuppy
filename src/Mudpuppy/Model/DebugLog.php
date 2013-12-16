@@ -18,6 +18,9 @@ defined('MUDPUPPY') or die('Restricted');
  * @property string requestMethod
  * @property string requestPath
  * @property array request
+ * @property string ip
+ * @property string userAgent
+ * @property string sessionHash
  * @property int memoryUsage
  * @property float startTime
  * @property float executionTime
@@ -39,6 +42,9 @@ class DebugLog extends DataObject {
 		$this->createColumn('requestMethod', DATATYPE_STRING, null, true);
 		$this->createColumn('requestPath', DATATYPE_STRING, null, true);
 		$this->createColumn('request', DATATYPE_JSON, null, false);
+		$this->createColumn('ip', DATATYPE_STRING, null, true);
+		$this->createColumn('userAgent', DATATYPE_STRING, null, true);
+		$this->createColumn('sessionHash', DATATYPE_STRING, null, true);
 		$this->createColumn('memoryUsage', DATATYPE_INT, null, true);
 		$this->createColumn('startTime', DATATYPE_DOUBLE, null, true);
 		$this->createColumn('executionTime', DATATYPE_DOUBLE, null, true);
@@ -108,13 +114,16 @@ class DebugLog extends DataObject {
 		if (!parent::save()) {
 			// Make sure the table exists
 			$db = App::getDBO();
-			if (preg_match("#Table '[^']*\\.debuglogs' doesn't exist#i", $db->getLastError(), $matches) > 0) {
+			if (preg_match("#Table '[^']*\\.DebugLogs' doesn't exist#i", $db->getLastError(), $matches) > 0) {
 				$db->query("CREATE TABLE IF NOT EXISTS `DebugLogs` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '	',
   `date` datetime NOT NULL,
   `requestMethod` varchar(16) NOT NULL,
   `requestPath` text NOT NULL,
   `request` text COMMENT 'JSON',
+  `ip` varchar(50) NOT NULL,
+  `userAgent` text NOT NULL,
+  `sessionHash` char(32) NOT NULL,
   `memoryUsage` int(11) NOT NULL,
   `startTime` double NOT NULL,
   `executionTime` double NOT NULL,
