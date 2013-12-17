@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+
 use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
@@ -15,8 +16,7 @@ defined('MUDPUPPY') or die('Restricted');
  * isValid, and sanitize), which provide the structure definition array, validate input objects (prior to creating and
  * updating), and sanitize objects (prior to returning to the user). Many objects may not need to perform any special
  * validation or sanitization, but no default implementation is provided in order to force the implementer to consider
- * such situations. There are also four other methods (prepForCreate, objectCreated, prepForUpdate, and objectUpdated)
- * that may be overridden as needed to modify fields or perform additional tasks before and after creation and update.
+ * such situations.
  * In addition to the core methods, the DataObjectcontroller implements an action called 'schema' that
  * returns the data object's structure definition (or schema).
  */
@@ -31,6 +31,18 @@ trait DataObjectController {
 		$this->dataObjectName = $dataObjectName;
 	}
 
+	public function getDataObjectName() {
+		if ($this->dataObjectName == null) {
+			$className = explode('\\', get_called_class());
+			$className = 'Model\\'.end($className);
+			if (strrpos($className, 'Controller') == strlen($className) - 10)
+				$className = substr($className, 0, -10);
+
+			$this->dataObjectName = $className;
+		}
+		return $this->dataObjectName;
+	}
+
 	/**
 	 * Gets the data object for the given id.
 	 * @param int $id the object id
@@ -40,11 +52,11 @@ trait DataObjectController {
 	 */
 	public function get($id) {
 		/** @var $dataObject DataObject */
-		$dataObject = call_user_func(array($this->dataObjectName, 'get'), $id);
+		$dataObject = call_user_func(array($this->getDataObjectName(), 'get'), $id);
 		if ($dataObject === null) {
 			throw new ObjectNotFoundException("No object found for id: $id");
 		}
-		if (!is_subclass_of($dataObject, 'DataObject')) {
+		if (!$dataObject instanceof DataObject) {
 			throw new MudpuppyException('Failed to retrieve object');
 		}
 		return $this->sanitize($dataObject->toArray());
@@ -94,11 +106,9 @@ trait DataObjectController {
 		if ($dataObject->exists()) {
 			throw new ObjectNotFoundException('The specified object already exists');
 		}
-		$this->prepForCreate($dataObject);
 		if (!$dataObject->save()) {
 			throw new MudpuppyException('Failed to create object');
 		}
-		$this->objectCreated($dataObject);
 		return $this->sanitize($dataObject->toArray());
 	}
 
@@ -117,18 +127,16 @@ trait DataObjectController {
 			throw new InvalidInputException('The specified object is invalid');
 		}
 		/** @var $dataObject DataObject */
-		$dataObject = call_user_func(array($this->dataObjectName, 'get'), $id);
+		$dataObject = call_user_func(array($this->getDataObjectName(), 'get'), $id);
 		if ($dataObject === null) {
 			throw new ObjectNotFoundException('The specified object does not exist');
 		}
 		foreach ($object as $field => $value) {
 			$dataObject->$field = $value;
 		}
-		$this->prepForUpdate($dataObject);
 		if (!$dataObject->save()) {
 			throw new MudpuppyException('Failed to update object');
 		}
-		$this->objectUpdated($dataObject);
 		return $this->sanitize($dataObject->toArray());
 	}
 
@@ -140,7 +148,8 @@ trait DataObjectController {
 	 */
 	public function delete($id) {
 		/** @var $dataObject DataObject */
-		$dataObject = new $this->dataObjectName($id);
+		$dataObjectClass = $this->getDataObjectName();
+		$dataObject = new $dataObjectClass($id);
 		if (!$dataObject->exists()) {
 			throw new ObjectNotFoundException("No object found for id: $id");
 		}
@@ -165,7 +174,7 @@ trait DataObjectController {
 	 * @return array(DataObject)
 	 */
 	protected function retrieveDataObjects($params) {
-		return call_user_func(array($this->dataObjectName, 'getAll'));
+		return call_user_func(array($this->getDataObjectName(), 'getAll'));
 	}
 
 	/**
@@ -175,7 +184,7 @@ trait DataObjectController {
 	 * @return array
 	 */
 	protected function getStructureDefinition() {
-		return call_user_func(array($this->dataObjectName, 'getStructureDefinition'));
+		return call_user_func(array($this->getDataObjectName(), 'getStructureDefinition'));
 	}
 
 	/**
@@ -193,41 +202,6 @@ trait DataObjectController {
 	 */
 	protected abstract function sanitize($object);
 
-	/**
-	 * Prepares the given data object for creation. This gives the concrete class a chance to modify fields or perform
-	 * other related tasks before the object is actually created in the database.
-	 * @param DataObject $dataObject the object to be prepared
-	 */
-	protected function prepForCreate($dataObject) {
-		// Nothing
-	}
-
-	/**
-	 * Notification that the data object has been created in the database. This gives the concrete class a chance to
-	 * perform any additional tasks that may be required to finish creating the object.
-	 * @param DataObject $dataObject the object that was created
-	 */
-	protected function objectCreated($dataObject) {
-		// Nothing
-	}
-
-	/**
-	 * Prepares the given data object for update. This gives the concrete class a chance to modify fields or perform
-	 * other related tasks before the object is actually updated in the database.
-	 * @param DataObject $user the object to be prepared
-	 */
-	protected function prepForUpdate($user) {
-		// Nothing
-	}
-
-	/**
-	 * Notification that the data object has been updated in the database. This gives the concrete class a chance to
-	 * perform any additional tasks that may be required to finish updating the object.
-	 * @param DataObject $dataObject the object that was updated
-	 */
-	protected function objectUpdated($dataObject) {
-		// Nothing
-	}
 
 	/**
 	 * Gets a cleaned version of the given associative array, according to the given structure. The structure definition

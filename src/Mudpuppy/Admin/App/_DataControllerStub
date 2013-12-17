@@ -39,6 +39,19 @@ class ___CLASS_NAME___ extends Controller {
 		return $object;
 	}
 
+	/**
+	 * Uncomment to override the fetching of a collection '/DataObject/?p=1&...' using $params from the request
+	 *
+	 * Retrieves an array of DataObjects for use by getCollection. The default implementation returns ALL objects.
+	 * Override to support filtering based on the query parameters.
+	 * @param array $params array of query parameters that came in with the request
+	 * @return array(DataObject)
+	 */
+//	protected function retrieveDataObjects($params) {
+//		return call_user_func(array($this->getDataObjectName(), 'getAll'));
+//	}
+
+
 	// TODO add actions as desired
 
 }

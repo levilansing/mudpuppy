@@ -73,7 +73,7 @@ class DataLookup {
 	function setLookup($dataObject, $value) {
 		if (is_int($value)) {
 			$dataObject->{$this->column} = $value;
-		} else if (is_subclass_of($value, 'DataObject')) {
+		} else if ($value instanceof DataObject) {
 			$dataObject->{$this->column} = $value->id;
 			$this->values[$value->id] = $value;
 		}
@@ -654,7 +654,7 @@ abstract class DataObject implements \JsonSerializable {
 		}
 
 		foreach ($this->_extra as $k => $v) {
-			if (is_object($v) && is_subclass_of($v, 'DataObject')) {
+			if (is_object($v) && $v instanceof DataObject) {
 				/** @var DataObject $v */
 				$a[$k] = $v->toArray($dateFormat);
 			} else if (is_array($v)) {
@@ -678,7 +678,7 @@ abstract class DataObject implements \JsonSerializable {
 			$dateFormat = Config::$dateFormat;
 		}
 		if (!is_array($array)) {
-			if (is_object($array) && is_subclass_of($array, 'DataObject')) {
+			if (is_object($array) && $array instanceof DataObject) {
 				/** @var DataObject $array */
 				return $array->toArray($dateFormat);
 			}
@@ -689,7 +689,7 @@ abstract class DataObject implements \JsonSerializable {
 		foreach ($array as $key => $object) {
 			if (is_array($object)) {
 				$result[$key] = self::objectListToArrayList($object, $dateFormat);
-			} else if (is_object($object) && is_subclass_of($object, 'DataObject')) {
+			} else if (is_object($object) && $object instanceof DataObject) {
 				/** @var DataObject $object */
 				$result[$key] = $object->toArray($dateFormat);
 			} else {
