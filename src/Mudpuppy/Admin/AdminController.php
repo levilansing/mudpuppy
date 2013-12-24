@@ -224,7 +224,7 @@ AND i.TABLE_NAME = '$table';");
 	private static function generateForeignKeyLookups($properties) {
 		$output = '';
 		foreach ($properties as $property) {
-			$output .= "\t\t\$this->createLookup('$property[name]Id', '$property[name]', '$property[type]');" . PHP_EOL;
+			$output .= "\t\t\$this->createLookup('$property[name]Id', '$property[name]', 'Model\\$property[type]');" . PHP_EOL;
 		}
 		return $output;
 	}
