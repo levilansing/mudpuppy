@@ -233,11 +233,16 @@ function error_handler($errNo, $errStr, $errFile, $errLine) {
 		E_USER_WARNING => 'User Warning',
 		E_USER_NOTICE => 'User Notice',
 		E_STRICT => 'Runtime Notice',
-		E_RECOVERABLE_ERROR => 'Catchable Fatal Error'
+		E_RECOVERABLE_ERROR => 'Catchable Fatal Error',
+		E_DEPRECATED => 'Deprecated'
 	);
 
 	// Handle the error
-	$err = $errorType[$errNo] . ": $errStr in $errFile ($errLine)";
+	if (isset($errorType[$errNo])) {
+		$err = $errorType[$errNo] . ": $errStr in $errFile ($errLine)";
+	} else {
+		$err = 'error #$errNo' . ": $errStr in $errFile ($errLine)";
+	}
 	switch ($errNo) {
 	case E_ERROR:
 	case E_PARSE:
