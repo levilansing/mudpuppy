@@ -215,7 +215,7 @@ abstract class DataObject implements \JsonSerializable {
 	 * @return bool
 	 */
 	function save() {
-		$id = (int)$this->getId();
+		$id = $this->getId();
 		$fields = array();
 		foreach ($this->_data as $col => &$value) {
 
@@ -226,10 +226,7 @@ abstract class DataObject implements \JsonSerializable {
 				$fields[] = new DBColumnValue($col, $value->dataType, $value->value);
 			}
 		}
-		if (sizeof($fields) == 0) {
-			if ($id == 0) {
-				return false;
-			}
+		if (sizeof($fields) == 0 && $id != 0) {
 			return true;
 		}
 

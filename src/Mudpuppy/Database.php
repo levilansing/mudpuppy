@@ -430,49 +430,48 @@ class Database {
 	 */
 	function insert($table, $columnValues) {
 		if (sizeof($columnValues) == 0) {
-			throw new MudpuppyException("error: database::add - 2nd parameter colvals is of size 0<br />\n");
-		}
-
-		// insert, return new id
-		$query = "INSERT INTO `$this->prefix$table` (";
-		$queryp2 = " VALUES(";
-		foreach ($columnValues as $val) {
-			$col = $val->getColumn();
-			$query .= "`$col`,";
-			$type = $val->getDataType();
-			if ($val->isNull()) {
-				$queryp2 .= 'NULL,';
-			} else if ($type < _DATATYPE_END_NUMERIC) {
-				$queryp2 .= $this->formatNumber($val->getValue()) . ',';
-			} else if ($type == DATATYPE_DATETIME) {
-				$queryp2 .= self::formatDateAndEscape($val->getValue()) . ',';
-			} else if ($type == DATATYPE_DATE) {
-				$queryp2 .= self::formatDateAndEscape($val->getValue(), false) . ',';
-			} else if ($type == DATATYPE_JSON) {
-				$value = $val->getValue();
-				if (empty($value)) {
+			$query = "INSERT INTO `$this->prefix$table` () VALUES ()";
+		} else {
+			// insert, return new id
+			$query = "INSERT INTO `$this->prefix$table` (";
+			$queryp2 = " VALUES(";
+			foreach ($columnValues as $val) {
+				$col = $val->getColumn();
+				$query .= "`$col`,";
+				$type = $val->getDataType();
+				if ($val->isNull()) {
 					$queryp2 .= 'NULL,';
-				} else if (is_string($val->getValue())) {
-					$queryp2 .= $this->formatString($val->getValue()) . ',';
+				} else if ($type < _DATATYPE_END_NUMERIC) {
+					$queryp2 .= $this->formatNumber($val->getValue()) . ',';
+				} else if ($type == DATATYPE_DATETIME) {
+					$queryp2 .= self::formatDateAndEscape($val->getValue()) . ',';
+				} else if ($type == DATATYPE_DATE) {
+					$queryp2 .= self::formatDateAndEscape($val->getValue(), false) . ',';
+				} else if ($type == DATATYPE_JSON) {
+					$value = $val->getValue();
+					if (empty($value)) {
+						$queryp2 .= 'NULL,';
+					} else if (is_string($val->getValue())) {
+						$queryp2 .= $this->formatString($val->getValue()) . ',';
+					} else {
+						$queryp2 .= $this->formatString(json_encode($val->getValue())) . ',';
+					}
 				} else {
-					$queryp2 .= $this->formatString(json_encode($val->getValue())) . ',';
+					$queryp2 .= $this->formatString($val->getValue()) . ',';
 				}
-			} else {
-				$queryp2 .= $this->formatString($val->getValue()) . ',';
 			}
+			$query = substr($query, 0, strlen($query) - 1) . ")";
+			$query .= substr($queryp2, 0, strlen($queryp2) - 1);
+			$query .= ")";
 		}
-		$query = substr($query, 0, strlen($query) - 1) . ")";
-		$query .= substr($queryp2, 0, strlen($queryp2) - 1);
-		$query .= ")";
 
 		try {
 			$this->query($query);
 
 			if (!$this->hasError()) {
 				// get generated id
-				$this->query("SELECT LAST_INSERT_ID()");
-				if ($this->lastResult && $row = $this->lastResult->fetch(\PDO::FETCH_NUM)) {
-					return $row[0];
+				if ($this->query("SELECT LAST_INSERT_ID()")) {
+					return $this->fetchFirstValue();
 				}
 			}
 

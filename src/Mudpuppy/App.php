@@ -86,6 +86,10 @@ class App {
 		// get the page controller and verify the user has permission to proceed
 		self::$pageController = Controller::getController();
 		if (!$security->hasPermissions(self::$pageController->getRequiredPermissions())) {
+			$reflectionApp = new \ReflectionClass('App\\' . Config::$appClass);
+			if ($reflectionApp->hasMethod('permissionDenied')) {
+				forward_static_call(array('App\\' . Config::$appClass, 'permissionDenied'));
+			}
 			throw new PermissionDeniedException();
 		}
 
