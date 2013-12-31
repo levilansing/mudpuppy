@@ -240,7 +240,7 @@
 		for (var i = 0; i < logs.length; i++) {
 			var item = logs[i];
 			var time = item.time;
-			ol.append($('<li></li>').text(parseFloat(time).toFixed(4) + ': ' + item.title));
+			ol.append($('<li></li>').text(parseFloat(time).toFixed(4) + 's: ' + item.title));
 		}
 
 		// log summary
@@ -260,7 +260,7 @@
 		for (var i = 0; i < errors.length; i++) {
 			var item = errors[i];
 			var time = item.time;
-			ol.append($('<li></li>').append($('<pre class="prettyprint lang-log"/>').text(parseFloat(time).toFixed(4) + ': ' + item.error)));
+			ol.append($('<li></li>').append($('<pre class="prettyprint lang-log"/>').text(parseFloat(time).toFixed(4) + 's: ' + item.error)));
 		}
 		return ol;
 	}

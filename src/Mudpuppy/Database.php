@@ -72,7 +72,11 @@ class Database {
 
 	/** @var \PDO */
 	private $pdo = null;
-	static $queryLog = array();
+
+	public static $queryLog = array();
+	public static $additionalQueryLogs = 0;
+	const LOG_LIMIT = 999;
+
 	static $errorCount = 0;
 	var $prefix = "";
 
@@ -81,10 +85,8 @@ class Database {
 	/** @var \PDOStatement */
 	var $statement = null;
 
-	function __construct() {
-	}
 
-	function connect($server, $port, $database, $user, $pass) {
+	public function connect($server, $port, $database, $user, $pass) {
 		try {
 
 			$this->pdo = new \PDO(sprintf(Config::$dbProtocol, $server, $port, $database), $user, $pass, array(
@@ -98,6 +100,30 @@ class Database {
 		}
 		return true;
 	}
+
+	private static function logQueryStart($query) {
+		if (count(Database::$queryLog) >= self::LOG_LIMIT) {
+			self::$additionalQueryLogs++;
+		}
+		Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => $query);
+	}
+
+	private static function logQueryEndTime() {
+		if (count(Database::$queryLog) == 0 || count(Database::$queryLog) > self::LOG_LIMIT) {
+			return;
+		}
+		Database::$queryLog[count(Database::$queryLog)-1]['etime'] = Log::getElapsedTime();
+	}
+
+	private static function logQueryError($error) {
+		if (count(Database::$queryLog) == 0 || count(Database::$queryLog) > self::LOG_LIMIT) {
+			Log::error($error);
+			return;
+		}
+		Database::$queryLog[sizeof(Database::$queryLog) - 1]['error'] = $error;
+	}
+
+
 
 	/**
 	 *
@@ -115,10 +141,10 @@ class Database {
 	 */
 	function beginTransaction() {
 		if (Config::$debug && Config::$logQueries) {
-			Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => 'PDO::beginTransaction()');
+			self::logQueryStart('PDO::beginTransaction()');
 		}
 		$result = $this->pdo->beginTransaction();
-		Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
+		self::logQueryEndTime();
 		return $result;
 	}
 
@@ -131,10 +157,10 @@ class Database {
 			return false;
 		}
 		if (Config::$debug && Config::$logQueries) {
-			Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => 'PDO::rollback()');
+			self::logQueryStart('PDO::rollback()');
 		}
 		$result = $this->pdo->rollBack();
-		Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
+		self::logQueryEndTime();
 		return $result;
 	}
 
@@ -147,11 +173,11 @@ class Database {
 			return false;
 		}
 		if (Config::$debug && Config::$logQueries) {
-			Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => 'PDO::commit()');
+			self::logQueryStart('PDO::commit()');
 		}
 
 		$result = $this->pdo->commit();
-		Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
+		self::logQueryEndTime();
 		return $result;
 	}
 
@@ -173,7 +199,7 @@ class Database {
 			}
 
 			if (Config::$debug && Config::$logQueries) {
-				Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => $query);
+				self::logQueryStart($query);
 			}
 
 			if ($bUseStatement) {
@@ -184,15 +210,13 @@ class Database {
 				$this->lastResult = $this->pdo->query($query);
 			}
 
-			if (Config::$debug && Config::$logQueries) {
-				Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
-			}
+			self::logQueryEndTime();
 
 			if ($this->hasError()) {
 				$error = $this->getLastError();
 				Log::error($error);
 				if (Config::$debug && Config::$logQueries) {
-					Database::$queryLog[sizeof(Database::$queryLog) - 1]['error'] = $error;
+					self::logQueryError($error);
 					Database::$errorCount++;
 				} else if (Config::$debug) {
 					Log::error('SQL Error: ' . $error);
@@ -203,10 +227,7 @@ class Database {
 
 			return $this->lastResult;
 		} catch (\Exception $e) {
-			$file = $e->getFile();
-			$line = $e->getLine();
-			$message = $e->getMessage();
-			Log::error("Error: <b>$message</b> in $file on line $line");
+			Log::exception($e);
 		}
 		return false;
 	}
@@ -224,9 +245,10 @@ class Database {
 			}
 
 			if (Config::$debug && Config::$logQueries) {
-				Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => $query->queryString);
 				if ($argArray != null) {
-					Database::$queryLog[] = array('stime' => Log::getElapsedTime(), 'query' => json_encode($argArray));
+					self::logQueryStart($query->queryString . "\n" . json_encode($argArray));
+				} else {
+					self::logQueryStart($query->queryString);
 				}
 			}
 			if ($argArray != null) {
@@ -236,14 +258,14 @@ class Database {
 			}
 
 			if (Config::$debug && Config::$logQueries) {
-				Database::$queryLog[sizeof(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
+				self::logQueryEndTime();
 			}
 
 			if ($this->hasError()) {
 				$error = $this->getLastError();
 				Log::error($error);
 				if (Config::$debug && Config::$logQueries) {
-					Database::$queryLog[sizeof(Database::$queryLog) - 1]['error'] = $error;
+					self::logQueryError($error);
 					Database::$errorCount++;
 				} else if (Config::$debug) {
 					Log::error('SQL Error: ' . $error);
@@ -254,10 +276,7 @@ class Database {
 
 			return $query;
 		} catch (\Exception $e) {
-			$file = $e->getFile();
-			$line = $e->getLine();
-			$message = $e->getMessage();
-			Log::error("Error: <b>$message</b> in $file on line $line");
+			Log::exception($e);
 		}
 		return false;
 	}
@@ -477,6 +496,7 @@ class Database {
 
 			throw new \Exception("database::insert failed.");
 		} catch (\Exception $e) {
+			Log::exception($e);
 			return false;
 		}
 	}

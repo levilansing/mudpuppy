@@ -19,16 +19,20 @@ class Log {
 	private static $log;
 	private static $errors;
 	private static $writeCompleted = false;
+	private static $additionalLogs = 0;
+	private static $additionalErrors = 0;
+	const LOG_LIMIT = 999;
+	const ERROR_LIMIT = 99;
 
 	/**
 	 * start up the log and record the start time (called automatically at bottom of this file)
 	 */
 	public static function initialize() {
-		if (Log::$startTime) {
+		if (self::$startTime) {
 			return;
 		}
-		Log::$startTime = microtime();
-		Log::$log = array();
+		self::$startTime = microtime();
+		self::$log = array();
 	}
 
 	/**
@@ -56,7 +60,10 @@ class Log {
 	 * @param string $text
 	 */
 	public static function add($text) {
-		Log::$log[] = array('title' => $text, 'time' => self::getElapsedTime(), 'mem' => memory_get_usage());
+		if (count(self::$log) >= self::LOG_LIMIT) {
+			self::$additionalLogs++;
+		}
+		self::$log[] = array('title' => $text, 'time' => self::getElapsedTime(), 'mem' => memory_get_usage());
 	}
 
 	/**
@@ -97,8 +104,11 @@ class Log {
 	 * @param string $error
 	 */
 	public static function error($error) {
+		if (count(self::$errors) >= self::ERROR_LIMIT) {
+			self::$additionalErrors++;
+		}
 		$error .= self::getBacktrace(2);
-		Log::$errors[] = array('time' => Log::getElapsedTime(), 'error' => $error);
+		self::$errors[] = array('time' => self::getElapsedTime(), 'error' => $error);
 	}
 
 	/**
@@ -106,9 +116,12 @@ class Log {
 	 * @param \Exception $e
 	 */
 	public static function exception(\Exception $e) {
+		if (count(self::$errors) >= self::ERROR_LIMIT) {
+			self::$additionalErrors++;
+		}
 		$error = get_class($e) . ': ' . $e->getFile() . '(' . $e->getLine() . ') \'' . $e->getMessage() . '\'';
 		$error .= self::getBacktrace(0, $e->getTrace());
-		Log::$errors[] = array('time' => Log::getElapsedTime(), 'error' => $error);
+		self::$errors[] = array('time' => self::getElapsedTime(), 'error' => $error);
 	}
 
 	/**
@@ -116,7 +129,7 @@ class Log {
 	 * @return mixed
 	 */
 	public static function getErrors() {
-		return Log::$errors;
+		return self::$errors;
 	}
 
 	/**
@@ -157,17 +170,40 @@ class Log {
 		if (Config::$logLevel == LOG_LEVEL_NONE) {
 			return;
 		}
+
+		if (self::$additionalLogs > 0) {
+			self::$log[] = array(
+				'title' => 'More than 999 log entries have been added. An additional ' . self::$additionalLogs . ' logs were not recorded.',
+				'time' => self::getElapsedTime(), 'mem' => memory_get_usage()
+			);
+		}
+
+		if (self::$additionalErrors > 0) {
+			self::$errors[] = array(
+				'time' => self::getElapsedTime(),
+				'error' => 'More than 99 errors reported. An additional ' . self::$additionalErrors . ' errors were not recorded.'
+			);
+		}
+
+		if (Database::$additionalQueryLogs) {
+			Database::$queryLog[] = array(
+				'stime' => Log::getElapsedTime(),
+				'query' => 'More than '.Database::LOG_LIMIT.' queries executed. ' . Database::$additionalQueryLogs . ' queries were not recorded.',
+				'etime'=>Log::getElapsedTime()
+			);
+		}
+
 		if (Config::$debug && !self::hasStorageOption()) {
-			if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
+			if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(self::$errors)) {
 				self::displayFullLog();
 				self::$writeCompleted = true;
 			}
 			return;
 		}
-		if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(Log::$errors)) {
+		if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(self::$errors)) {
 			try {
 				// Delete old logs once in a while
-				if (rand(0, 1000) == 0) {
+				if (rand(0, 10000) == 0) {
 					$oldAge = strtotime('7 days ago');
 					if (Config::$logToDatabase) {
 						$db = App::getDBO();
@@ -255,13 +291,13 @@ class Log {
 	public static function displayFullLog() {
 		$tend = microtime();
 
-		$nErrors = sizeof(Log::$errors);
+		$nErrors = sizeof(self::$errors);
 		if (!Config::$logQueries || !Config::$dbHost) {
 			$nQueries = "Log Queries Off";
 		} else {
 			$nQueries = sizeof(Database::$queryLog) . " Queries";
 		}
-		$executionTime = sprintf("%0.4fs", Log::getElapsedTime($tend));
+		$executionTime = sprintf("%0.4fs", self::getElapsedTime($tend));
 
 		print "<div id=\"debug_preview\" style=\"background:#CCC; color:#335533; padding:2px 10px; font-size: 13px; line-height: 18px; height: 18px; cursor:pointer\" onclick=\"if (window.jQuery) $('#debug_details').toggle(500); else document.getElementById('debug_details').style.display='';\">";
 		print "Debug Log (<span" . ($nErrors > 0 ? ' style="color:#C20; font-weight:bold;"' : '') . ">$nErrors Errors</span> | $nQueries | Execution Time: $executionTime)";
@@ -271,8 +307,8 @@ class Log {
 
 		// Errors from the error handler
 		print "<h3>Errors</h3>\n";
-		if (sizeof(Log::$errors) > 0) {
-			foreach (Log::$errors as $e) {
+		if (sizeof(self::$errors) > 0) {
+			foreach (self::$errors as $e) {
 				printf("%.4fs: %s<br />\n", $e['time'], $e['error']);
 			}
 		} else {
@@ -305,7 +341,7 @@ class Log {
 
 		// performance information
 		print "<h3>Performance Information:</h3>\n";
-		print "execution time: " . number_format(Log::getElapsedTime($tend), 4) . "s<br />\n";
+		print "execution time: " . number_format(self::getElapsedTime($tend), 4) . "s<br />\n";
 		print "end memory usage: " . number_format(memory_get_usage()) . " bytes<br />\n";
 		if (function_exists('memory_get_peak_usage')) {
 			print "peak memory usage: " . number_format(memory_get_peak_usage()) . " bytes<br />\n";
@@ -324,9 +360,9 @@ class Log {
 		print "</ul></div>\n";
 
 		print "<br /><h3>Log:</h3>";
-		if (sizeof(Log::$log) > 0) {
-			foreach (Log::$log as $l) {
-				printf("%.4fs [%s]: %s", $l['time'], Log::formatMemory($l['mem']), $l['title']);
+		if (sizeof(self::$log) > 0) {
+			foreach (self::$log as $l) {
+				printf("%.4fs [%s]: %s", $l['time'], self::formatMemory($l['mem']), $l['title']);
 				print "<br />\n";
 			}
 		}

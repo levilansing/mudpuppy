@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+
 use App\Config;
 
 define('MUDPUPPY', true);
@@ -70,7 +71,6 @@ MPAutoLoad('Mudpuppy\MudpuppyException');
 // Initialize the application
 App::start();
 
-
 //======================================================================================================================
 // Automatic class loading functions
 //======================================================================================================================
@@ -110,7 +110,7 @@ function MPAutoLoad($className) {
 	if ((($namespace && (!isset($classes[$namespace]) || !isset($classes[$namespace][$class]) || !file_exists($classes[$namespace][$class])))
 			|| (!$namespace && (!isset($classes[$class]) || !file_exists($classes[$class])))) && !$reloadedCache && Config::$debug
 	) {
-		Log::add('Refreshing auto-load cache for class '.$className);
+		Log::add('Refreshing auto-load cache for class ' . $className);
 		File::putContents($classCacheFile, _refreshAutoLoadClasses($classes));
 		$reloadedCache = true;
 	}
@@ -200,10 +200,8 @@ function _refreshAutoLoadClasses(&$classes) {
 		}
 	}
 
-
 	return json_encode($classes, JSON_PRETTY_PRINT);
 }
-
 
 //======================================================================================================================
 // Error handling functions
