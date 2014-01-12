@@ -77,7 +77,7 @@ class Security extends Mudpuppy\Security {
 	 * Logs out the current user by resetting the session.
 	 */
 	public function logout() {
-		Session::resetAll();
+		Session::reset();
 	}
 
 	/**

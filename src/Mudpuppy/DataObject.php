@@ -18,12 +18,14 @@ class DataValue {
 	var $dataType;
 	var $value;
 	var $flags;
+	var $maxLength;
 
 	// set flag to loaded if sending value
-	function __construct($dataType, $default = null, $notNull = false) {
+	function __construct($dataType, $default = null, $notNull = false, $maxLength = 0) {
 		$this->dataType = $dataType;
 		$this->value = $default;
 		$this->flags = (is_null($default) ? 0 : DATAFLAG_CHANGED) | ($notNull ? DATAFLAG_NOTNULL : 0);
+		$this->maxLength = $maxLength;
 	}
 
 	function isEmpty() {
@@ -412,7 +414,7 @@ abstract class DataObject implements \JsonSerializable {
 
 	/**
 	 * @param int $id
-	 * @return DataObject
+	 * @return DataObject|null
 	 */
 	public static function get($id) {
 		if (!$id) {
@@ -494,6 +496,39 @@ abstract class DataObject implements \JsonSerializable {
 			$objects[] = new $objectClass($row);
 		}
 		return $objects;
+	}
+
+	/**
+	 * Fetch by an id or key value pair map
+	 * @param int|array $criteria
+	 * @throws MudpuppyException
+	 * @return \Mudpuppy\DataObject[]
+	 */
+	public static function fetch($criteria) {
+		if (is_int($criteria)) {
+			return [self::get($criteria)];
+		}
+		if (is_array($criteria)) {
+			return self::getByFields($criteria);
+		}
+		throw new MudpuppyException("Unrecognized \$options type");
+	}
+
+	/**
+	 * Fetch by an id or key value pair map, but only return the first result or null
+	 * @param $criteria
+	 * @return DataObject|DataObject[]|null
+	 */
+	public static function fetchOne($criteria) {
+		$result = self::fetch($criteria);
+		if (is_array($result)) {
+			if (count($result) > 0) {
+				return $result[0];
+			} else {
+				return null;
+			}
+		}
+		return $result;
 	}
 
 	function getDate($col, $format, $default = null) {
@@ -616,15 +651,19 @@ abstract class DataObject implements \JsonSerializable {
 	/**
 	 * Convert data object into a JSON friendly array
 	 *
-	 * @param string $dateFormat
+	 * @param string $dateFormat or null to use the date format from Config
+	 * @param array $filter list of keys to include
 	 * @return array
 	 */
-	function &toArray($dateFormat = null) {
+	function &toArray($dateFormat = null, $filter = null) {
 		if (empty($dateFormat)) {
 			$dateFormat = Config::$dateFormat;
 		}
 		$a = array();
 		foreach ($this->_data as $k => $v) {
+			if ($filter && !in_array($k, $filter)) {
+				continue;
+			}
 			$dataType = $v->dataType;
 			if ($v->value === null) {
 				$a[$k] = null;
@@ -651,6 +690,9 @@ abstract class DataObject implements \JsonSerializable {
 		}
 
 		foreach ($this->_extra as $k => $v) {
+			if ($filter && !in_array($k, $filter)) {
+				continue;
+			}
 			if (is_object($v) && $v instanceof DataObject) {
 				/** @var DataObject $v */
 				$a[$k] = $v->toArray($dateFormat);

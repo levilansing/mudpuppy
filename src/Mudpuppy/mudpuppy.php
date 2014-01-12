@@ -23,9 +23,12 @@ if (!defined('PASSWORD_DEFAULT')) {
 }
 
 // Load the configuration, logging system, and file system helper
+require_once('Mudpuppy/Log.php');
 require_once('App/Config.php');
-require_once('Mudpuppy/log.php');
-require_once('Mudpuppy/file.php');
+require_once('Mudpuppy/File.php');
+
+// initialize the log
+Log::initialize();
 
 // Must have PHP >= 5.4.0
 if (version_compare(PHP_VERSION, '5.4.0', '<')) {

@@ -15,11 +15,10 @@ defined('MUDPUPPY') or die('Restricted');
 */
 class Session {
 	protected static $sessionHash;
-	protected static $lastFlashData;
 	protected static $_data;
 
 	function __construct() {
-		throw new Exception('Session is a static class; cannot instantiate.');
+		throw new \Exception('Session is a static class; cannot instantiate.');
 	}
 
 	/**
@@ -28,7 +27,7 @@ class Session {
 	static function start() {
 		session_start();
 		if (isset($_SERVER['HTTP_HOST']) || isset($_SERVER['SERVER_NAME'])) {
-			self::$sessionHash = (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']);
+			self::$sessionHash = (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']);		// add application name
 		} else {
 			self::$sessionHash = 'noserver-' . Config::$appTitle;
 		}
@@ -41,12 +40,6 @@ class Session {
 		}
 
 		Session::$_data =& $_SESSION[self::$sessionHash];
-
-		if (!isset(Session::$_data['flash_data'])) {
-			Session::$_data['flash_data'] = array();
-		}
-		Session::$lastFlashData = Session::$_data['flash_data'];
-		Session::$_data['flash_data'] = array();
 
 		// delete expired temp variables
 		if (!isset(Session::$_data['_temp'])) {
@@ -63,7 +56,7 @@ class Session {
 	/**
 	 * clear the entire session variable for this application
 	 */
-	static function resetAll() {
+	static function reset() {
 		unset($_SESSION[self::$sessionHash]);
 		$_SESSION[self::$sessionHash] = array();
 
@@ -129,7 +122,7 @@ class Session {
 
 	/**
 	 * clear the regular session data
-	 * excludes temp and flash data
+	 * (excludes temp data)
 	 */
 	static function clear() {
 		foreach (array_keys(Session::$_data) as $key) {
@@ -173,54 +166,6 @@ class Session {
 		unset(Session::$_data['_temp'][$id]);
 	}
 
-	//////////////////////////////
-	// Flash functions
-
-	/**
-	 * Set a flash variable
-	 * @param $key
-	 * @param $val
-	 */
-	static function setFlash($key, $val) {
-		Session::$_data['flash_data'][$key] = $val;
-	}
-
-	/**
-	 * Get a flash variable or return $default if it doesn't exist
-	 * @param $key
-	 * @param null $default
-	 * @return *
-	 */
-	static function getFlash($key, $default = null) {
-		if (isset(Session::$lastFlashData[$key])) {
-			return Session::$lastFlashData[$key];
-		}
-
-		return $default;
-	}
-
-	/**
-	 * check if a flash variable exists
-	 * @param $key
-	 * @return bool
-	 */
-	static function isFlash($key) {
-		return isset(Session::$lastFlashData[$key]);
-	}
-
-	/**
-	 * free flash data from previous page
-	 */
-	static function freeFlash() {
-		Session::$lastFlashData = array();
-	}
-
-	/**
-	 * clear current flash data - will not pass to next page
-	 */
-	static function cancelFlash() {
-		Session::$_data['flash_data'] = array();
-	}
 }
 
 ?>

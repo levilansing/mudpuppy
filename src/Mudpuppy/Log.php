@@ -372,6 +372,4 @@ class Log {
 	}
 }
 
-// initialize the log automatically
-Log::initialize();
 ?>

@@ -5,8 +5,6 @@
 namespace App;
 defined('MUDPUPPY') or die('Restricted');
 
-define('APP_VERSION', '1.0.0');
-
 // Base configuration
 class Config {
 	// Database settings

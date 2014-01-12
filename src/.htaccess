@@ -10,7 +10,7 @@ RewriteEngine On
 RewriteCond %{REQUEST_URI} !^/content/
 
 # Always let the favicon and robots.txt through
-RewriteCond %{REQUEST_URI} !^/(favicon.ico|robots.txt)$
+RewriteCond %{REQUEST_URI} !^/(favicon.ico|robots.txt|crossdomain.xml)$
 
 # Everything else goes to the index
 RewriteCond %{REQUEST_URI} !^/index.php/

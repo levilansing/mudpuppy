@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy\Admin;
+
 use Mudpuppy\Controller;
 use Mudpuppy\PageController;
 use Mudpuppy\App;
@@ -34,7 +35,7 @@ class AdminController extends Controller {
 
 		if (count($this->pathOptions) > 1 && strtolower($this->pathOptions[0]) == 'content') {
 			if (in_array($this->pathOptions[1], array('bootstrap', 'css', 'js', 'images'))) {
-				File::passThrough('Mudpuppy/Admin/content/'.implode('/', array_slice($this->pathOptions, 1)));
+				File::passThrough('Mudpuppy/Admin/content/' . implode('/', array_slice($this->pathOptions, 1)));
 			}
 			throw new PageNotFoundException();
 		}
@@ -189,8 +190,21 @@ class AdminController extends Controller {
 				$default = "NULL";
 			}
 			$notNull = $col['Null'] == 'NO' ? 'true' : 'false';
+			$length = 0;
+			$type = strtoupper(preg_replace('#\(.*$#', '', $col['Type']));
+			$stringTypes = ['TINYBLOB', 'TINYTEXT', 'BLOB', 'TEXT', 'MEDIUMBLOB', 'MEDIUMTEXT', 'LONGBLOB', 'LONGTEXT'];
+			if (in_array($type, ['CHAR', 'VARCHAR', 'BINARY', 'VARBINARY'])) {
+				if (preg_match('/\(([0-9]+)\)/', $col['Type'], $matches)) {
+					$length = (int)$matches[1];
+				}
+			} else {
+				$index = array_search($type, $stringTypes);
+				if ($index !== false) {
+					$length = pow(2, ((int)($index/2)+1)*8);
+				}
+			}
 			$type = self::getDbDataType($col['Type'], $col['Comment']);
-			$str .= "		\$this->createColumn('$fieldName', $type, $default, $notNull);" . PHP_EOL;
+			$str .= "		\$this->createColumn('$fieldName', $type, $default, $notNull, $length);" . PHP_EOL;
 		}
 		return $str;
 	}
@@ -231,13 +245,13 @@ AND i.TABLE_NAME = '$table';");
 
 	private static function getPhpType($type, $comment) {
 		$type = strtoupper(preg_replace('#\(.*$#', '', $type));
-		$types = array(
-			'int' => array('INTEGER', 'INT', 'SMALLINT', 'TINYINT', 'MEDIUMINT', 'BIGINT', 'DATE', 'DATETIME', 'TIMESTAMP', 'YEAR'),
-			'float' => array('FLOAT', 'DOUBLE'),
-			'bool' => array('BIT', 'BOOL'),
-			'string' => array('DECIMAL', 'NUMERIC', 'CHAR', 'VARCHAR', 'BINARY', 'VARBINARY', 'ENUM', 'SET', 'BLOB', 'TEXT',
-				'TINYBLOB', 'TINYTEXT', 'MEDIUMBLOB', 'MEDIUMTEXT', 'LONGBLOB', 'LONGTEXT'),
-		);
+		$types = [
+			'int' => ['INTEGER', 'INT', 'SMALLINT', 'TINYINT', 'MEDIUMINT', 'BIGINT', 'DATE', 'DATETIME', 'TIMESTAMP', 'YEAR'],
+			'float' => ['FLOAT', 'DOUBLE'],
+			'bool' => ['BIT', 'BOOL'],
+			'string' => ['DECIMAL', 'NUMERIC', 'CHAR', 'VARCHAR', 'BINARY', 'VARBINARY', 'ENUM', 'SET', 'BLOB', 'TEXT',
+				'TINYBLOB', 'TINYTEXT', 'MEDIUMBLOB', 'MEDIUMTEXT', 'LONGBLOB', 'LONGTEXT'],
+		];
 		foreach ($types as $t => $list) {
 			if (in_array($type, $list)) {
 				if ($t == 'string' && strtoupper(substr($comment, 0, 4)) == 'JSON') {
