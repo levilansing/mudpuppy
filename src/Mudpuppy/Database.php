@@ -92,8 +92,18 @@ class Database {
 			$this->pdo = new \PDO(sprintf(Config::$dbProtocol, $server, $port, $database), $user, $pass, array(
 				\PDO::ATTR_AUTOCOMMIT => true
 			));
+
+			$now = new \DateTime();
+			$min = $now->getOffset() / 60;
+			$sgn = ($min < 0 ? -1 : 1);
+			$min = abs($min);
+			$hrs = floor($min / 60);
+			$min -= $hrs * 60;
+			$offset = sprintf('%+d:%02d', $hrs*$sgn, $min);
+
 			// PDO doesn't default to the requested database automatically with MSSQL
-			$this->pdo->query("USE $database; SET sql_mode = 'TRADITIONAL';");
+			$this->pdo->query("SET time_zone='$offset'; USE $database; SET sql_mode = 'TRADITIONAL';");
+
 		} catch (\PDOException $e) {
 			Log::error("DB Connection failed:" . $e->getMessage());
 			return false;
@@ -555,9 +565,7 @@ class Database {
 		if (strncmp($mysqltime, '0000-00-00', 10) == 0) {
 			return 0;
 		}
-		if ($time) {
-			return strtotime($mysqltime . ' GMT');
-		}
+		// MySQL is set to the application's timezone, no need to convert between timezones
 		return strtotime($mysqltime);
 	}
 
@@ -579,7 +587,7 @@ class Database {
 		} // MSSQL: "0000-00-00";
 
 		if ($time) {
-			return gmdate("Y-m-d H:i:s", $datetime);
+			return date("Y-m-d H:i:s", $datetime);
 		}
 		return date("Y-m-d", $datetime);
 	}

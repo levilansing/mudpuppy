@@ -212,7 +212,7 @@ class AppController extends Controller {
 		$currentFolder = '';
 		foreach ($folders as $folder) {
 			if (!file_exists($currentFolder . $folder) && !mkdir($currentFolder . $folder)) {
-				throw new MudpuppyException(null, 500, 'Failed to create directory ' . $currentFolder . $folder);
+				throw new MudpuppyException(null, 'Failed to create directory ' . $currentFolder . $folder);
 			}
 			$currentFolder .= $folder . '/';
 		}
@@ -238,7 +238,7 @@ class AppController extends Controller {
 
 			$stub = file_get_contents('Mudpuppy/Admin/app/' . $stubFile);
 			if (!$stub) {
-				throw new MudpuppyException(null, 500, 'Controller stub is missing: ' . $stubFile);
+				throw new MudpuppyException(null, 'Controller stub is missing: ' . $stubFile);
 			}
 
 			// populate stub file
@@ -247,7 +247,7 @@ class AppController extends Controller {
 			$stub = str_replace('___VIEW_FILE_PATH___', implode('/', explode('\\', $namespace)) . '/'. substr($fileName, 0, -10) . 'View.php', $stub);
 
 			if (file_put_contents($currentFolder . $fileName . '.php', $stub) === false) {
-				throw new MudpuppyException(null, 500, 'Unable to create file. May not have appropriate file permissions.');
+				throw new MudpuppyException(null, 'Unable to create file. May not have appropriate file permissions.');
 			}
 
 			// if it's not a page controller, we're done
@@ -273,13 +273,13 @@ class AppController extends Controller {
 		$stubFile = 'Mudpuppy/Admin/app/_ViewStub';
 		$stub = file_get_contents($stubFile);
 		if (!$stub) {
-			throw new MudpuppyException(null, 500, 'View stub is missing: ' . $stubFile);
+			throw new MudpuppyException(null, 'View stub is missing: ' . $stubFile);
 		}
 
 		// populate stub file
 
 		if (file_put_contents($currentFolder . $fileName . '.php', $stub) === false) {
-			throw new MudpuppyException(null, 500, 'Unable to create file. May not have appropriate file permissions.');
+			throw new MudpuppyException(null, 'Unable to create file. May not have appropriate file permissions.');
 		}
 
 		return [];
@@ -303,7 +303,7 @@ class AppController extends Controller {
 		$currentFolder = '';
 		foreach ($folders as $folder) {
 			if (!file_exists($currentFolder . $folder) && !mkdir($currentFolder . $folder)) {
-				throw new MudpuppyException(null, 500, 'Failed to create directory ' . $currentFolder . $folder);
+				throw new MudpuppyException(null, 'Failed to create directory ' . $currentFolder . $folder);
 			}
 			$currentFolder .= $folder . '/';
 		}

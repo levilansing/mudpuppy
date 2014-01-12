@@ -40,7 +40,7 @@ class App {
 		// Setup the random number generators
 		function _createSeed() {
 			list($uSec, $sec) = explode(' ', microtime());
-			return (((float)$sec + ((float)$uSec * 100000)) * Config::$randomSeedOffset & 0xFFF) ^ Config::$randomSeedOffset;
+			return (((int)$sec * 100000) + ((float)$uSec * 100000)) ^ Config::$randomSeedOffset;
 		}
 
 		srand(_createSeed());
