@@ -48,8 +48,11 @@ class LogController extends Controller {
 	private static function getNewLogs($lastId) {
 		$results = [];
 		if (Config::$logToDatabase) {
-			$results = DebugLog::getByFields(array(), "id > $lastId ORDER BY id ASC");
-			if (!empty($results)) {
+			$db = App::getDBO();
+			$db->prepare('SELECT * FROM DebugLogs WHERE id > ? ORDER BY id ASC');
+			$db->execute([$lastId]);
+			$results = $db->fetchAll('Mudpuppy\Model\DebugLog');
+			if (count($results)) {
 				$results = DataObject::objectListToArrayList($results);
 			}
 		} else if (!empty(Config::$logFileDir)) {
@@ -57,7 +60,7 @@ class LogController extends Controller {
 				if ($file == "$lastId.json") {
 					break;
 				}
-				if ($file != '.' && $file != '..') {
+				if ($file != '.' && $file != '..' && File::getExtension($file) == 'json') {
 					$results[] = json_decode(file_get_contents(Config::$logFileDir . $file));
 				}
 			}
@@ -78,14 +81,19 @@ class LogController extends Controller {
 			if ($lastId >= 0) {
 				$results = self::getNewLogs($lastId);
 			} else {
-				$results = DataObject::objectListToArrayList(array_reverse(DebugLog::getByFields(array(), "id > $lastId ORDER BY id DESC LIMIT 100")));
+				$db = App::getDBO();
+				$db->prepare('SELECT * FROM DebugLogs WHERE id > ? ORDER BY id DESC LIMIT 100');
+				$db->execute([$lastId]);
+				$results = $db->fetchAll('Mudpuppy\Model\DebugLog');
+
+				$results = DataObject::objectListToArrayList(array_reverse($results));
 			}
 		} else if (!empty(Config::$logFileDir)) {
 			if (!empty($lastId)) {
 				$results = self::getNewLogs($lastId);
 			} else {
 				foreach (array_reverse(array_slice(scandir(Config::$logFileDir, SCANDIR_SORT_DESCENDING), 0, 100)) as $file) {
-					if ($file != '.' && $file != '..') {
+					if ($file != '.' && $file != '..' && File::getExtension($file) == 'json') {
 						$results[] = json_decode(file_get_contents(Config::$logFileDir . $file));
 					}
 				}
@@ -160,7 +168,7 @@ class LogController extends Controller {
 			} else if (!empty(Config::$logFileDir)) {
 				$files = scandir(Config::$logFileDir, SCANDIR_SORT_DESCENDING);
 				if (!empty($files)) {
-					if ($files[0] != '.' && $files[0] != '..') {
+					if ($files[0] != '.' && $files[0] != '..' && File::getExtension($files[0]) == 'json') {
 						$results[] = json_decode(file_get_contents(Config::$logFileDir . $files[0]));
 					}
 				}

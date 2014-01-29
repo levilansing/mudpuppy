@@ -56,7 +56,8 @@ class AdminController extends Controller {
 		}
 
 		$db = App::getDBO();
-		$result = $db->query("SHOW TABLES");
+		$db->prepare("SHOW TABLES");
+		$result = $db->execute();
 		$tables = $result->fetchAll(\PDO::FETCH_COLUMN, 0);
 
 		$updates = 0;
@@ -123,7 +124,8 @@ class AdminController extends Controller {
 	// #BEGIN DEFAULTS
 	// #END DEFAULTS
 	private static function updateContent($content, $table, $output) {
-		$result = App::getDBO()->query("SHOW FULL COLUMNS FROM $table");
+		App::getDBO()->prepare("SHOW FULL COLUMNS FROM $table");
+		$result = App::getDBO()->execute();
 		$columns = $result->fetchAll(\PDO::FETCH_ASSOC);
 
 		// Only generate for tables with an auto-incrementing id column
@@ -210,12 +212,13 @@ class AdminController extends Controller {
 	}
 
 	private static function getForeignKeyProperties($table) {
-		$result = App::getDBO()->query("SELECT i.CONSTRAINT_TYPE as `type`, k.COLUMN_NAME as `sourceColumn`, k.REFERENCED_TABLE_NAME as `referencedTable`, k.REFERENCED_COLUMN_NAME as `referencedColumn`
+		App::getDBO()->prepare("SELECT i.CONSTRAINT_TYPE as `type`, k.COLUMN_NAME as `sourceColumn`, k.REFERENCED_TABLE_NAME as `referencedTable`, k.REFERENCED_COLUMN_NAME as `referencedColumn`
 FROM information_schema.TABLE_CONSTRAINTS i
 LEFT JOIN information_schema.KEY_COLUMN_USAGE k ON i.CONSTRAINT_NAME = k.CONSTRAINT_NAME
 WHERE i.CONSTRAINT_TYPE = 'FOREIGN KEY'
 AND i.TABLE_SCHEMA = DATABASE() AND k.TABLE_SCHEMA = DATABASE()
 AND i.TABLE_NAME = '$table';");
+		$result = App::getDBO()->execute();
 		$properties = array();
 		while ($result && $row = $result->fetch(\PDO::FETCH_ASSOC)) {
 			if ($row['type'] == 'FOREIGN KEY' && $row['referencedColumn'] == 'id' && substr($row['sourceColumn'], -2) == 'Id') {

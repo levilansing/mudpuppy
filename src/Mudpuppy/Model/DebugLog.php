@@ -66,32 +66,27 @@ class DebugLog extends DataObject {
 		return 'DebugLogs';
 	}
 
+
 	/**
-	 * @param int $id
-	 * @return DebugLog
+	 * Fetch a collection of $[CLASS] objects by specified criteria, either by the id, or by any
+	 * set of field value pairs (generates query of ... WHERE field0=value0 && field1=value1)
+	 * optionally order using field direction pairs [field=>'ASC']
+	 * @param int|array $criteria
+	 * @param array $order
+	 * @param int $limit
+	 * @param int $offset
+	 * @return DebugLog[]
 	 */
-	public static function get($id) {
-		return forward_static_call(array('Mudpuppy\DataObject', 'get'), $id);
+	public static function fetch($criteria, $order = null, $limit = 0, $offset = 0) {
+		return forward_static_call(['Mudpuppy\DataObject', 'fetch'], $criteria, $limit, $offset);
 	}
 
 	/**
-	 * @param int $start first index of results
-	 * @param int $limit max number of results to return
-	 * @return DebugLog[]
+	 * @param int|array $criteria
+	 * @return DebugLog|null
 	 */
-	public static function getAll($start, $limit) {
-		return forward_static_call(array('Mudpuppy\DataObject', 'getByFields'), null, 1, $start, $limit);
-	}
-
-	/**
-	 * @param array $fieldSet in format { fieldName => value }
-	 * @param string $condition conditional logic in addition to $fieldSet
-	 * @param int $start first index of results
-	 * @param int $limit max number of results to return
-	 * @return DebugLog[]
-	 */
-	public static function getByFields($fieldSet, $condition = '', $start = 0, $limit = 0) {
-		return forward_static_call(array('Mudpuppy\DataObject', 'getByFields'), $fieldSet, $condition, $start, $limit);
+	public static function fetchOne($criteria) {
+		return forward_static_call(['Mudpuppy\DataObject', 'fetchOne'], $criteria);
 	}
 
 	/**
@@ -99,8 +94,8 @@ class DebugLog extends DataObject {
 	 */
 	public static function getLast() {
 		$db = App::getDBO();
-		$statement = $db->prepare("SELECT * FROM " . self::getTableName() . " ORDER BY id DESC LIMIT 100");
-		$result = $db->query();
+		$db->prepare("SELECT * FROM " . self::getTableName() . " ORDER BY id DESC LIMIT 100");
+		$result = $db->execute();
 		$dataObject = null;
 		if ($result && ($row = $result->fetch(\PDO::FETCH_ASSOC))) {
 			$dataObject = new DebugLog($row);
@@ -109,7 +104,8 @@ class DebugLog extends DataObject {
 	}
 
 	public static function deleteAll() {
-		return App::getDBO()->query('DELETE FROM ' . self::getTableName()) !== false;
+		App::getDBO()->prepare('DELETE FROM ' . self::getTableName() . ' WHERE 1=1');
+		return App::getDBO()->execute() !== false;
 	}
 
 	public function save() {
@@ -117,7 +113,7 @@ class DebugLog extends DataObject {
 			// Make sure the table exists
 			$db = App::getDBO();
 			if (preg_match("#Table '[^']*\\.DebugLogs' doesn't exist#i", $db->getLastError(), $matches) > 0) {
-				$db->query("CREATE TABLE IF NOT EXISTS `DebugLogs` (
+				$db->prepare("CREATE TABLE IF NOT EXISTS `DebugLogs` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '	',
   `date` datetime NOT NULL,
   `requestMethod` varchar(16) NOT NULL,
@@ -138,6 +134,7 @@ class DebugLog extends DataObject {
   KEY `ix_date` (`date`),
   KEY `ix_error` (`date`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;");
+				$db->execute();
 				return parent::save();
 			}
 			return false;

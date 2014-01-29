@@ -207,7 +207,8 @@ class Log {
 					$oldAge = strtotime('7 days ago');
 					if (Config::$logToDatabase) {
 						$db = App::getDBO();
-						$db->query("DELETE FROM DebugLogs WHERE `date` < '" . Database::formatDate($oldAge, false) . "'");
+						$db->prepare("DELETE FROM DebugLogs WHERE `date` < ?");
+						$db->execute([$db->formatDate($oldAge, false)]);
 					}
 					if (!empty(Config::$logFileDir)) {
 						foreach (scandir(Config::$logFileDir) as $file) {

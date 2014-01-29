@@ -12,9 +12,9 @@ class MudpuppyException extends \Exception {
 	protected $responseMessage = 'Internal server error';
 
 	public function __construct($internalMessage = 'Internal server error', $responseMessage = null, $statusCode = 500) {
-		if ($responseMessage) {
+		if (!empty($responseMessage)) {
 			$this->responseMessage = $responseMessage;
-			if (!$internalMessage) {
+			if (empty($internalMessage)) {
 				$internalMessage = $responseMessage;
 			}
 		}
@@ -93,6 +93,22 @@ class UnsupportedMethodException extends MudpuppyException {
 	public function __construct($internalMessage = 'Request method not supported in this context', $responseMessage = null) {
 		$this->responseMessage = 'Request method not supported in this context';
 		parent::__construct($internalMessage, $responseMessage, 405);
+	}
+}
+
+/**
+ * Assert a truth value is true. if not, throw a standard MudpuppyException.
+ * @param bool $truth
+ * @param string $internalMessage
+ * @param string $responseMessage
+ * @throws MudpuppyException
+ */
+function MPAssert($truth, $internalMessage='', $responseMessage='') {
+	if (!$truth) {
+		if (empty($internalMessage) && empty($responseMessage)) {
+			$internalMessage = 'Mudpuppy Assertion Failed';
+		}
+		throw new MudpuppyException($internalMessage, $responseMessage);
 	}
 }
 

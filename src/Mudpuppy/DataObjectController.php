@@ -315,6 +315,7 @@ trait DataObjectController {
 			}
 			break;
 
+		// todo issue #27 allow time stamp? handle date vs datetime differently?
 		case 'date':
 			if (!empty($value)) {
 				$date = false;
@@ -322,7 +323,7 @@ trait DataObjectController {
 					$date = strtotime($value);
 				}
 				if ($date !== false) {
-					return date($date, Config::$dateFormat);
+					return date($date, Config::$dateTimeFormat);
 				}
 			}
 			break;

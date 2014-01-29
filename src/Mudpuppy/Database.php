@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+
 use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
@@ -25,6 +26,8 @@ define('DATATYPE_LONGTEXT', 11);
 define('DATATYPE_JSON', 12);
 define('DATATYPE_DATETIME', 13);
 define('DATATYPE_DATE', 14);
+
+define('DB_MAX_LOG_VALUE_LENGTH', 100);
 
 class DBColumnValue {
 
@@ -68,6 +71,7 @@ class DBColumnValue {
 
 }
 
+
 class Database {
 
 	/** @var \PDO */
@@ -78,14 +82,23 @@ class Database {
 	const LOG_LIMIT = 999;
 
 	static $errorCount = 0;
-	var $prefix = "";
 
 	/** @var \PDOStatement */
-	var $lastResult = null;
+	private $lastResult = null;
 	/** @var \PDOStatement */
-	var $statement = null;
+	private $statement = null;
 
+	private $boundParams = null;
 
+	/**
+	 * Connect to a database
+	 * @param string $server name of the server
+	 * @param int $port server port
+	 * @param string $database name of database to use
+	 * @param string $user username for authentication
+	 * @param string $pass password for authentication
+	 * @return bool
+	 */
 	public function connect($server, $port, $database, $user, $pass) {
 		try {
 
@@ -99,7 +112,7 @@ class Database {
 			$min = abs($min);
 			$hrs = floor($min / 60);
 			$min -= $hrs * 60;
-			$offset = sprintf('%+d:%02d', $hrs*$sgn, $min);
+			$offset = sprintf('%+d:%02d', $hrs * $sgn, $min);
 
 			// PDO doesn't default to the requested database automatically with MSSQL
 			$this->pdo->query("SET time_zone='$offset'; USE $database; SET sql_mode = 'TRADITIONAL';");
@@ -122,7 +135,7 @@ class Database {
 		if (count(Database::$queryLog) == 0 || count(Database::$queryLog) > self::LOG_LIMIT) {
 			return;
 		}
-		Database::$queryLog[count(Database::$queryLog)-1]['etime'] = Log::getElapsedTime();
+		Database::$queryLog[count(Database::$queryLog) - 1]['etime'] = Log::getElapsedTime();
 	}
 
 	private static function logQueryError($error) {
@@ -133,20 +146,53 @@ class Database {
 		Database::$queryLog[sizeof(Database::$queryLog) - 1]['error'] = $error;
 	}
 
-
+	private $pdoTypeList = [
+		\PDO::PARAM_BOOL => 'PARAM_BOOL',
+		\PDO::PARAM_INT => 'PARAM_INT',
+		\PDO::PARAM_LOB => 'PARAM_LOB',
+		\PDO::PARAM_NULL => 'PARAM_NULL',
+		\PDO::PARAM_STMT => 'PARAM_STMT',
+		\PDO::PARAM_STR => 'PARAM_STR'
+	];
 
 	/**
-	 *
-	 * @param $query
-	 * @return \PDOStatement
+	 * Record to the log a parameter that is being bound to a PDO statement
+	 * @param string|int $label index of use or identifier used in the statement
+	 * @param mixed $value the value being bound
+	 * @param int $dataType PDO::TYPE_ type
 	 */
-	function prepare($query) {
-		$this->statement = $this->pdo->prepare($query);
-		return $this->statement;
+	public function logBindParam($label, $value, $dataType) {
+		if (!$this->boundParams) {
+			$this->boundParams = [];
+		}
+
+		if (is_null($value)) {
+			$displayValue = 'NULL';
+		} else if (is_numeric($value)) {
+			$displayValue = $value;
+		} else {
+			if (strlen($value) > DB_MAX_LOG_VALUE_LENGTH) {
+				$displayValue = '"' . substr($value, 0, DB_MAX_LOG_VALUE_LENGTH) . '" [TRUNCATED FROM LENGTH' . strlen($value) . ']';
+			} else {
+				$displayValue = '"' . $value . '"';
+			}
+		}
+
+		$displayValue .= ' (';
+		if ($dataType & \PDO::PARAM_INPUT_OUTPUT) {
+			$displayValue .= 'PARAM_INPUT_OUTPUT|';
+			$dataType &= ~\PDO::PARAM_INPUT_OUTPUT;
+		}
+		if (isset($this->pdoTypeList[$dataType])) {
+			$displayValue .= $this->pdoTypeList[$dataType];
+		}
+		$displayValue .= ')';
+
+		$this->boundParams[$label] = $displayValue;
 	}
 
 	/**
-	 * begin a transaction on the PDO connection
+	 * Begin a transaction on the PDO connection
 	 * @return bool success
 	 */
 	function beginTransaction() {
@@ -159,7 +205,7 @@ class Database {
 	}
 
 	/**
-	 * cancel a transaction
+	 * Cancel a transaction
 	 * @return bool success
 	 */
 	function rollBackTransaction() {
@@ -175,7 +221,7 @@ class Database {
 	}
 
 	/**
-	 * cancel a transaction
+	 * Commit a transaction
 	 * @return bool success
 	 */
 	function commitTransaction() {
@@ -192,84 +238,44 @@ class Database {
 	}
 
 	/**
-	 * perform the specified query, or query the prepared statement if $query = NULL
-	 * @param string $query
-	 * @return \PDOStatement
+	 * Prepare a statement using PDO
+	 * @param string $query The sql statement to be prepared for execution
+	 * @param array $driverOptions optional PDO driver options
+	 * @return bool
 	 */
-	function query($query = null) {
-		try {
-			//$query = str_replace("#__",$this->prefix,$query);
-			$bUseStatement = false;
-			if ($query == null) {
-				$bUseStatement = true;
-				if (!$this->statement) {
-					throw new \Exception('Prepared Statement does not exist', 0);
-				}
-				$query = $this->statement->queryString;
-			}
-
-			if (Config::$debug && Config::$logQueries) {
-				self::logQueryStart($query);
-			}
-
-			if ($bUseStatement) {
-				$this->statement->execute();
-				$this->lastResult = $this->statement;
-				$this->statement = null;
-			} else {
-				$this->lastResult = $this->pdo->query($query);
-			}
-
-			self::logQueryEndTime();
-
-			if ($this->hasError()) {
-				$error = $this->getLastError();
-				Log::error($error);
-				if (Config::$debug && Config::$logQueries) {
-					self::logQueryError($error);
-					Database::$errorCount++;
-				} else if (Config::$debug) {
-					Log::error('SQL Error: ' . $error);
-					Database::$errorCount++;
-				}
-				return false;
-			}
-
-			return $this->lastResult;
-		} catch (\Exception $e) {
-			Log::exception($e);
-		}
-		return false;
+	function prepare($query, array $driverOptions = []) {
+		$this->boundParams = null;
+		$this->statement = $this->pdo->prepare($query, $driverOptions);
+		return $this->statement ? true : false;
 	}
 
 	/**
-	 * @param \PDOStatement $query
+	 * Execute the current prepared statement
 	 * @param null $argArray
-	 * @return bool
+	 * @return \PDOStatement|bool
 	 */
-	function execute($query, $argArray = null) {
+	function execute($argArray = null) {
 		try {
-
-			if (!$query) {
-				throw new \Exception('Prepared Statement does not exist', 0);
-			}
 
 			if (Config::$debug && Config::$logQueries) {
 				if ($argArray != null) {
-					self::logQueryStart($query->queryString . "\n" . json_encode($argArray));
-				} else {
-					self::logQueryStart($query->queryString);
+					foreach ($argArray as $label => $value) {
+						$this->logBindParam((is_int($label) ? $label + 1 : $label), $value, \PDO::PARAM_STR);
+					}
 				}
+				self::logQueryStart($this->statement->queryString . "\n" . json_encode($this->boundParams, JSON_PRETTY_PRINT));
+
 			}
 			if ($argArray != null) {
-				$query->execute($argArray);
+				$this->statement->execute($argArray);
 			} else {
-				$query->execute();
+				$this->statement->execute();
 			}
 
 			if (Config::$debug && Config::$logQueries) {
 				self::logQueryEndTime();
 			}
+			$this->lastResult = $this->statement;
 
 			if ($this->hasError()) {
 				$error = $this->getLastError();
@@ -284,7 +290,7 @@ class Database {
 				return false;
 			}
 
-			return $query;
+			return $this->statement;
 		} catch (\Exception $e) {
 			Log::exception($e);
 		}
@@ -292,8 +298,107 @@ class Database {
 	}
 
 	/**
+	 * Get the last insert ID from PDO
+	 * @param string $name
+	 * @return int|null|string
+	 */
+	public function lastInsertId($name = null) {
+		$id = $this->pdo->lastInsertId($name);
+		if ($this->pdo->errorCode() == 'IM001') {
+			$this->lastResult = $this->pdo->query('SELECT LAST_INSERT_ID()');
+			return $this->fetchFirstValue();
+		}
+		return $id;
+	}
+
+	/**
+	 * See PDOStatement::setAttribute
+	 * @param int $attribute
+	 * @param mixed $value
+	 * @return bool
+	 */
+	public function setStatementAttribute($attribute, $value) {
+		return $this->statement->setAttribute($attribute, $value);
+	}
+
+	/**
+	 * See PDOStatement::getAttribute
+	 * @param int $attribute
+	 * @return mixed
+	 */
+	public function getStatementAttribute($attribute) {
+		return $this->statement->getAttribute($attribute);
+	}
+
+	/**
+	 * See PDOStatement::setFetchMode
+	 * @param int $mode
+	 * @return bool
+	 */
+	public function setStatementFetchMode($mode) {
+		return call_user_func_array([$this->statement, 'setFetchMode'], func_get_args());
+	}
+
+	/**
+	 * Bind a list of parameters using a list of types or PARAM_STR if types is null
+	 * Params can be a 0 based list for ? params, or key value pare for named params (types must match keys of params)
+	 * @param array $params
+	 * @param int[] $types
+	 * @return bool
+	 * @throws MudpuppyException
+	 */
+	public function bindParams($params, $types=null) {
+		if ($types && count($types) != count($params))
+			throw new MudpuppyException('length of $params and $types must be the same');
+		if (isset($params[0])) {
+			for ($i=0; $i<count($params); $i++) {
+				if (!$this->bindParam($i+1, $params[$i], $types ? $types[$i] : \PDO::PARAM_STR))
+					return false;
+			}
+		} else {
+			foreach ($params as $name=>$param) {
+				if (!$this->bindParam($name, $params[$name], $types ? $types[$name] : \PDO::PARAM_STR))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Bind a param to the current pdo statement
+	 * @param $parameter
+	 * @param $variable
+	 * @param int $data_type
+	 * @param null $length
+	 * @param null $driver_options
+	 * @return bool
+	 */
+	public function bindParam($parameter, &$variable, $data_type = \PDO::PARAM_STR, $length = null, $driver_options = null) {
+		// log parameter to db
+		$this->logBindParam($parameter, $variable, $data_type);
+
+		// forward call
+		return $this->statement->bindParam($parameter, $variable, $data_type, $length, $driver_options);
+	}
+
+	/**
+	 * Bind a value to the current pdo statement
+	 * @param $parameter
+	 * @param $value
+	 * @param int $data_type
+	 * @return bool
+	 */
+	public function bindValue($parameter, $value, $data_type = \PDO::PARAM_STR) {
+		// log parameter to db
+		$this->logBindParam($parameter, $value, $data_type);
+
+		// forward call
+		return $this->statement->bindValue($parameter, $value, $data_type);
+	}
+
+	/**
 	 * fetch the first value of the next result
-	 * @return int|null
+	 * @return int|string|null
 	 */
 	function fetchFirstValue() {
 		if (!$this->lastResult) {
@@ -307,72 +412,42 @@ class Database {
 	}
 
 	/**
-	 * fetch into a data object of type $type
+	 * fetch into a data object of type $type or an associative array
 	 * @param $type string Class name of the data object
-	 * @return null
+	 * @return DataObject|array|null
 	 */
-	function fetchObject($type) {
+	function fetch($type = 'array') {
 		if (!$this->lastResult) {
 			return null;
 		}
 		$row = $this->lastResult->fetch(\PDO::FETCH_ASSOC);
 		if (!empty($row)) {
-			return new $type($row);
+			if ($type == 'array') {
+				return $row;
+			} else {
+				return new $type($row);
+			}
 		}
 		return null;
 	}
 
 	/**
-	 * perform an assoc fetch (required for DataObject)
-	 * @param \PDOStatement $result
-	 * @return mixed
+	 * fetch into a data object of type $type or an associative array
+	 * @param $type string Class name of the data object
+	 * @return DataObject[]|array
 	 */
-	function fetchRowAssoc($result = -1) {
-		if ($result === -1) {
-			$result = $this->lastResult;
-		}
-		if (!$result) {
-			return null;
-		}
-		return $result->fetch(\PDO::FETCH_ASSOC);
-	}
-
-	function fetchAllWithKey($type, $key, $result = -1) {
-		if ($result === -1) {
-			$result = $this->lastResult;
-		}
-		if (!$result) {
+	function fetchAll($type = 'array') {
+		if (!$this->lastResult) {
 			return array();
 		}
 
 		$list = array();
 		if ($type == 'array') {
-			while ($row = $result->fetch(\PDO::FETCH_ASSOC)) {
-				$list[$row[$key]] = $row;
-			}
-		} else {
-			while ($row = $result->fetch(\PDO::FETCH_ASSOC)) {
-				$list[$row[$key]] = new $type($row);
-			}
-		}
-		return $list;
-	}
-
-	function fetchAll($type, $result = -1) {
-		if ($result === -1) {
-			$result = $this->lastResult;
-		}
-		if (!$result) {
-			return array();
-		}
-
-		$list = array();
-		if ($type == 'array') {
-			while ($row = $result->fetch(\PDO::FETCH_ASSOC)) {
+			while ($row = $this->lastResult->fetch(\PDO::FETCH_ASSOC)) {
 				$list[] = $row;
 			}
 		} else {
-			while ($row = $result->fetch(\PDO::FETCH_ASSOC)) {
+			while ($row = $this->lastResult->fetch(\PDO::FETCH_ASSOC)) {
 				$list[] = new $type($row);
 			}
 		}
@@ -383,6 +458,10 @@ class Database {
 		return ($this->pdo->errorCode() != "00000") || ($this->lastResult && $this->lastResult->errorCode() != "00000");
 	}
 
+	/**
+	 * Get the error string from the most recent query if an error exists
+	 * @return string
+	 */
 	function getLastError() {
 		if ($this->lastResult && $this->lastResult->errorCode() != '00000') {
 			$info = $this->lastResult->errorInfo();
@@ -395,6 +474,11 @@ class Database {
 		return '';
 	}
 
+	/**
+	 * Get the row count of hte most recent query
+	 * @param $result
+	 * @return int
+	 */
 	function numRows($result = -1) {
 		if ($result === -1) {
 			$result = $this->lastResult;
@@ -406,174 +490,46 @@ class Database {
 	}
 
 	/**
-	 * get the PDO object for this database connection
+	 * Get the PDO object for this database connection
+	 * warning: accessing PDO directly will not show any queries/errors in the logs
 	 * @return \PDO
 	 */
 	function getPDO() {
 		return $this->pdo;
 	}
 
-	////////////////////
-	// fully automated functions for DataObject
-
-	private function genSelect($fields, $table, $where = null, $order = null, $limit = null, $offset = null) {
-		if (is_array($fields)) {
-			$f = "`$fields[0]`";
-			for ($i = 1; $i < sizeof($fields); $i++) {
-				$f .= ",`$fields[$i]`";
-			}
-			$fields = $f;
-		}
-
-		$query = "SELECT $fields FROM $this->prefix$table";
-		if (!is_null($where)) {
-			$query .= " WHERE $where";
-		}
-		if (!is_null($order)) {
-			$query .= " ORDER BY $order";
-		}
-		if (!is_null($limit)) {
-			$query .= " LIMIT $limit";
-		}
-		if (!is_null($offset)) {
-			$query .= " OFFSET $offset";
-		}
-
-		return $query;
-	}
-
-	function select($fields, $table, $where = null, $order = null, $limit = null, $offset = null) {
-		$query = $this->genSelect($fields, $table, $where, $order, $limit, $offset);
-		$this->query($query);
-
-		return $this->lastResult;
-	}
 
 	/**
-	 * @todo switch to prepared statements
-	 * perform an insert using column values from a dataobject
-	 * @param string $table
-	 * @param DBColumnValue[] $columnValues
-	 * @throws MudpuppyException
-	 * @return int the inserted id OR false if failed
+	 * Convert a date string from MySQL into a PHP timestamp
+	 * @param string $mysqlTime
+	 * @param bool $time
+	 * @return int
 	 */
-	function insert($table, $columnValues) {
-		if (sizeof($columnValues) == 0) {
-			$query = "INSERT INTO `$this->prefix$table` () VALUES ()";
-		} else {
-			// insert, return new id
-			$query = "INSERT INTO `$this->prefix$table` (";
-			$queryp2 = " VALUES(";
-			foreach ($columnValues as $val) {
-				$col = $val->getColumn();
-				$query .= "`$col`,";
-				$type = $val->getDataType();
-				if ($val->isNull()) {
-					$queryp2 .= 'NULL,';
-				} else if ($type < _DATATYPE_END_NUMERIC) {
-					$queryp2 .= $this->formatNumber($val->getValue()) . ',';
-				} else if ($type == DATATYPE_DATETIME) {
-					$queryp2 .= self::formatDateAndEscape($val->getValue()) . ',';
-				} else if ($type == DATATYPE_DATE) {
-					$queryp2 .= self::formatDateAndEscape($val->getValue(), false) . ',';
-				} else if ($type == DATATYPE_JSON) {
-					$value = $val->getValue();
-					if (empty($value)) {
-						$queryp2 .= 'NULL,';
-					} else if (is_string($val->getValue())) {
-						$queryp2 .= $this->formatString($val->getValue()) . ',';
-					} else {
-						$queryp2 .= $this->formatString(json_encode($val->getValue())) . ',';
-					}
-				} else {
-					$queryp2 .= $this->formatString($val->getValue()) . ',';
-				}
-			}
-			$query = substr($query, 0, strlen($query) - 1) . ")";
-			$query .= substr($queryp2, 0, strlen($queryp2) - 1);
-			$query .= ")";
-		}
-
-		try {
-			$this->query($query);
-
-			if (!$this->hasError()) {
-				// get generated id
-				if ($this->query("SELECT LAST_INSERT_ID()")) {
-					return $this->fetchFirstValue();
-				}
-			}
-
-			throw new \Exception("database::insert failed.");
-		} catch (\Exception $e) {
-			Log::exception($e);
-			return false;
-		}
-	}
-
-	/**
-	 * @todo switch to prepared statements
-	 * @param $table
-	 * @param DBColumnValue[] $colvals
-	 * @param null $where
-	 * @return \PDOStatement
-	 */
-	function update($table, $colvals, $where = null) {
-		$query = "UPDATE `$this->prefix$table` SET ";
-		foreach ($colvals as $val) {
-			$col = $val->getColumn();
-			$type = $val->getDataType();
-			if ($val->isNull()) {
-				$query .= "`$col`=" . 'NULL,';
-			} else if ($type <= _DATATYPE_END_NUMERIC) {
-				$query .= "`$col`=" . $this->formatNumber($val->getValue()) . ',';
-			} else if ($type == DATATYPE_DATETIME) {
-				$query .= "`$col`=" . self::formatDateAndEscape($val->getValue()) . ',';
-			} else if ($type == DATATYPE_DATE) {
-				$query .= "`$col`=" . self::formatDateAndEscape($val->getValue(), false) . ',';
-			} else if ($type == DATATYPE_JSON) {
-				$value = $val->getValue();
-				if (empty($value)) {
-					$query .= "`$col`=" . 'NULL,';
-				} else if (is_string($val->getValue())) {
-					$query .= "`$col`=" . $this->formatString($val->getValue()) . ',';
-				} else {
-					$query .= "`$col`=" . $this->formatString(json_encode($val->getValue())) . ',';
-				}
-			} else {
-				$query .= "`$col`=" . $this->formatString($val->getValue()) . ',';
-			}
-		}
-		$query = substr($query, 0, strlen($query) - 1);
-		if ($where) {
-			$query .= " WHERE $where";
-		}
-
-		return $this->query($query);
-	}
-
-	function delete($table, $where = null) {
-		$query = "DELETE FROM `$this->prefix$table`";
-		if ($where) {
-			$query .= " WHERE $where";
-		}
-
-		return $this->query($query);
-	}
-
-	public static function readDate($mysqltime, $time = true) {
-		if (strncmp($mysqltime, '0000-00-00', 10) == 0) {
+	public function readDate($mysqlTime, $time = true) {
+		if (strncmp($mysqlTime, '0000-00-00', 10) == 0) {
 			return 0;
 		}
 		// MySQL is set to the application's timezone, no need to convert between timezones
-		return strtotime($mysqltime);
+		return strtotime($time ? $mysqlTime : substr($mysqlTime, 0, 10));
 	}
 
+	/**
+	 * @deprecated use a prepared statement!
+	 * @param $datetime
+	 * @param bool $time
+	 * @return string
+	 */
 	public static function formatDateAndEscape($datetime, $time = true) {
-		return "'" . self::formatDate($datetime, $time) . "'";
+		return "'" . App::getDBO()->formatDate($datetime, $time) . "'";
 	}
 
-	public static function formatDate($datetime, $time = true) {
+	/**
+	 * Format a PHP timestamp into a string MySQL recognizes
+	 * @param $datetime
+	 * @param bool $time
+	 * @return bool|null|string
+	 */
+	public function formatDate($datetime, $time = true) {
 		if (DateHelper::isValidPHPTimeStamp($datetime)) {
 			$datetime = (int)$datetime;
 		}
@@ -592,17 +548,33 @@ class Database {
 		return date("Y-m-d", $datetime);
 	}
 
-	// make a string query friendly
+	/**
+	 * make a string query friendly
+	 * @deprecated use a prepared statement!
+	 * @param $string
+	 * @return string
+	 */
 	function escapeString($string) {
 		$str = $this->pdo->quote($string);
 		return substr($str, 1, strlen($str) - 2);
 	}
 
+	/**
+	 * make a string query friendly and surround with quotes
+	 * @deprecated use a prepared statement!
+	 * @param $string
+	 * @return string
+	 */
 	function formatString($string) {
 		return $this->pdo->quote($string);
 	}
 
-	// make sure a number is really a number
+	/**
+	 * Make sure a number is really a number
+	 * @deprecated use a prepared statement!
+	 * @param $number
+	 * @return float|int
+	 */
 	function formatNumber($number) {
 		if ($number == 'NULL' || is_int($number) || is_float($number) || is_double($number)) {
 			return $number;

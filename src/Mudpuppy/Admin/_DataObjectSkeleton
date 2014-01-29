@@ -30,31 +30,25 @@ class $[CLASS] extends DataObject {
 	}
 
 	/**
-	 * @param int $id
-	 * @return $[CLASS]
+	 * Fetch a collection of $[CLASS] objects by specified criteria, either by the id, or by any
+	 * set of field value pairs (generates query of ... WHERE field0=value0 && field1=value1)
+	 * optionally order using field direction pairs [field=>'ASC']
+	 * @param int|array $criteria
+	 * @param array $order
+	 * @param int $limit
+	 * @param int $offset
+	 * @return $[CLASS][]
 	 */
-	public static function get($id) {
-		return forward_static_call(array('Mudpuppy\DataObject', 'get'), $id);
+	public static function fetch($criteria, $order = null, $limit = 0, $offset = 0) {
+		return forward_static_call(['Mudpuppy\DataObject', 'fetch'], $criteria, $limit, $offset);
 	}
 
 	/**
-	 * @param int $start first index of results
-	 * @param int $limit max number of results to return
-	 * @return $[CLASS][]
+	 * @param int|array $criteria
+	 * @return $[CLASS]|null
 	 */
-	public static function getAll($start, $limit) {
-		return forward_static_call(array('Mudpuppy\DataObject', 'getByFields'), null, 1, $start, $limit);
-	}
-
-    /**
-	  * @param array $fieldSet in format { fieldName => value }
-	  * @param string $condition conditional logic in addition to $fieldSet
-	  * @param int $start first index of results
-     * @param int $limit max number of results to return
-	  * @return $[CLASS][]
-	  */
-    public static function getByFields($fieldSet, $condition = '', $start = 0, $limit = 0) {
-		return forward_static_call(array('Mudpuppy\DataObject', 'getByFields'), $fieldSet, $condition, $start, $limit);
+	public static function fetchOne($criteria) {
+		return forward_static_call(['Mudpuppy\DataObject', 'fetchOne'], $criteria);
 	}
 
 }

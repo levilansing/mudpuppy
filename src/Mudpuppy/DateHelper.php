@@ -38,7 +38,7 @@ class DateHelper {
 	 * @return bool
 	 */
 	public static function isValidPHPTimeStamp($timestamp) {
-		return ((string)(int)$timestamp === $timestamp)
+		return ((string)(int)$timestamp === (string)$timestamp)
 		&& bccomp($timestamp, PHP_INT_MAX) <= 0
 		&& bccomp($timestamp, ~PHP_INT_MAX) >= 0;
 	}

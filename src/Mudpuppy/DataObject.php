@@ -4,6 +4,7 @@
 //======================================================================================================================
 
 namespace Mudpuppy;
+
 use App\Config;
 
 defined('MUDPUPPY') or die('Restricted');
@@ -59,12 +60,12 @@ class DataLookup {
 	 * @return DataObject
 	 */
 	function &performLookup($dataObject) {
-		$id = $dataObject->{$this->column};
+		$id = (int)$dataObject->{$this->column};
 		if (isset($this->values[$id])) {
 			return $this->values[$id];
 		}
 
-		$this->values[$id] = call_user_func($this->type . '::get', $id);
+		$this->values[$id] = call_user_func($this->type . '::fetchOne', $id);
 		return $this->values[$id];
 	}
 
@@ -99,7 +100,7 @@ abstract class DataObject implements \JsonSerializable {
 
 	/** @var DataValue[] $_lookup */
 	protected $_data; // array of DataValue; key = col name
-	/** @var DataValue[] $_defaults */
+	/** @var DataValue[][] $_defaults */
 	protected static $_defaults = array();
 	/** @var DataLookup[][] $_lookup */
 	protected static $_lookups = array();
@@ -108,20 +109,21 @@ abstract class DataObject implements \JsonSerializable {
 
 	/**
 	 * Create a new data object and initialize the data with $row
-	 * @param $row array OR int id
+	 * @param $row array
 	 */
 	function __construct($row = null) {
 		$this->_data = array();
 		$this->_extra = array();
-		if (!isset(self::$_defaults[$this->getObjectName()])) {
+		$className = $this->getObjectName();
+		if (!isset(self::$_defaults[$className])) {
 			// maintain the default data (column values) statically
-			self::$_defaults[$this->getObjectName()] = array();
-			self::$_lookups[$this->getObjectName()] = array();
+			self::$_defaults[$className] = array();
+			self::$_lookups[$className] = array();
 			$this->loadDefaults();
 		}
 
 		// clone from the default data- much faster than reloading the column values every time
-		$def =& self::$_defaults[$this->getObjectName()];
+		$def =& self::$_defaults[$className];
 		foreach ($def as $k => &$d) {
 			$this->_data[$k] = clone $d;
 		}
@@ -129,8 +131,6 @@ abstract class DataObject implements \JsonSerializable {
 		// load the data or set the id
 		if (is_array($row)) {
 			$this->loadFromRow($row);
-		} else if (is_int($row)) {
-			$this->setValue('id', $row);
 		}
 	}
 
@@ -204,6 +204,22 @@ abstract class DataObject implements \JsonSerializable {
 	}
 
 	/**
+	 * get the column defaults for the specified class
+	 * @param null $objectClass
+	 * @return \Mudpuppy\DataValue[]
+	 */
+	protected static function getColumnDefaults($objectClass=null) {
+		if (empty($objectClass)) {
+			$objectClass = get_called_class();
+		}
+		if (empty(self::$_defaults[$objectClass])) {
+			new $objectClass();
+		}
+
+		return self::$_defaults[$objectClass];
+	}
+
+	/**
 	 * get the id of this object
 	 * @return int
 	 */
@@ -232,19 +248,9 @@ abstract class DataObject implements \JsonSerializable {
 			return true;
 		}
 
-		if ($id != 0) {
-			// update
-			if (!App::getDBO()->update($this->getTableName(), $fields, "id=$id")) {
-				return false;
-			}
-		} else {
-			// save new (insert)
-			if ($id = App::getDBO()->insert($this->getTableName(), $fields)) {
-				$this->_data['id']->value = $id;
-				$this->_data['id']->flags = DATAFLAG_LOADED;
-			} else {
-				return false;
-			}
+		// insert or update database
+		if (!$this->insertOrUpdate($fields)) {
+			return false;
 		}
 
 		// if we got here, the save was successful
@@ -317,9 +323,11 @@ abstract class DataObject implements \JsonSerializable {
 
 		if ($bNeedLoad) {
 			$db = App::getDBO();
-			$result = $db->select($cols, $this->getTableName(), "id=$id");
+			$db->prepare('SELECT `' . implode('`,`', $cols) . '` FROM ' . self::getTableName() . ' WHERE id=?');
+			$db->bindValue(1, $id, \PDO::PARAM_INT);
+			$db->execute();
 
-			if ($result && $row = $db->fetchRowAssoc($result)) {
+			if ($row = $db->fetch()) {
 				$this->loadFromRow($row);
 			} else {
 				return false;
@@ -341,24 +349,15 @@ abstract class DataObject implements \JsonSerializable {
 		return $this->load($cols);
 	}
 
-	function exists() {
-		$id = $this->getId();
-		if ($id == 0) {
-			return false;
-		}
-		$db = App::getDBO();
-		$db->select(array('id'), $this->getTableName(), "id=$id");
-		return $db->numRows() > 0;
-	}
-
 	function delete() {
 		if ($this->getId() == 0) {
 			return true;
 		}
 
-		$result = App::getDBO()->delete($this->getTableName(), "id=" . $this->getId());
-		// TODO: log some debug if needed
-		if ($result) {
+		$db = App::getDBO();
+		$db->prepare('DELETE FROM ' . $this->getTableName() . ' WHERE id=?');
+		$db->bindValue(1, $this->getId(), \PDO::PARAM_INT);
+		if ($db->execute()) {
 			// if we got here, the delete was successful
 			$this->id = 0; // set the id to 0 because it's been deleted
 			foreach ($this->_data as &$value) {
@@ -367,9 +366,10 @@ abstract class DataObject implements \JsonSerializable {
 					$value->flags |= DATAFLAG_CHANGED;
 				} // flag all valid data as changed & not loaded
 			}
+			return true;
 		}
 
-		return $result ? true : false;
+		return false;
 	}
 
 	function loadFromRow($row) {
@@ -378,7 +378,7 @@ abstract class DataObject implements \JsonSerializable {
 		}
 
 		$setChanged = (isset($row['id']) && $row['id']) ? false : true;
-
+		$db = App::getDBO();
 		foreach ($row as $col => &$value) {
 			if (isset($this->_data[$col])) {
 				$data = & $this->_data[$col];
@@ -386,7 +386,7 @@ abstract class DataObject implements \JsonSerializable {
 					$data->value = null;
 				} else {
 					if (($data->dataType == DATATYPE_DATETIME || $data->dataType == DATATYPE_DATE) && is_string($value)) {
-						$data->value = Database::readDate($value, $data->dataType == DATATYPE_DATETIME);
+						$data->value = $db->readDate($value, $data->dataType == DATATYPE_DATETIME);
 					} else {
 						if ($data->dataType == DATATYPE_INT && $value === (string)(int)$value) {
 							$data->value = (int)$value;
@@ -406,6 +406,7 @@ abstract class DataObject implements \JsonSerializable {
 		}
 
 		// assume we loaded the id (or from the id)
+		$this->_data['id']->value = (int)$this->_data['id']->value;
 		if ($this->_data['id']->value > 0) {
 			$this->_data['id']->flags &= ~DATAFLAG_CHANGED;
 			$this->_data['id']->flags |= DATAFLAG_LOADED;
@@ -413,10 +414,93 @@ abstract class DataObject implements \JsonSerializable {
 	}
 
 	/**
+	 * Update or insert a subset of fields and values into the database and update our id
+	 * @param DBColumnValue[] $fields
+	 * @return bool success
+	 */
+	private function insertOrUpdate($fields) {
+		$db = App::getDBO();
+		$table = $this->getTableName();
+		$id = $this->getId();
+		if (sizeof($fields) == 0) {
+			if ($id == 0)
+				$db->prepare("INSERT INTO `$table` () VALUES ()");
+			else
+				return true;
+		} else {
+			// insert, return new id
+			$columns = [];
+			$questionMarks = [];
+			foreach ($fields as $val) {
+				$columns[] = $val->getColumn();
+				$questionMarks[] = '?';
+			}
+			if ($id == 0)
+				$db->prepare("INSERT INTO `$table` (`" . implode('`,`', $columns) . '`) VALUES (' . implode(',', $questionMarks) . ')');
+			else
+				$db->prepare("UPDATE `$table` SET `" . implode('`=?,`', $columns) . '`=? WHERE id=?');
+
+			$i = 1;
+			foreach ($fields as $val) {
+				$type = $val->getDataType();
+				if ($val->isNull()) {
+					$db->bindValue($i, null, \PDO::PARAM_INT);
+				} else if ($type == DATATYPE_BOOL) {
+					$db->bindValue($i, $val->getValue(), \PDO::PARAM_BOOL);
+				} else if ($type <= DATATYPE_INT) {
+					$db->bindValue($i, $val->getValue(), \PDO::PARAM_INT);
+				} else if ($type == DATATYPE_DATETIME) {
+					$db->bindValue($i, $db->formatDate($val->getValue()), \PDO::PARAM_STR);
+				} else if ($type == DATATYPE_DATE) {
+					$db->bindValue($i, $db->formatDate($val->getValue(), false), \PDO::PARAM_STR);
+				} else if ($type == DATATYPE_JSON) {
+					$value = $val->getValue();
+					if (empty($value)) {
+						$db->bindValue($i, null, \PDO::PARAM_INT);
+					} else if (is_string($val->getValue())) {
+						$db->bindValue($i, $val->getValue(), \PDO::PARAM_STR);
+					} else {
+						$db->bindValue($i, json_encode($val->getValue()), \PDO::PARAM_STR);
+					}
+				} else {
+					$db->bindValue($i, $val->getValue(), \PDO::PARAM_STR);
+				}
+				$i++;
+			}
+
+			if ($id != 0)
+				$db->bindValue($i, $id, \PDO::PARAM_INT);
+		}
+
+		try {
+
+			if ($db->execute()) {
+				// get generated id
+				if ($id == 0) {
+					if ($id = $db->lastInsertId()) {
+						$this->_data['id']->value = $id;
+						$this->_data['id']->flags = DATAFLAG_LOADED;
+						return true;
+					}
+				} else {
+					return true;
+				}
+			}
+
+			throw new \Exception("DataObject::insertOrUpdate failed.");
+		} catch (\Exception $e) {
+			Log::exception($e);
+			return false;
+		}
+	}
+
+	/**
+	 * @deprecated use fetchOne instead
 	 * @param int $id
 	 * @return DataObject|null
 	 */
 	public static function get($id) {
+		Log::error('DataObject::get is deprecated');
 		if (!$id) {
 			return null;
 		}
@@ -424,32 +508,37 @@ abstract class DataObject implements \JsonSerializable {
 		/** @var DataObject $objectClass */
 		$objectClass = get_called_class();
 
-		$statement = App::getDBO()->prepare('SELECT * FROM ' . $objectClass::getTableName() . ' WHERE id=?');
-		$statement->bindValue(1, $id, \PDO::PARAM_INT);
-		$result = App::getDBO()->query();
-		if ($result && ($row = $result->fetch(\PDO::FETCH_ASSOC))) {
-			return new $objectClass($row);
+		$db = App::getDBO();
+		$db->prepare('SELECT * FROM `' . $objectClass::getTableName() . '` WHERE id=?');
+		$db->bindValue(1, $id, \PDO::PARAM_INT);
+		$db->execute();
+		if ($db->execute()) {
+			return $db->fetch($objectClass);
 		}
 		return null;
 	}
 
 	/**
+	 * @deprecated use fetch instead
 	 * @param int $start
 	 * @param int $limit
 	 * @return DataObject[]
 	 */
 	public static function getAll($start, $limit) {
+		Log::error('DataObject::getAll is deprecated');
 		return self::getByFields(null, '1', $start, $limit);
 	}
 
 	/**
+	 * @deprecated use fetch instead
 	 * @param array $fieldSet in format { fieldName => value }
 	 * @param string $condition conditional logic in addition to $fieldSet
-	 * @param int $start
+	 * @param int $offset
 	 * @param int $limit
 	 * @return DataObject[]
 	 */
-	public static function getByFields($fieldSet, $condition = '', $start = 0, $limit = 0) {
+	public static function getByFields($fieldSet, $condition = null, $offset = 0, $limit = 0) {
+		Log::error('DataObject::getByFields is deprecated');
 		$objectClass = get_called_class();
 		// create an empty data object to read structure
 		$emptyObject = new $objectClass();
@@ -459,7 +548,7 @@ abstract class DataObject implements \JsonSerializable {
 
 		// build query
 		/** @var DataObject $objectClass */
-		$query = 'SELECT * FROM ' . $objectClass::getTableName() . ' WHERE ';
+		$query = 'SELECT * FROM `' . $objectClass::getTableName() . '` WHERE ';
 		if (!empty($fieldSet)) {
 			$query .= '(`' . implode('`=? AND `', array_keys($fieldSet)) . '`=?' . ')';
 		}
@@ -471,11 +560,14 @@ abstract class DataObject implements \JsonSerializable {
 			$query .= '1=1';
 		}
 
-		if ($start != 0 || $limit != 0) {
-			$query .= ' LIMIT ' . (int)$start . ',' . (int)$limit;
+		if ($limit != 0) {
+			$query .= ' LIMIT ' . (int)$limit;
+		}
+		if ($offset != 0) {
+			$query .= ' OFFSET ' . (int)$offset;
 		}
 
-		$statement = $db->prepare($query);
+		$db->prepare($query);
 
 		// bind params
 		$i = 1;
@@ -486,41 +578,117 @@ abstract class DataObject implements \JsonSerializable {
 			} else if ($emptyObject->_data[$field]->dataType < DATATYPE_INT) {
 				$type = \PDO::PARAM_INT;
 			}
-			$statement->bindValue($i++, $value, $type);
+			$db->bindValue($i++, $value, $type);
 		}
 
 		// query
-		$result = $db->query();
-		$objects = array();
-		while ($result && ($row = $result->fetch(\PDO::FETCH_ASSOC))) {
-			$objects[] = new $objectClass($row);
-		}
-		return $objects;
+		$db->execute();
+		return $db->fetchAll($objectClass);
 	}
 
 	/**
 	 * Fetch by an id or key value pair map
 	 * @param int|array $criteria
+	 * @param array $order
+	 * @param int $limit result limit
+	 * @param int $offset result offset
 	 * @throws MudpuppyException
 	 * @return \Mudpuppy\DataObject[]
 	 */
-	public static function fetch($criteria) {
+	public static function fetch($criteria, $order = null, $limit = 0, $offset = 0) {
+		/** @var DataObject $$objectClass */
+		$objectClass = get_called_class();
+		$db = App::getDBO();
+
 		if (is_int($criteria)) {
-			return [self::get($criteria)];
+			if (!$criteria) {
+				return null;
+			}
+
+			$db->prepare('SELECT * FROM `' . forward_static_call([$objectClass, 'getTableName']) . '` WHERE id=?');
+			$db->bindValue(1, $criteria, \PDO::PARAM_INT);
+			$db->execute();
+			return $db->fetch($objectClass);
 		}
+
 		if (is_array($criteria)) {
-			return self::getByFields($criteria);
+			// get columns to validate criteria before injecting in a query
+			/** @var array $columnDefaults */
+			$columnDefaults = self::getColumnDefaults($objectClass);
+
+			// create an empty data object to read structure
+			$fieldSet = $criteria == null ? array() : $criteria;
+
+			// build the query
+			/** @var DataObject $objectClass */
+			$query = 'SELECT * FROM `' . $objectClass::getTableName() . '`';
+			if (!empty($fieldSet)) {
+				$query .= ' WHERE (`' . implode('`=? AND `', array_keys($fieldSet)) . '`=?' . ')';
+				foreach ($fieldSet as $field => $value) {
+					MPAssert(array_key_exists($field, $columnDefaults), 'DataObject::fetch Invalid field '.$field);
+				}
+			}
+
+			if (is_array($order) && count($order) > 0) {
+				$orderFields = [];
+				foreach ($order as $field => $direction) {
+					MPAssert(array_key_exists($field, $columnDefaults), 'DataObject::fetch Invalid order field '.$field);
+					MPAssert(strcasecmp($direction, 'asc') == 0 || strcasecmp($direction, 'DESC') == 0);
+					$orderFields[] = "`$field` $direction";
+				}
+				$query .= ' ORDER BY ';
+			}
+
+			if ($limit != 0) {
+				$query .= ' LIMIT ' . (int)$limit;
+				if ($offset != 0) {
+					$query .= ' OFFSET ' . (int)$offset;
+				}
+			}
+
+			$db->prepare($query);
+
+			// bind values
+			$i = 1;
+			foreach ($fieldSet as $field => $value) {
+				$type = \PDO::PARAM_STR;
+				$dataType = $columnDefaults[$field]->dataType;
+				if (is_null($value)) {
+					$type = \PDO::PARAM_INT;
+				} else if ($dataType == DATATYPE_BOOL) {
+					$type = \PDO::PARAM_BOOL;
+				} else if ($dataType <= DATATYPE_INT) {
+					$type = \PDO::PARAM_INT;
+				} else if ($dataType == DATATYPE_DATETIME) {
+					$value = $db->formatDate($value);
+				} else if ($dataType == DATATYPE_DATE) {
+					$value = $db->formatDate($value, false);
+				} else if ($dataType == DATATYPE_JSON) {
+					if (empty($value)) {
+						$type = \PDO::PARAM_INT;
+						$value = null;
+					} else if (!is_string($value)) {
+						$value = json_encode($value);
+					}
+				}
+				$db->bindValue($i++, $value, $type);
+			}
+
+			// query
+			$db->execute();
+			return $db->fetchAll($objectClass);
 		}
-		throw new MudpuppyException("Unrecognized \$options type");
+
+		throw new MudpuppyException("Unrecognized \$criteria type");
 	}
 
 	/**
 	 * Fetch by an id or key value pair map, but only return the first result or null
-	 * @param $criteria
+	 * @param int|array $criteria
 	 * @return DataObject|DataObject[]|null
 	 */
 	public static function fetchOne($criteria) {
-		$result = self::fetch($criteria);
+		$result = self::fetch($criteria, 1, 0);
 		if (is_array($result)) {
 			if (count($result) > 0) {
 				return $result[0];
@@ -651,27 +819,42 @@ abstract class DataObject implements \JsonSerializable {
 	/**
 	 * Convert data object into a JSON friendly array
 	 *
-	 * @param string $dateFormat or null to use the date format from Config
-	 * @param array $filter list of keys to include
+	 * @param null $dateTimeFormat
+	 * @param null $dateOnlyFormat
+	 * @param array $include list of keys to include
+	 * @param null $exclude list of keys to exclude
+	 * @internal param string $dateFormat or null to use the date format from Config
 	 * @return array
 	 */
-	function &toArray($dateFormat = null, $filter = null) {
-		if (empty($dateFormat)) {
-			$dateFormat = Config::$dateFormat;
+	function &toArray($dateTimeFormat = null, $dateOnlyFormat = null, $include = null, $exclude = null) {
+		if (empty($dateTimeFormat)) {
+			$dateTimeFormat = Config::$dateTimeFormat;
+		}
+		if (empty($dateOnlyFormat)) {
+			$dateOnlyFormat = Config::$dateOnlyFormat;
 		}
 		$a = array();
 		foreach ($this->_data as $k => $v) {
-			if ($filter && !in_array($k, $filter)) {
+			if ($include && !in_array($k, $include)) {
+				continue;
+			}
+			if ($exclude && in_array($k, $exclude)) {
 				continue;
 			}
 			$dataType = $v->dataType;
 			if ($v->value === null) {
 				$a[$k] = null;
-			} else if ($dataType == DATATYPE_DATETIME || $dataType == DATATYPE_DATE) {
+			} else if ($dataType == DATATYPE_DATETIME) {
 				if ($v->value == null || $v->value == '') {
 					$a[$k] = null;
 				} else {
-					$a[$k] = date($dateFormat, $v->value);
+					$a[$k] = date($dateTimeFormat, $v->value);
+				}
+			} else if ($dataType == DATATYPE_DATE) {
+				if ($v->value == null || $v->value == '') {
+					$a[$k] = null;
+				} else {
+					$a[$k] = date($dateOnlyFormat, $v->value);
 				}
 			} else if ($dataType == DATATYPE_JSON) {
 				if (is_string($v->value)) {
@@ -690,14 +873,14 @@ abstract class DataObject implements \JsonSerializable {
 		}
 
 		foreach ($this->_extra as $k => $v) {
-			if ($filter && !in_array($k, $filter)) {
+			if ($include && !in_array($k, $include)) {
 				continue;
 			}
 			if (is_object($v) && $v instanceof DataObject) {
 				/** @var DataObject $v */
-				$a[$k] = $v->toArray($dateFormat);
+				$a[$k] = $v->toArray($dateTimeFormat, $dateOnlyFormat);
 			} else if (is_array($v)) {
-				$a[$k] = self::objectListToArrayList($v, $dateFormat);
+				$a[$k] = self::objectListToArrayList($v, $dateTimeFormat, $dateOnlyFormat);
 			} else {
 				$a[$k] = $v;
 			}
@@ -709,17 +892,22 @@ abstract class DataObject implements \JsonSerializable {
 	 * Convert an array of data objects to an array of arrays
 	 *
 	 * @param array $array of data objects (can be nested in arrays)
-	 * @param null $dateFormat
+	 * @param null $dateTimeFormat
+	 * @param null $dateOnlyFormat
+	 * @internal param null $dateFormat
 	 * @return array
 	 */
-	public static function objectListToArrayList($array, $dateFormat = null) {
-		if (empty($dateFormat)) {
-			$dateFormat = Config::$dateFormat;
+	public static function objectListToArrayList($array, $dateTimeFormat = null, $dateOnlyFormat = null) {
+		if (empty($dateTimeFormat)) {
+			$dateTimeFormat = Config::$dateTimeFormat;
+		}
+		if (empty($dateOnlyFormat)) {
+			$dateOnlyFormat = Config::$dateOnlyFormat;
 		}
 		if (!is_array($array)) {
 			if (is_object($array) && $array instanceof DataObject) {
 				/** @var DataObject $array */
-				return $array->toArray($dateFormat);
+				return $array->toArray($dateTimeFormat, $dateOnlyFormat);
 			}
 			return array();
 		}
@@ -727,10 +915,10 @@ abstract class DataObject implements \JsonSerializable {
 		$result = array();
 		foreach ($array as $key => $object) {
 			if (is_array($object)) {
-				$result[$key] = self::objectListToArrayList($object, $dateFormat);
+				$result[$key] = self::objectListToArrayList($object, $dateTimeFormat, $dateOnlyFormat);
 			} else if (is_object($object) && $object instanceof DataObject) {
 				/** @var DataObject $object */
-				$result[$key] = $object->toArray($dateFormat);
+				$result[$key] = $object->toArray($dateTimeFormat, $dateOnlyFormat);
 			} else {
 				$result[$key] = $object;
 			}
@@ -739,6 +927,7 @@ abstract class DataObject implements \JsonSerializable {
 	}
 
 	/**
+	 * todo issue #27 also affects the structure definition here
 	 * Generates a structure definition recognizable by the Module/API system
 	 * @return array structure definition
 	 */
@@ -749,7 +938,6 @@ abstract class DataObject implements \JsonSerializable {
 
 		/** @var DataValue $d */
 		foreach ($objectDef as $k => &$d) {
-			$type = 'int';
 			if ($d->dataType == DATATYPE_DATETIME || $d->dataType == DATATYPE_DATE) {
 				$type = 'date';
 			} else if ($d->dataType == DATATYPE_BOOL) {

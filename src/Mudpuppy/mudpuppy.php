@@ -213,7 +213,7 @@ function _refreshAutoLoadClasses(&$classes) {
 // Assertion handler function
 function _assert_handler($file, $line, $code) {
 	if (Config::$debug) {
-		throw(new \Exception("Assertion failed in file $file($line).\nCode: $code"));
+		throw(new MudpuppyException("Assertion failed in file $file($line).\nCode: $code"));
 	}
 }
 
