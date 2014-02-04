@@ -195,7 +195,7 @@ class Database {
 	 * Begin a transaction on the PDO connection
 	 * @return bool success
 	 */
-	function beginTransaction() {
+	public function beginTransaction() {
 		if (Config::$debug && Config::$logQueries) {
 			self::logQueryStart('PDO::beginTransaction()');
 		}
@@ -208,7 +208,7 @@ class Database {
 	 * Cancel a transaction
 	 * @return bool success
 	 */
-	function rollBackTransaction() {
+	public function rollBackTransaction() {
 		if (!$this->pdo->inTransaction()) {
 			return false;
 		}
@@ -224,7 +224,7 @@ class Database {
 	 * Commit a transaction
 	 * @return bool success
 	 */
-	function commitTransaction() {
+	public function commitTransaction() {
 		if (!$this->pdo->inTransaction()) {
 			return false;
 		}
@@ -243,7 +243,7 @@ class Database {
 	 * @param array $driverOptions optional PDO driver options
 	 * @return bool
 	 */
-	function prepare($query, array $driverOptions = []) {
+	public function prepare($query, array $driverOptions = []) {
 		$this->boundParams = null;
 		$this->statement = $this->pdo->prepare($query, $driverOptions);
 		return $this->statement ? true : false;
@@ -251,23 +251,27 @@ class Database {
 
 	/**
 	 * Execute the current prepared statement
-	 * @param null $argArray
+	 * @param array|null $bindArray optional array of values or associative array of [named parameter => value] to bind
 	 * @return \PDOStatement|bool
 	 */
-	function execute($argArray = null) {
+	public function execute($bindArray = null) {
 		try {
 
 			if (Config::$debug && Config::$logQueries) {
-				if ($argArray != null) {
-					foreach ($argArray as $label => $value) {
-						$this->logBindParam((is_int($label) ? $label + 1 : $label), $value, \PDO::PARAM_STR);
+				if ($bindArray != null) {
+					foreach ($bindArray as $label => $value) {
+						if (is_null($value) || is_int($value)) {
+							$this->logBindParam((is_int($label) ? $label + 1 : $label), $value, \PDO::PARAM_INT);
+						} else {
+							$this->logBindParam((is_int($label) ? $label + 1 : $label), $value, \PDO::PARAM_STR);
+						}
 					}
 				}
 				self::logQueryStart($this->statement->queryString . "\n" . json_encode($this->boundParams, JSON_PRETTY_PRINT));
 
 			}
-			if ($argArray != null) {
-				$this->statement->execute($argArray);
+			if ($bindArray != null) {
+				$this->statement->execute($bindArray);
 			} else {
 				$this->statement->execute();
 			}
@@ -397,10 +401,10 @@ class Database {
 	}
 
 	/**
-	 * fetch the first value of the next result
+	 * Fetch the first value of the next result
 	 * @return int|string|null
 	 */
-	function fetchFirstValue() {
+	public function fetchFirstValue() {
 		if (!$this->lastResult) {
 			return null;
 		}
@@ -412,11 +416,11 @@ class Database {
 	}
 
 	/**
-	 * fetch into a data object of type $type or an associative array
+	 * Fetch one row into a data object of type $type or an associative array
 	 * @param $type string Class name of the data object
 	 * @return DataObject|array|null
 	 */
-	function fetch($type = 'array') {
+	public function fetch($type = 'array') {
 		if (!$this->lastResult) {
 			return null;
 		}
@@ -432,11 +436,11 @@ class Database {
 	}
 
 	/**
-	 * fetch into a data object of type $type or an associative array
+	 * Fetch all results into data objects of type $type or an associative array
 	 * @param $type string Class name of the data object
 	 * @return DataObject[]|array
 	 */
-	function fetchAll($type = 'array') {
+	public function fetchAll($type = 'array') {
 		if (!$this->lastResult) {
 			return array();
 		}
@@ -454,7 +458,7 @@ class Database {
 		return $list;
 	}
 
-	function hasError() {
+	public function hasError() {
 		return ($this->pdo->errorCode() != "00000") || ($this->lastResult && $this->lastResult->errorCode() != "00000");
 	}
 
@@ -462,7 +466,7 @@ class Database {
 	 * Get the error string from the most recent query if an error exists
 	 * @return string
 	 */
-	function getLastError() {
+	public function getLastError() {
 		if ($this->lastResult && $this->lastResult->errorCode() != '00000') {
 			$info = $this->lastResult->errorInfo();
 		} else {
@@ -479,7 +483,7 @@ class Database {
 	 * @param $result
 	 * @return int
 	 */
-	function numRows($result = -1) {
+	public function numRows($result = -1) {
 		if ($result === -1) {
 			$result = $this->lastResult;
 		}
@@ -494,7 +498,7 @@ class Database {
 	 * warning: accessing PDO directly will not show any queries/errors in the logs
 	 * @return \PDO
 	 */
-	function getPDO() {
+	public function getPDO() {
 		return $this->pdo;
 	}
 
@@ -554,7 +558,7 @@ class Database {
 	 * @param $string
 	 * @return string
 	 */
-	function escapeString($string) {
+	public function escapeString($string) {
 		$str = $this->pdo->quote($string);
 		return substr($str, 1, strlen($str) - 2);
 	}
@@ -565,7 +569,7 @@ class Database {
 	 * @param $string
 	 * @return string
 	 */
-	function formatString($string) {
+	public function formatString($string) {
 		return $this->pdo->quote($string);
 	}
 
@@ -575,7 +579,7 @@ class Database {
 	 * @param $number
 	 * @return float|int
 	 */
-	function formatNumber($number) {
+	public function formatNumber($number) {
 		if ($number == 'NULL' || is_int($number) || is_float($number) || is_double($number)) {
 			return $number;
 		}
@@ -591,7 +595,7 @@ class Database {
 		return doubleval($number);
 	}
 
-	static function queryToHTML($query) {
+	public static function queryToHTML($query) {
 		$q = preg_replace('#(\sFROM\s|\sWHERE\s|\sORDER BY\s|\sVALUES)#i', "<br />\n&nbsp; &nbsp; $1", htmlentities($query));
 		return "&nbsp; &nbsp; $q";
 	}

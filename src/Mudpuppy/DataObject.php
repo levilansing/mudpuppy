@@ -588,8 +588,8 @@ abstract class DataObject implements \JsonSerializable {
 
 	/**
 	 * Fetch by an id or key value pair map
-	 * @param int|array $criteria
-	 * @param array $order
+	 * @param int|array $criteria the integer id or an array of column value pairs
+	 * @param array $order an array of column direction pairs ['column'=>'ASC']
 	 * @param int $limit result limit
 	 * @param int $offset result offset
 	 * @throws MudpuppyException
@@ -685,7 +685,7 @@ abstract class DataObject implements \JsonSerializable {
 	/**
 	 * Fetch by an id or key value pair map, but only return the first result or null
 	 * @param int|array $criteria
-	 * @return DataObject|DataObject[]|null
+	 * @return DataObject|null
 	 */
 	public static function fetchOne($criteria) {
 		$result = self::fetch($criteria, 1, 0);
