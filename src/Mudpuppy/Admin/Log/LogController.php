@@ -41,7 +41,7 @@ class LogController extends Controller {
 	public function render() {
 		// Abort the default template, use the debug log view for the entire page
 		ob_clean();
-		include('Mudpuppy/Admin/log/LogView.php');
+		include('Mudpuppy/Admin/Log/LogView.php');
 		App::cleanExit();
 	}
 

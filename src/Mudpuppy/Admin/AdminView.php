@@ -26,10 +26,10 @@ use App\Config;
 <div class="logo"></div>
 <div class="adminPage">
 	<div class="adminButton"></div>
-	<a href="/mudpuppy/log/" class="adminButton"><span class="icon log"></span>View Debug Log</a>
+	<a href="/mudpuppy/Log/" class="adminButton"><span class="icon log"></span>View Debug Log</a>
 	<div class="adminButton"></div>
 	<div class="adminButton"></div>
-	<a href="/mudpuppy/app/" class="adminButton"><span class="icon structure"></span>Manage App Structure</a>
+	<a href="/mudpuppy/App/" class="adminButton"><span class="icon structure"></span>Manage App Structure</a>
 	<div class="adminButton"></div>
 	<div class="adminButton"></div>
 	<a href="javascript:adminPage.updateDataObjects()" class="adminButton"><span class="icon database"></span>Synchronize DataObjects</a>

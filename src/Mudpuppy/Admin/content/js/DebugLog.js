@@ -44,7 +44,7 @@
 		var self = this;
 		$.ajax({
 			type: 'GET',
-			url: '/mudpuppy/log/pull',
+			url: '/mudpuppy/Log/pull',
 			data: {lastId: this.lastId},
 			success: function(data, textStatus, jqXHR) {
 				self.receive(data, textStatus, jqXHR);
@@ -71,7 +71,7 @@
 		var self = this;
 		this.request = $.ajax({
 			type: 'GET',
-			url: '/mudpuppy/log/waitForNext',
+			url: '/mudpuppy/Log/waitForNext',
 			data: {lastId: this.lastId, t: new Date().getTime()},
 			dataType: 'json',
 			success: function(data, textStatus, jqXHR) {
@@ -116,7 +116,7 @@
 		if (andDelete) {
 			$.ajax({
 				type: 'GET',
-				url: '/mudpuppy/log/clearLog',
+				url: '/mudpuppy/Log/clearLog',
 				data: null
 			});
 		}

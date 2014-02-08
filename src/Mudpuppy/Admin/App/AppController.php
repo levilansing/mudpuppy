@@ -49,7 +49,7 @@ class AppController extends Controller {
 	 * Renders the page body.
 	 */
 	public function render() {
-		include('mudpuppy/Admin/app/AppView.php');
+		include('mudpuppy/Admin/App/AppView.php');
 	}
 
 	/**
@@ -236,7 +236,7 @@ class AppController extends Controller {
 			}
 			$stubFile .= 'ControllerStub';
 
-			$stub = file_get_contents('Mudpuppy/Admin/app/' . $stubFile);
+			$stub = file_get_contents('Mudpuppy/Admin/App/' . $stubFile);
 			if (!$stub) {
 				throw new MudpuppyException(null, 'Controller stub is missing: ' . $stubFile);
 			}
@@ -270,7 +270,7 @@ class AppController extends Controller {
 			throw new InvalidInputException(null, "Object already exists");
 		}
 
-		$stubFile = 'Mudpuppy/Admin/app/_ViewStub';
+		$stubFile = 'Mudpuppy/Admin/App/_ViewStub';
 		$stub = file_get_contents($stubFile);
 		if (!$stub) {
 			throw new MudpuppyException(null, 'View stub is missing: ' . $stubFile);

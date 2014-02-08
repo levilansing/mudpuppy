@@ -52,7 +52,7 @@ trait DataObjectController {
 	 */
 	public function get($id) {
 		/** @var $dataObject DataObject */
-		$dataObject = call_user_func(array($this->getDataObjectName(), 'get'), $id);
+		$dataObject = call_user_func(array($this->getDataObjectName(), 'fetchOne'), $id);
 		if ($dataObject === null) {
 			throw new ObjectNotFoundException("No object found for id: $id");
 		}
@@ -127,7 +127,7 @@ trait DataObjectController {
 			throw new InvalidInputException('The specified object is invalid');
 		}
 		/** @var $dataObject DataObject */
-		$dataObject = call_user_func(array($this->getDataObjectName(), 'get'), $id);
+		$dataObject = call_user_func(array($this->getDataObjectName(), 'fetchOne'), $id);
 		if ($dataObject === null) {
 			throw new ObjectNotFoundException('The specified object does not exist');
 		}
@@ -174,7 +174,7 @@ trait DataObjectController {
 	 * @return array(DataObject)
 	 */
 	protected function retrieveDataObjects($params) {
-		return call_user_func(array($this->getDataObjectName(), 'getAll'));
+		return call_user_func(array($this->getDataObjectName(), 'fetchAll'));
 	}
 
 	/**

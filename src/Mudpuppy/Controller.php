@@ -40,7 +40,10 @@ abstract class Controller {
 			$searchPath = 'App/';
 
 			// Check if we are viewing the admin area
-			if (Config::$debug && strtolower($parts[0]) == 'mudpuppy') {
+			if (strtolower($parts[0]) == 'mudpuppy') {
+				if (!Config::$debug) {
+					throw new PageNotFoundException();
+				}
 				$namespace = 'Mudpuppy';
 				$searchPath = 'Mudpuppy/';
 				array_splice($parts, 0, 1, ['Admin']);

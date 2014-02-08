@@ -29,7 +29,7 @@
 
 	AppView.prototype.refresh = function() {
 		var self = this;
-		$.getJSON('/mudpuppy/app/listApp', function(data) {
+		$.getJSON('/mudpuppy/App/listApp', function(data) {
 			console.log(data);
 			$('#structureList').empty();
 			self.update(data);
@@ -162,7 +162,7 @@
 		var self = this;
 		$.ajax({
 			dataType: "json",
-			url: '/mudpuppy/app/createFolder',
+			url: '/mudpuppy/App/createFolder',
 			data: {
 				name: name
 			},
@@ -192,7 +192,7 @@
 		var self = this;
 		$.ajax({
 			dataType: "json",
-			url: '/mudpuppy/app/createFile',
+			url: '/mudpuppy/App/createFile',
 			data: {
 				namespace: namespace,
 				name: name,
