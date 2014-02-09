@@ -21,7 +21,8 @@ class Config {
 	// Site configuration
 	public static $appTitle = 'Mudpuppy Sample';
 	public static $timezone = 'America/New_York';
-	public static $dateFormat = 'd M Y H:i:s \\G\\M\\TO';
+	public static $dateTimeFormat = 'd M Y H:i:s \\G\\M\\TO';
+	public static $dateOnlyFormat = 'd M Y';
 
 	// Application configuration
 	public static $appClass = 'SampleApp';
