@@ -121,6 +121,7 @@ abstract class Controller {
 					if ($isPage) {
 						return;
 					}
+
 					throw new UnsupportedMethodException("Request method $method is invalid for this URL");
 				}
 				/** @var DataObjectController $this */
@@ -205,9 +206,31 @@ abstract class Controller {
 					// Call an action: POST <module>/<action>
 					$db = App::getDBO();
 					$db && $db->beginTransaction();
-					$params = json_decode(file_get_contents('php://input'), true);
-					$params = $params != null ? $params : $_POST;
-					Request::setParams($params);
+
+					// check if we should decode the params from php://input, default to $_POST params
+					$input = file_get_contents('php://input');
+
+					// try json decode first
+					$params = json_decode($input, true);
+					if ($params !== null) {
+						Request::setParams($params);
+					} else {
+						// attempt URL decode next
+						$params = [];
+						foreach (explode('&', $input) as $chunk) {
+							$param = explode("=", $chunk);
+
+							if ($param) {
+								$params[urldecode($param[0])] = urldecode($param[1]);
+							}
+						}
+						if (count($params) > 0) {
+							Request::setParams($params);
+						} else {
+							Request::setParams($_POST);
+						}
+					}
+
 					$response = $this->runAction($actionName, $params);
 					$db && $db->commitTransaction();
 					break;
