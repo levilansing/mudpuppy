@@ -25,7 +25,7 @@ class Config {
 
 	// Application configuration
 	public static $appClass = 'SampleApp';
-	public static $rootControllerName = 'Home';
+	public static $rootControllerName = 'Root';
 	public static $randomSeedOffset = 0x5C7474D1;
 	// Array of folders for global classes or key-value pairs for namespace => folder
 	public static $autoloadFolders = array();

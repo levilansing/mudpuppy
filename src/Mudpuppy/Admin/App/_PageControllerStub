@@ -42,7 +42,7 @@ class ___CLASS_NAME___ extends Controller {
 	 * @return array
 	 */
 	public function getAllowablePathPatterns() {
-		return array();
+		return [];
 	}
 
 	// TODO add actions as desired

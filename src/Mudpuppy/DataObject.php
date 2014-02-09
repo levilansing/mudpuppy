@@ -453,6 +453,8 @@ abstract class DataObject implements \JsonSerializable {
 					$db->bindValue($i, $db->formatDate($val->getValue()), \PDO::PARAM_STR);
 				} else if ($type == DATATYPE_DATE) {
 					$db->bindValue($i, $db->formatDate($val->getValue(), false), \PDO::PARAM_STR);
+				} else if ($type == DATATYPE_BINARY) {
+					$db->bindValue($i, $val->getValue(), \PDO::PARAM_LOB);
 				} else if ($type == DATATYPE_JSON) {
 					$value = $val->getValue();
 					if (empty($value)) {

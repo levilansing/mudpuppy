@@ -276,8 +276,8 @@ AND i.TABLE_NAME = '$table';");
 			'DATATYPE_DOUBLE' => array('DOUBLE'),
 			'DATATYPE_BOOL' => array('BIT', 'BOOL'),
 			'DATATYPE_DECIMAL' => array('DECIMAL', 'NUMERIC'),
-			'DATATYPE_STRING' => array('CHAR', 'VARCHAR', 'BINARY', 'VARBINARY', 'ENUM', 'SET', 'BLOB', 'TEXT',
-				'TINYBLOB', 'TINYTEXT', 'MEDIUMBLOB', 'MEDIUMTEXT', 'LONGBLOB', 'LONGTEXT'),
+			'DATATYPE_STRING' => array('CHAR', 'VARCHAR', 'ENUM', 'SET', 'TEXT', 'TINYTEXT', 'MEDIUMTEXT', 'LONGTEXT'),
+			'DATATYPE_BINARY' => array('BINARY', 'VARBINARY', 'BLOB', 'TINYBLOB', 'MEDIUMBLOB', 'LONGBLOB'),
 		);
 		foreach ($types as $t => $list) {
 			if (in_array($type, $list)) {

@@ -20,9 +20,8 @@ define('_DATATYPE_END_NUMERIC', 5);
 define('DATATYPE_CHAR', 6);
 define('DATATYPE_DECIMAL', 7);
 define('DATATYPE_STRING', 8);
-define('DATATYPE_TEXT', 9);
-define('DATATYPE_MEDIUMTEXT', 10);
-define('DATATYPE_LONGTEXT', 11);
+define('DATATYPE_BINARY', 9);
+// removed 10 & 11
 define('DATATYPE_JSON', 12);
 define('DATATYPE_DATETIME', 13);
 define('DATATYPE_DATE', 14);

@@ -10,7 +10,7 @@ use Mudpuppy\PageNotFoundException;
 
 defined('MUDPUPPY') or die('Restricted');
 
-class HomeController extends Controller {
+class RootController extends Controller {
 	use PageController;
 
 	public function getRequiredPermissions() {
@@ -25,7 +25,16 @@ class HomeController extends Controller {
 	}
 
 	public function render() {
-		include('App/HomeView.php');
+		include('App/RootView.php');
+	}
+
+	/**
+	 * return a list of regular expressions or strings that the page options must match
+	 * example: a url of "this-controller/get/42" can be validated by array('#^get/[0-9]+$#');
+	 * @return array
+	 */
+	public function getAllowablePathPatterns() {
+		return [];
 	}
 
 	/**
