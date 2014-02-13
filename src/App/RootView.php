@@ -6,7 +6,7 @@ defined('MUDPUPPY') or die('Restricted');
 ?>
 <h1>Mudpuppy</h1><p>This is your home page.</p>
 <ul>
-	<li><a href="/home/getJson?title=hello&message=This is the result of a REST get">Send a sample REST get</a></li>
-	<li><a href="/home/getJson">Send a malformed REST get</a></li>
+	<li><a href="/getJson?title=hello&message=This is the result of a REST get">Send a sample REST get</a></li>
+	<li><a href="/getJson">Send a malformed REST get</a></li>
 	<li><a href="/mudpuppy">View the Mudpuppy admin area</a></li>
 </ul>
