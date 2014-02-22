@@ -13,56 +13,60 @@ class Security extends Mudpuppy\Security {
 
 	/**
 	 * Attempts to log a user in.
-	 * @param string $email
+	 * @param string $username
 	 * @param string $password
 	 * @return bool|string true if successful, error message otherwise
 	 */
-	public function login($email, $password) {
-		self::logout();
-		if (strlen($email) == 0 || strlen($password) == 0) {
-			return 'Email and Password are required';
-		}
-
+	public function login($username, $password) {
 		return "Security login method incomplete";
-		/* FIXME
-		$user = User::getByEmail($email);
-		if ($user != null) {
-			$salt = substr($user->password, 0, self::PASSWORD_SALT_LENGTH);
-			$encryptedPass = substr($user->password, self::PASSWORD_SALT_LENGTH);
-			if (self::getPasswordHash($salt, $password) == $encryptedPass) {
-				Session::set('user', $user);
-				return true;
-			}
-		}*/
-		return 'Invalid Login or Password';
+
+		/*****************************************************************************************************************
+		* Example Implementation
+		******************************************************************************************************************
+		// Clear any active login
+		$this->logout();
+		// Must specify both parameters
+		if (empty($username) || empty($password)) {
+			return 'Username and Password are required';
+		}
+		// Fetch the user object
+		$user = User::fetchOne(['username' => $username]);
+		// Verify the password
+		if ($user != null && $this->verifyPassword($password, $user->password)) {
+			// Store the logged in user object in the session
+			Session::set('user', $user);
+			// Success
+			return true;
+		}
+		// Failure
+		return 'Invalid Username or Password';
+		*****************************************************************************************************************/
 	}
 
+	/**
+	 * Refreshes the current login.
+	 */
 	public function refreshLogin() {
-		/* FIXME
-		if (self::isLoggedIn()) {
-			$currentTime = time();
-			$user = User::get(self::getUser()->id);
-			if (\Config::$noActivityTimeout && $user->lastActivity < $currentTime + \Config::$noActivityTimeout) {
-				SampleApp::sessionExpired();
-				return;
-			}
-			// if it's been more than 10 sec since last activity, update last activity
-			if ($currentTime - $user->lastActivity >= 10) {
-				$user->lastActivity = time();
-				$user->save();
-			}
-			// remove sensitive information from user object
-			$user->clearValue('password');
+		/*****************************************************************************************************************
+		* Example Implementation
+		******************************************************************************************************************
+		if ($this->isLoggedIn()) {
+			// Re-fetch the user object
+			$user = User::fetchOne(['id' => $this->getUser()->id]);
+			// Update last activity time, etc, as needed by your application
+			// Store back to the session
 			Session::set('user', $user);
-		}*/
+		}
+		*****************************************************************************************************************/
 	}
 
 	/**
 	 * Gets the current user object.
-	 * @return User
+	 * @return \Mudpuppy\DataObject
 	 */
 	public function getUser() {
-		return null; // FIXME: Session::get('user');
+		return null;
+		// Example Implementation: Session::get('user');
 	}
 
 	/**
@@ -70,7 +74,8 @@ class Security extends Mudpuppy\Security {
 	 * @return boolean
 	 */
 	public function isLoggedIn() {
-		return false; // FIXME: Session::has('user');
+		return false;
+		// Example Implementation: Session::has('user');
 	}
 
 	/**
@@ -86,42 +91,47 @@ class Security extends Mudpuppy\Security {
 	 * @return bool
 	 */
 	public function hasPermission($permission) {
-		return true; // FIXME
-		/*if (is_null($permission) || !self::isLoggedIn()) {
+		return true;
+
+		/*****************************************************************************************************************
+		* Example Implementation
+		******************************************************************************************************************
+		if (is_null($permission) || !$this->isLoggedIn()) {
 			return false;
 		}
-		$permissions = self::getUser()->permissions;
-		return $permissions && is_array($permissions) && in_array($permission, $permissions);*/
+		$permissions = $this->getUser()->permissions;
+		return $permissions && is_array($permissions) && in_array($permission, $permissions);
+		*****************************************************************************************************************/
 	}
 
 	/**
 	 * Checks if the current user has a set of permissions.
 	 * @param string[] $permissions
-	 * @internal param $permission
 	 * @return bool
 	 */
 	public function hasPermissions($permissions) {
+		return true;
+
+		/*****************************************************************************************************************
+		* Example Implementation
+		******************************************************************************************************************
 		if (empty($permissions)) {
 			return true;
 		}
-
-		if (!self::isLoggedIn()) {
+		if (!$this->isLoggedIn()) {
 			return false;
 		}
-
-		// FIXME
-		return false;
-//		$userPermissions = self::getUser()->permissions;
-//		if (!is_array($userPermissions)) {
-//			return false;
-//		}
-//
-//		foreach ($permissions as $permission) {
-//			if (!in_array($permission, $userPermissions)) {
-//				return false;
-//			}
-//		}
-//		return true;
+		$userPermissions = $this->getUser()->permissions;
+		if (!is_array($userPermissions)) {
+			return false;
+		}
+		foreach ($permissions as $permission) {
+			if (!in_array($permission, $userPermissions)) {
+				return false;
+			}
+		}
+		return true;
+		*****************************************************************************************************************/
 	}
 
 }
