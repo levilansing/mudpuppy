@@ -26,6 +26,8 @@ There are two core concepts/constructs that you need to understand to use Mudpup
 
 ### Admin Area
 
+The admin area is only available in debug mode and is protect by default with HTTP Basic Authentication. The default user and password are both `admin`. This can be changed or disabled by selecting **Manage App Structure** then **BasicAuth.json**. 
+
 ## Architecture
 
 ### Site Structure

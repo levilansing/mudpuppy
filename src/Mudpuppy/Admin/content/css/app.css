@@ -87,7 +87,8 @@
 .fileIcon.folderOpen {
   background-position: -96px -32px;
 }
-.fileIcon.permissions {
+.fileIcon.permissions,
+.fileIcon.basicAuth {
   background-position: 0px -64px;
 }
 .fileIcon.phpClass {
@@ -126,7 +127,8 @@
 .fileIcon.white.folderOpen {
   background-position: -96px -160px;
 }
-.fileIcon.white.permissions {
+.fileIcon.white.permissions,
+.fileIcon.white.basicAuth {
   background-position: 0px -192px;
 }
 .fileIcon.white.phpClass {
@@ -178,4 +180,7 @@ a#newFile:hover {
 .objectDetails pre {
   font-size: 0.85em;
   font-weight: normal;
+}
+.basicAuthDetails select {
+  margin-left: 8px;
 }

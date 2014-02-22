@@ -1,5 +1,6 @@
 <?php
-use Mudpuppy\App, App\Config;
+use App\Config;
+use Mudpuppy\App;
 
 $controller = App::getPageController();
 ?>
@@ -85,8 +86,10 @@ $controller = App::getPageController();
 					</select>
 				</div>
 				<div id="ControllerOptions" class="controls">
-					<label for="objectPageController"><input type="checkbox" id="objectPageController" /> Page Controller</label>
-					<label for="objectDataObjectController"><input type="checkbox" id="objectDataObjectController" /> Data Object Controller</label>
+					<label for="objectPageController"><input type="checkbox" id="objectPageController"/> Page
+						Controller</label>
+					<label for="objectDataObjectController"><input type="checkbox" id="objectDataObjectController"/> Data
+						Object Controller</label>
 				</div>
 			</div>
 			<div class="control-group">
@@ -128,6 +131,62 @@ $controller = App::getPageController();
 				<label class="control-label">Allowable Paths</label>
 				<div class="controls">
 					<pre id="objectPaths"></pre>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="basicAuthTemplate" class="basicAuthDetails">
+		<h2>BasicAuth.json</h2>
+		<div class="form-horizontal">
+			<legend>
+				Authorization Realms
+				<select id="realms">
+					<option value="" selected>--- Create New ---</option>
+				</select>
+			</legend>
+			<div class="control-group">
+				<label class="control-label">Realm Name</label>
+				<div class="controls">
+					<input id="realmName" type="text"/>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label">Path Pattern</label>
+				<div class="controls">
+					<input id="pathPattern" type="text"/>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label"></label>
+				<div class="controls">
+					<button id="saveRealm" class="btn">Save</button>
+					<button id="deleteRealm" class="btn">Delete</button>
+				</div>
+			</div>
+			<legend>
+				Associated Credentials
+				<select id="credentials" disabled>
+					<option value="" selected>--- Create New ---</option>
+				</select>
+			</legend>
+			<div class="control-group">
+				<label class="control-label">Username</label>
+				<div class="controls">
+					<input id="username" type="text"/>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label">Password</label>
+				<div class="controls">
+					<input id="password" type="password"/>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label"></label>
+				<div class="controls">
+					<button id="saveCredential" class="btn">Save</button>
+					<button id="deleteCredential" class="btn">Delete</button>
 				</div>
 			</div>
 		</div>

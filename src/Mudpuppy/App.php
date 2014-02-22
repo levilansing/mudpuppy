@@ -83,6 +83,21 @@ class App {
 		// Refresh login, check for session expiration
 		$security->refreshLogin();
 
+		// Handle HTTP Basic Auth if needed
+		foreach (json_decode(file_get_contents('App/BasicAuth.json'), true) as $realm => $authInfo) {
+			$pathPattern = $authInfo['pathPattern'];
+			if (preg_match($pathPattern, $_SERVER['PATH_INFO'])) {
+				if (!isset($_SERVER['PHP_AUTH_USER']) || !isset($authInfo['credentials'][$_SERVER['PHP_AUTH_USER']])
+					|| !$security->verifyPassword($_SERVER['PHP_AUTH_PW'], $authInfo['credentials'][$_SERVER['PHP_AUTH_USER']])) {
+					header("WWW-Authenticate: Basic realm=\"$realm\"");
+					header('HTTP/1.0 401 Unauthorized');
+					Log::add("HTTP Basic Auth required for matched pattern: $pathPattern");
+					App::cleanExit(true);
+				}
+				break;
+			}
+		}
+
 		// get the page controller and verify the user has permission to proceed
 		self::$pageController = Controller::getController();
 		if (!$security->hasPermissions(self::$pageController->getRequiredPermissions())) {
@@ -155,7 +170,7 @@ class App {
 
 			// If in debug mode and we don't have any way of storing logs, display the log if necessary. Needs to happen
 			// here before the connection is closed.
-			if (Config::$debug && !Log::hasStorageOption()) {
+			if (Config::$debug && !Log::hasStorageOption() && !$suppressAdditionalOutput) {
 				Log::write();
 			}
 
@@ -178,7 +193,7 @@ class App {
 			}
 
 			// Record errors to database (or S3 or local file, depending on configuration)
-			Log::write();
+			Log::write($suppressAdditionalOutput);
 		}
 		// Then terminate execution
 		exit();

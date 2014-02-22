@@ -5,12 +5,14 @@
 
 namespace Mudpuppy\Admin\App;
 
-use Mudpuppy\Controller, Mudpuppy\PageController;
 use App\Config;
+use Mudpuppy\App;
+use Mudpuppy\Controller;
 use Mudpuppy\File;
 use Mudpuppy\InvalidInputException;
 use Mudpuppy\Log;
 use Mudpuppy\MudpuppyException;
+use Mudpuppy\PageController;
 use Mudpuppy\Request;
 
 defined('MUDPUPPY') or die('Restricted');
@@ -63,7 +65,7 @@ class AppController extends Controller {
 
 	private function generateFileListing($directory) {
 		$list = [];
-		foreach (File::getFiles($directory, '#\.php$#') as $file) {
+		foreach (File::getFiles($directory, '#(\.php|^BasicAuth.json)$#') as $file) {
 			$namespace = implode('\\', explode('/', $directory));
 			$type = 'phpClass';
 			$properties = [];
@@ -88,6 +90,11 @@ class AppController extends Controller {
 				case 'Security.php':
 				case 'Permissions.php':
 					$type = 'permissions';
+					break;
+
+				case 'BasicAuth.json':
+					$type = 'basicAuth';
+					$properties['realms'] = array_keys(json_decode(file_get_contents('App/BasicAuth.json'), true));
 					break;
 
 				case 'Config.php':
@@ -244,7 +251,7 @@ class AppController extends Controller {
 			// populate stub file
 			$stub = str_replace('___NAMESPACE___', $namespace, $stub);
 			$stub = str_replace('___CLASS_NAME___', $fileName, $stub);
-			$stub = str_replace('___VIEW_FILE_PATH___', implode('/', explode('\\', $namespace)) . '/'. substr($fileName, 0, -10) . 'View.php', $stub);
+			$stub = str_replace('___VIEW_FILE_PATH___', implode('/', explode('\\', $namespace)) . '/' . substr($fileName, 0, -10) . 'View.php', $stub);
 
 			if (file_put_contents($currentFolder . $fileName . '.php', $stub) === false) {
 				throw new MudpuppyException(null, 'Unable to create file. May not have appropriate file permissions.');
@@ -297,7 +304,7 @@ class AppController extends Controller {
 
 		$folders = explode('/', $name);
 		if (empty($folders) || $folders[0] != 'App') {
-			throw new InvalidInputException(null, "Folder name is invalid. It must start with 'App/': ".$name);
+			throw new InvalidInputException(null, "Folder name is invalid. It must start with 'App/': " . $name);
 		}
 
 		$currentFolder = '';
@@ -310,4 +317,123 @@ class AppController extends Controller {
 
 		return [];
 	}
+
+	/**
+	 * @param string $name
+	 * @return array
+	 * @throws \Mudpuppy\InvalidInputException
+	 */
+	public function action_getBasicAuthRealm($name) {
+		$realms = json_decode(file_get_contents('App/BasicAuth.json'), true);
+		$name = trim($name);
+		if (!isset($realms[$name])) {
+			throw new InvalidInputException(null, "Unknown realm \"$name\"");
+		}
+		return [
+			'name' => $name,
+			'pathPattern' => $realms[$name]['pathPattern'],
+			'credentials' => array_keys($realms[$name]['credentials'])
+		];
+	}
+
+	/**
+	 * @param string $oldName
+	 * @param string $newName
+	 * @param string $pathPattern
+	 * @return array
+	 * @throws \Mudpuppy\InvalidInputException
+	 */
+	public function action_saveBasicAuthRealm($oldName, $newName, $pathPattern) {
+		$realms = json_decode(file_get_contents('App/BasicAuth.json'), true);
+		$oldName = trim($oldName);
+		$newName = trim($newName);
+		$pathPattern = trim($pathPattern);
+		if (empty($newName)) {
+			throw new InvalidInputException(null, 'Must specify Realm Name');
+		}
+		if (empty($pathPattern)) {
+			throw new InvalidInputException(null, 'Must specify Path Pattern');
+		}
+		if (empty($oldName)) {
+			$realms[$newName] = ['pathPattern' => $pathPattern, 'credentials' => []];
+		} else if (isset($realms[$oldName])) {
+			$realms[$newName] = $realms[$oldName];
+			unset($realms[$oldName]);
+			$realms[$newName]['pathPattern'] = $pathPattern;
+		} else {
+			throw new InvalidInputException(null, "Unknown realm \"$oldName\"");
+		}
+		file_put_contents('App/BasicAuth.json', json_encode($realms));
+		return ['realms' => array_keys($realms)];
+	}
+
+	/**
+	 * @param string $name
+	 * @return array
+	 * @throws \Mudpuppy\InvalidInputException
+	 */
+	public function action_deleteBasicAuthRealm($name) {
+		$realms = json_decode(file_get_contents('App/BasicAuth.json'), true);
+		$name = trim($name);
+		if (!isset($realms[$name])) {
+			throw new InvalidInputException(null, "Unknown realm \"$name\"");
+		}
+		unset($realms[$name]);
+		file_put_contents('App/BasicAuth.json', json_encode($realms));
+		return ['realms' => array_keys($realms)];
+	}
+
+	/**
+	 * @param string $realmName
+	 * @param string $oldUsername
+	 * @param string $newUsername
+	 * @param string $password
+	 * @return array
+	 * @throws \Mudpuppy\InvalidInputException
+	 */
+	public function action_saveBasicAuthCredential($realmName, $oldUsername, $newUsername, $password) {
+		$realms = json_decode(file_get_contents('App/BasicAuth.json'), true);
+		$realmName = trim($realmName);
+		$oldUsername = trim($oldUsername);
+		$newUsername = trim($newUsername);
+		$password = trim($password);
+		if (!isset($realms[$realmName])) {
+			throw new InvalidInputException(null, "Unknown realm \"$realmName\"");
+		}
+		if (empty($newUsername)) {
+			throw new InvalidInputException(null, 'Must specify Username');
+		}
+		if (empty($password)) {
+			throw new InvalidInputException(null, 'Must specify Password');
+		}
+		if (empty($oldUsername)) {
+			$realms[$realmName]['credentials'][$newUsername] = App::getSecurity()->hashPassword($password);
+		} else if (isset($realms[$realmName]['credentials'][$oldUsername])) {
+			unset($realms[$realmName]['credentials'][$oldUsername]);
+			$realms[$realmName]['credentials'][$newUsername] = App::getSecurity()->hashPassword($password);
+		} else {
+			throw new InvalidInputException(null, "Unknown credential \"$oldUsername\"");
+		}
+		file_put_contents('App/BasicAuth.json', json_encode($realms));
+		return ['credentials' => array_keys($realms[$realmName]['credentials'])];
+	}
+
+	/**
+	 * @param string $realmName
+	 * @param string $username
+	 * @return array
+	 * @throws \Mudpuppy\InvalidInputException
+	 */
+	public function action_deleteBasicAuthCredential($realmName, $username) {
+		$realms = json_decode(file_get_contents('App/BasicAuth.json'), true);
+		$realmName = trim($realmName);
+		$username = trim($username);
+		if (!isset($realms[$realmName])) {
+			throw new InvalidInputException(null, "Unknown realm \"$realmName\"");
+		}
+		unset($realms[$realmName]['credentials'][$username]);
+		file_put_contents('App/BasicAuth.json', json_encode($realms));
+		return ['credentials' => array_keys($realms[$realmName]['credentials'])];
+	}
+
 }

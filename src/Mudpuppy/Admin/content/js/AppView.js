@@ -27,9 +27,25 @@
 
 	window.AppView = AppView;
 
+	AppView.prototype.callAction = function(action, params, success) {
+		$.ajax({
+			dataType: 'json',
+			url: '/mudpuppy/App/' + action,
+			data: params,
+			success: success,
+			error: function(result) {
+				if (result.responseJSON && result.responseJSON.message) {
+					alert(result.responseJSON.message);
+				} else {
+					alert("An unknown error occurred");
+				}
+			}
+		});
+	};
+
 	AppView.prototype.refresh = function() {
 		var self = this;
-		$.getJSON('/mudpuppy/App/listApp', function(data) {
+		this.callAction('listApp', null, function(data) {
 			console.log(data);
 			$('#structureList').empty();
 			self.update(data);
@@ -86,30 +102,129 @@
 			var info = $(li).data('properties');
 			$(li).addClass('selected').find('.fileIcon').addClass('white');
 
-			var $template = $('#objectTemplate').clone().attr('id', '');
-			if (info && info.properties && info.properties.traits) {
-				var props = info.properties;
-				$template.find('#objectName').text(props.namespace + '\\' + props.className);
-				$template.find('#objectFile').text(info.file);
+			var $template = $();
+			var self = this;
+			if (info) {
+				if (info.type == 'controller' || info.type == 'pageController' || info.type == 'dataObjectController') {
+					$template = $('#objectTemplate').clone().attr('id', '');
+					var props = info.properties;
+					$template.find('#objectName').text(props.namespace + '\\' + props.className);
+					$template.find('#objectFile').text(info.file);
 
-				var $actions = $('<ul></ul>');
-				$.each(props.actions || {}, function(i, action) {
-					$actions.append($('<li></li>').text(action));
-				});
-				$template.find('#objectActions').append($actions);
+					var $actions = $('<ul></ul>');
+					$.each(props.actions || {}, function(i, action) {
+						$actions.append($('<li></li>').text(action));
+					});
+					$template.find('#objectActions').append($actions);
 
-				var $traits = $('<ul></ul>');
-				$.each(props.traits || {}, function(i, trait) {
-					$traits.append($('<li></li>').text(trait));
-				});
-				$template.find('#objectTraits').append($traits);
+					var $traits = $('<ul></ul>');
+					$.each(props.traits || {}, function(i, trait) {
+						$traits.append($('<li></li>').text(trait));
+					});
+					$template.find('#objectTraits').append($traits);
 
-				$template.find('#objectPermissions').append(props.permissions);
-				$template.find('#objectPaths').append(props.paths);
-			} else if (info && info.file) {
-				$template = $('<h2>' + info.file + '</h2><div>No additional details for this file are available.</div>');
-			} else {
-				$template = $();
+					$template.find('#objectPermissions').append(props.permissions);
+					$template.find('#objectPaths').append(props.paths);
+				} else if (info.type == 'basicAuth') {
+					$template = $('#basicAuthTemplate').clone().attr('id', '');
+					var $realms = $template.find('#realms');
+					for (var n = 0; n < info.properties.realms.length; n++) {
+						$realms.append('<option val="' + info.properties.realms[n] + '">' + info.properties.realms[n] + '</option>');
+					}
+					var $credentials = $template.find('#credentials');
+					$credentials.change(function() {
+						var username = $(this).val();
+						if (username == '') {
+							$template.find('#username, #password').val('');
+							$template.find('#deleteCredential').prop('disabled', true);
+						} else {
+							$template.find('#username').val(username);
+							$template.find('#password').val('');
+							$template.find('#deleteCredential').prop('disabled', false);
+						}
+					});
+					$realms.change(function() {
+						var realmName = $(this).val();
+						if (realmName == '') {
+							$template.find('#realmName, #pathPattern').val('');
+							$template.find('#deleteRealm, #credentials, #username, #password, #saveCredential').prop('disabled',
+								true);
+						} else {
+							$template.find('#deleteRealm, #credentials, #username, #password, #saveCredential').prop('disabled',
+								false);
+							self.callAction('getBasicAuthRealm', {name: realmName}, function(data) {
+								$template.find('#realmName').val(data.name);
+								$template.find('#pathPattern').val(data.pathPattern);
+								$credentials.find('option[value!=""]').remove();
+								for (var n = 0; n < data.credentials.length; n++) {
+									$credentials.append('<option value="' + data.credentials[n] + '">' + data.credentials[n] + '</option>');
+								}
+							});
+						}
+						$credentials.find('option').prop('selected', false).filter('[value=""]').prop('selected', true);
+						$credentials.change();
+					}).change();
+					$template.find('#saveRealm').click(function() {
+						var params = {
+							oldName: $template.find('#realms').val(),
+							newName: $template.find('#realmName').val(),
+							pathPattern: $template.find('#pathPattern').val()
+						};
+						self.callAction('saveBasicAuthRealm', params, function(data) {
+							info.properties.realms = data.realms;
+							$realms.find('option[value!=""]').remove();
+							for (var n = 0; n < data.realms.length; n++) {
+								$realms.append('<option value="' + data.realms[n] + '">' + data.realms[n] + '</option>');
+							}
+							$realms.find('option').prop('selected',
+								false).filter('[value="' + params.newName + '"]').prop('selected', true);
+							$realms.change();
+						});
+					});
+					$template.find('#deleteRealm').click(function() {
+						self.callAction('deleteBasicAuthRealm', {name: $template.find('#realms').val()}, function(data) {
+							info.properties.realms = data.realms;
+							$realms.find('option[value!=""]').remove();
+							for (var n = 0; n < data.realms.length; n++) {
+								$realms.append('<option value="' + data.realms[n] + '">' + data.realms[n] + '</option>');
+							}
+							$realms.find('option').prop('selected', false).filter('[value=""]').prop('selected', true);
+							$realms.change();
+						});
+					});
+					$template.find('#saveCredential').click(function() {
+						var params = {
+							realmName: $template.find('#realms').val(),
+							oldUsername: $template.find('#credentials').val(),
+							newUsername: $template.find('#username').val(),
+							password: $template.find('#password').val()
+						};
+						self.callAction('saveBasicAuthCredential', params, function(data) {
+							$credentials.find('option[value!=""]').remove();
+							for (var n = 0; n < data.credentials.length; n++) {
+								$credentials.append('<option value="' + data.credentials[n] + '">' + data.credentials[n] + '</option>');
+							}
+							$credentials.find('option').prop('selected',
+								false).filter('[value="' + params.newUsername + '"]').prop('selected', true);
+							$credentials.change();
+						});
+					});
+					$template.find('#deleteCredential').click(function() {
+						self.callAction('deleteBasicAuthCredential', {
+							realmName: $template.find('#realms').val(),
+							username: $template.find('#credentials').val()
+						}, function(data) {
+							$credentials.find('option[value!=""]').remove();
+							for (var n = 0; n < data.credentials.length; n++) {
+								$credentials.append('<option value="' + data.credentials[n] + '">' + data.credentials[n] + '</option>');
+							}
+							$credentials.find('option').prop('selected', false).filter('[value=""]').prop('selected', true);
+							$credentials.change();
+						});
+					});
+				} else if (info.file) {
+					$template = $('<h2>' + info.file + '</h2><div>No additional details for this file are available.</div>');
+				}
 			}
 
 			$('#details').empty().append($template);
@@ -119,7 +234,6 @@
 	};
 
 	/**
-	 *
 	 * @returns {{properties:{actions:[],namespace:,traits:[]},file:,type:}|{}}
 	 */
 	AppView.prototype.getSelectedInfo = function() {
@@ -160,23 +274,9 @@
 		var name = $form.find('#folderName').val();
 
 		var self = this;
-		$.ajax({
-			dataType: "json",
-			url: '/mudpuppy/App/createFolder',
-			data: {
-				name: name
-			},
-			success: function(result) {
-				self.refresh();
-				$('#dialog').modal('hide');
-			},
-			error: function(result) {
-				if (result.responseJSON && result.responseJSON.message) {
-					alert(result.responseJSON.message);
-				} else {
-					alert("An unknown error occured");
-				}
-			}
+		this.callAction('createFolder', {name: name}, function(result) {
+			self.refresh();
+			$('#dialog').modal('hide');
 		});
 	};
 
@@ -190,27 +290,15 @@
 		var traitDataObjectController = $form.find('#objectDataObjectController').prop('checked');
 
 		var self = this;
-		$.ajax({
-			dataType: "json",
-			url: '/mudpuppy/App/createFile',
-			data: {
-				namespace: namespace,
-				name: name,
-				type: type,
-				isPageController: traitPageController,
-				isDataObjectController: traitDataObjectController
-			},
-			success: function(result) {
-				self.refresh();
-				$('#dialog').modal('hide');
-			},
-			error: function(result) {
-				if (result.responseJSON && result.responseJSON.message) {
-					alert(result.responseJSON.message);
-				} else {
-					alert("An unknown error occured");
-				}
-			}
+		this.callAction('createFile', {
+			namespace: namespace,
+			name: name,
+			type: type,
+			isPageController: traitPageController,
+			isDataObjectController: traitDataObjectController
+		}, function(result) {
+			self.refresh();
+			$('#dialog').modal('hide');
 		});
 	};
 

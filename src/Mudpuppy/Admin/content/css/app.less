@@ -79,7 +79,7 @@
 	&.folder { background-position:  -32px -32px; }
 	&.folderAdd { background-position:  -64px -32px; }
 	&.folderOpen { background-position:  -96px -32px; }
-	&.permissions { background-position:  -0px -64px; }
+	&.permissions, &.basicAuth { background-position:  -0px -64px; }
 	&.phpClass { background-position:  -32px -64px; }
 	&.view { background-position:  -64px -64px; }
 	&.pageController { background-position:  -96px -64px; }
@@ -94,7 +94,7 @@
 		&.folder { background-position:  -32px -160px; }
 		&.folderAdd { background-position:  -64px -160px; }
 		&.folderOpen { background-position:  -96px -160px; }
-		&.permissions { background-position:  -0px -192px; }
+		&.permissions, &.basicAuth { background-position:  -0px -192px; }
 		&.phpClass { background-position:  -32px -192px; }
 		&.view { background-position:  -64px -192px; }
 		&.pageController { background-position:  -96px -192px; }
@@ -140,5 +140,11 @@ a#newFolder, a#newFile {
 	pre {
 		font-size: 0.85em;
 		font-weight: normal;
+	}
+}
+
+.basicAuthDetails {
+	select {
+		margin-left: 8px;
 	}
 }

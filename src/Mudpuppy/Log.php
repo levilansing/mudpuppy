@@ -161,8 +161,10 @@ class Log {
 	/**
 	 * Writes the log to the configured storage option(s). If the log can't be stored (due to error or configuration), it
 	 * is instead displayed on the page for debug mode.
+	 *
+	 * @param boolean $suppressOutput prevents output of log to the main stream
 	 */
-	public static function write() {
+	public static function write($suppressOutput = false) {
 		if (self::$writeCompleted) {
 			return;
 		}
@@ -188,14 +190,16 @@ class Log {
 		if (Database::$additionalQueryLogs) {
 			Database::$queryLog[] = array(
 				'stime' => Log::getElapsedTime(),
-				'query' => 'More than '.Database::LOG_LIMIT.' queries executed. ' . Database::$additionalQueryLogs . ' queries were not recorded.',
-				'etime'=>Log::getElapsedTime()
+				'query' => 'More than ' . Database::LOG_LIMIT . ' queries executed. ' . Database::$additionalQueryLogs . ' queries were not recorded.',
+				'etime' => Log::getElapsedTime()
 			);
 		}
 
 		if (Config::$debug && !self::hasStorageOption()) {
 			if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(self::$errors)) {
-				self::displayFullLog();
+				if (!$suppressOutput) {
+					self::displayFullLog();
+				}
 				self::$writeCompleted = true;
 			}
 			return;
@@ -242,7 +246,7 @@ class Log {
 				$log->errors = self::$errors;
 				$log->responseCode = http_response_code();
 
-				if (Config::$logToDatabase && !$log->save() && Config::$debug) {
+				if (!$suppressOutput && Config::$logToDatabase && !$log->save() && Config::$debug) {
 					self::displayFullLog();
 				}
 				if (!empty(Config::$logFileDir)) {
@@ -256,7 +260,7 @@ class Log {
 					$baseName .= $index;
 					$log = $log->toArray();
 					$log['id'] = $baseName;
-					if (!File::putContents(Config::$logFileDir . $baseName . '.json', json_encode($log)) && Config::$debug) {
+					if (!$suppressOutput && !File::putContents(Config::$logFileDir . $baseName . '.json', json_encode($log)) && Config::$debug) {
 						self::displayFullLog();
 					}
 				}
@@ -278,7 +282,7 @@ class Log {
 				}
 
 			} catch (\Exception $e) {
-				if (Config::$debug) {
+				if (!$suppressOutput && Config::$debug) {
 					self::exception($e);
 					self::displayFullLog();
 				}
