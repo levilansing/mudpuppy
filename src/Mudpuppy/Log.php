@@ -246,7 +246,7 @@ class Log {
 				$log->errors = self::$errors;
 				$log->responseCode = http_response_code();
 
-				if (!$suppressOutput && Config::$logToDatabase && !$log->save() && Config::$debug) {
+				if (Config::$logToDatabase && !$log->save() && Config::$debug && !$suppressOutput) {
 					self::displayFullLog();
 				}
 				if (!empty(Config::$logFileDir)) {
@@ -260,7 +260,7 @@ class Log {
 					$baseName .= $index;
 					$log = $log->toArray();
 					$log['id'] = $baseName;
-					if (!$suppressOutput && !File::putContents(Config::$logFileDir . $baseName . '.json', json_encode($log)) && Config::$debug) {
+					if (!File::putContents(Config::$logFileDir . $baseName . '.json', json_encode($log)) && Config::$debug && !$suppressOutput) {
 						self::displayFullLog();
 					}
 				}
@@ -282,7 +282,7 @@ class Log {
 				}
 
 			} catch (\Exception $e) {
-				if (!$suppressOutput && Config::$debug) {
+				if (Config::$debug && !$suppressOutput) {
 					self::exception($e);
 					self::displayFullLog();
 				}

@@ -36,7 +36,6 @@ class App {
 	 * Called by Mudpuppy when the application starts up.
 	 */
 	public static function start() {
-
 		// Setup the random number generators
 		function _createSeed() {
 			list($uSec, $sec) = explode(' ', microtime());
@@ -91,14 +90,14 @@ class App {
 					|| !$security->verifyPassword($_SERVER['PHP_AUTH_PW'], $authInfo['credentials'][$_SERVER['PHP_AUTH_USER']])) {
 					header("WWW-Authenticate: Basic realm=\"$realm\"");
 					header('HTTP/1.0 401 Unauthorized');
-					Log::add("HTTP Basic Auth required for matched pattern: $pathPattern");
+					Log::dontWrite();
 					App::cleanExit(true);
 				}
 				break;
 			}
 		}
 
-		// get the page controller and verify the user has permission to proceed
+		// Get the page controller and verify the user has permission to proceed
 		self::$pageController = Controller::getController();
 		if (!$security->hasPermissions(self::$pageController->getRequiredPermissions())) {
 			$reflectionApp = new \ReflectionClass('App\\' . Config::$appClass);
@@ -111,8 +110,7 @@ class App {
 		// Process the request
 		self::$pageController->processRequest();
 
-		// if we got here, there is no request to process
-		// continue to load the page
+		// If we got here, there is no request to process. Continue to load the page.
 		if (!self::$pageController->validatePathOptions()) {
 			throw new PageNotFoundException("PathOptions are not valid");
 		}
