@@ -71,6 +71,8 @@ class App {
 					die();
 				}
 			}
+		} else {
+			Config::$logToDatabase = false;
 		}
 
 		// Do any application-specific startup tasks

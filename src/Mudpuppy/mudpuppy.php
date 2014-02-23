@@ -22,10 +22,11 @@ if (!defined('PASSWORD_DEFAULT')) {
 	require_once('Mudpuppy/Compatibility/password.php');
 }
 
-// Load the configuration, logging system, and file system helper
+// Load the configuration, logging system, file system helper, and Database (required by Log)
 require_once('Mudpuppy/Log.php');
 require_once('App/Config.php');
 require_once('Mudpuppy/File.php');
+require_once('Mudpuppy/Database.php');
 
 // initialize the log
 Log::initialize();

@@ -149,7 +149,7 @@ class LogController extends Controller {
 			$read = array($fp);
 			$write = null;
 			$except = null;
-			$triggered = stream_select($read, $write, $except, 30);
+			$triggered = stream_select($read, $write, $except, 15);
 			fclose($fp);
 			unlink($pipe);
 		} else {
