@@ -85,16 +85,21 @@ class App {
 		$security->refreshLogin();
 
 		// Handle HTTP Basic Auth if needed
+		$authorizedRealms = Session::get('authorizedRealms', []);
 		foreach (json_decode(file_get_contents('App/BasicAuth.json'), true) as $realm => $authInfo) {
 			$pathPattern = $authInfo['pathPattern'];
 			if (preg_match($pathPattern, $_SERVER['PATH_INFO'])) {
-				if (!isset($_SERVER['PHP_AUTH_USER']) || !isset($authInfo['credentials'][$_SERVER['PHP_AUTH_USER']])
-					|| !$security->verifyPassword($_SERVER['PHP_AUTH_PW'], $authInfo['credentials'][$_SERVER['PHP_AUTH_USER']])) {
+				if (!in_array($realm, $authorizedRealms) &&
+					(!isset($_SERVER['PHP_AUTH_USER']) || !isset($authInfo['credentials'][$_SERVER['PHP_AUTH_USER']])
+						|| !$security->verifyPassword($_SERVER['PHP_AUTH_PW'], $authInfo['credentials'][$_SERVER['PHP_AUTH_USER']]))
+				) {
 					header("WWW-Authenticate: Basic realm=\"$realm\"");
 					header('HTTP/1.0 401 Unauthorized');
 					Log::dontWrite();
 					App::cleanExit(true);
 				}
+				$authorizedRealms[] = $realm;
+				Session::set('authorizedRealms', $authorizedRealms);
 				break;
 			}
 		}
