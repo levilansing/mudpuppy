@@ -1,4 +1,7 @@
 .DS_Store
 .elasticbeanstalk/
 .idea/
+src/App/BasicAuth.json
+src/App/Config.json
+src/App/SampleApp.php
 src/Mudpuppy/cache/
