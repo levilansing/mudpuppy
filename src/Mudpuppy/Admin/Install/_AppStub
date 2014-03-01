@@ -7,7 +7,8 @@ namespace App;
 
 defined('MUDPUPPY') or die('Restricted');
 
-abstract class SampleApp {
+abstract class ___CLASS_NAME___ {
+
 	private static $security = null;
 
 	public static function initialize() {

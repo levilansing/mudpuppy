@@ -5,8 +5,6 @@
 
 namespace Mudpuppy;
 
-use App\Config;
-
 define('MUDPUPPY', true);
 define('MUDPUPPY_VERSION', '2.0.0 beta');
 
@@ -24,11 +22,14 @@ if (!defined('PASSWORD_DEFAULT')) {
 
 // Load the configuration, logging system, file system helper, and Database (required by Log)
 require_once('Mudpuppy/Log.php');
-require_once('App/Config.php');
+require_once('Mudpuppy/Config.php');
 require_once('Mudpuppy/File.php');
 require_once('Mudpuppy/Database.php');
 
-// initialize the log
+// Load the configuration overrides
+Config::load('App/Config.json');
+
+// Initialize the log
 Log::initialize();
 
 // Must have PHP >= 5.4.0

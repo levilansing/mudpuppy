@@ -5,7 +5,7 @@
 
 namespace Mudpuppy\Admin\App;
 
-use App\Config;
+use Mudpuppy\Config;
 use Mudpuppy\App;
 use Mudpuppy\Controller;
 use Mudpuppy\File;
@@ -14,6 +14,7 @@ use Mudpuppy\Log;
 use Mudpuppy\MudpuppyException;
 use Mudpuppy\PageController;
 use Mudpuppy\Request;
+use Mudpuppy\Security;
 
 defined('MUDPUPPY') or die('Restricted');
 
@@ -41,6 +42,7 @@ class AppController extends Controller {
 			],
 			'css' => [
 				'/mudpuppy/content/bootstrap/css/bootstrap.min.css',
+				'/mudpuppy/content/bootstrap/css/bootstrap-theme.min.css',
 				'/mudpuppy/content/css/styles.css',
 				'/mudpuppy/content/css/app.css'
 			]
@@ -51,7 +53,7 @@ class AppController extends Controller {
 	 * Renders the page body.
 	 */
 	public function render() {
-		include('mudpuppy/Admin/App/AppView.php');
+		include('Mudpuppy/Admin/App/AppView.php');
 	}
 
 	/**
@@ -110,7 +112,7 @@ class AppController extends Controller {
 
 		$folders = [];
 		foreach (File::getFolders($directory) as $folder) {
-			$folders[$folder . '/'] = $this->generateFileListing($directory . '/' . $folder);
+			$folders[$folder . '\\'] = $this->generateFileListing($directory . '/' . $folder);
 		}
 
 		// sort files & directories
@@ -302,9 +304,9 @@ class AppController extends Controller {
 	public function action_createFolder($name) {
 		$name = File::cleanPath($name);
 
-		$folders = explode('/', $name);
+		$folders = preg_split('#[\\\\/]#', $name);
 		if (empty($folders) || $folders[0] != 'App') {
-			throw new InvalidInputException(null, "Folder name is invalid. It must start with 'App/': " . $name);
+			throw new InvalidInputException(null, "Folder name is invalid. It must start with 'App\\': " . $name);
 		}
 
 		$currentFolder = '';
@@ -407,10 +409,10 @@ class AppController extends Controller {
 			throw new InvalidInputException(null, 'Must specify Password');
 		}
 		if (empty($oldUsername)) {
-			$realms[$realmName]['credentials'][$newUsername] = App::getSecurity()->hashPassword($password);
+			$realms[$realmName]['credentials'][$newUsername] = Security::hashPassword($password);
 		} else if (isset($realms[$realmName]['credentials'][$oldUsername])) {
 			unset($realms[$realmName]['credentials'][$oldUsername]);
-			$realms[$realmName]['credentials'][$newUsername] = App::getSecurity()->hashPassword($password);
+			$realms[$realmName]['credentials'][$newUsername] = Security::hashPassword($password);
 		} else {
 			throw new InvalidInputException(null, "Unknown credential \"$oldUsername\"");
 		}

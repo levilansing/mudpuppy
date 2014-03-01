@@ -5,8 +5,6 @@
 
 namespace Mudpuppy;
 
-use App\Config;
-
 defined('MUDPUPPY') or die('Restricted');
 MPAutoLoad('Mudpuppy\DateHelper');
 

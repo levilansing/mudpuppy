@@ -5,7 +5,7 @@
 
 namespace Mudpuppy\Admin\log;
 
-use App\Config;
+use Mudpuppy\Config;
 use Mudpuppy\App;
 use Mudpuppy\Controller;
 use Mudpuppy\DataObject;

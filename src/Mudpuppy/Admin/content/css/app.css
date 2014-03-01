@@ -145,7 +145,6 @@
 }
 #details {
   height: 620px;
-  padding: 10px 0;
   overflow: auto;
 }
 a#newFolder,
@@ -166,10 +165,6 @@ a#newFile:hover {
 .objectDetails label {
   color: #555;
 }
-.objectDetails .controls {
-  padding-top: 5px;
-  font-weight: bold;
-}
 .objectDetails ul {
   margin: 0;
   padding: 0;
@@ -181,6 +176,6 @@ a#newFile:hover {
   font-size: 0.85em;
   font-weight: normal;
 }
-.basicAuthDetails select {
-  margin-left: 8px;
+.modal-title {
+  font-weight: bold;
 }

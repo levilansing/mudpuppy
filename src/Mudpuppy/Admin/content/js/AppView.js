@@ -22,6 +22,8 @@
 				}
 			}
 		});
+		this.newFolderDialog = $('#newFolderDialog').detach();
+		this.newFileDialog = $('#newFileDialog').detach();
 		this.refresh();
 	}
 
@@ -77,7 +79,7 @@
 			}
 			$.each(data, function(key, item) {
 				var li;
-				if (key.substr(-1) == '/') {
+				if (key.substr(-1) == '\\') {
 					li = liFolderTemplate.clone(true);
 					li.find('>div').append($('<span class="fileIcon folder"></span>')).append(key);
 					li.addClass('folder open');
@@ -252,7 +254,7 @@
 		var info = this.getSelectedInfo();
 		var namespace = (info.properties && info.properties.namespace) || 'App\\';
 
-		var body = $('#newFileDialog');
+		var body = this.newFileDialog.clone(true);
 		body.find('input').val('').prop('checked', false);
 		body.find('select#objectType').val('Controller').change();
 		body.find('#objectNamespace').val(namespace);
@@ -263,9 +265,8 @@
 		var info = this.getSelectedInfo();
 		var namespace = (info.properties && info.properties.namespace) || 'App\\';
 
-		var body = $('#newFolderDialog');
-		body.find('#folderName').val(namespace.replace(/\\/g, '/'));
-		this.showModal("Create a New Folder", body);
+		var body = this.newFolderDialog.clone();
+		this.showModal("Create a New Namespace", body);
 	};
 
 	AppView.prototype.onCreateNewFolder = function(e, item) {

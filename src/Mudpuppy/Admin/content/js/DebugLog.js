@@ -142,7 +142,7 @@
 		var self = this;
 		$('#debugLog .logHeader td:nth-child(4)').each(function(index, td) {
 			var $td = $(td);
-			var id = $td.parents('.accordion-toggle').attr('href').substr(4);
+			var id = $td.parents('.panel-toggle').attr('href').substr(4);
 			var time = getTimeDifference(new Date(self.logs[id].date), now);
 			if (time != $td.text()) {
 				$td.text(time);
@@ -156,19 +156,19 @@
 
 	DebugLog.prototype.displayLog = function(log) {
 		var container = this.logTemplate.clone();
-		container.find('.accordion-toggle').attr('href', '#log' + log.id);
-		container.find('.accordion-body').attr('id', 'log' + log.id);
+		container.find('.panel-toggle').attr('href', '#log' + log.id);
+		container.find('.panel-body').attr('id', 'log' + log.id);
 
 		// generate header
 		var header = container.find('.logHeader td');
 		var nErrors = (log.errors ? log.errors.length : 0) || 0;
 		if (nErrors) {
-			$(header.get(0)).append('<span class="badge badge-important">' + nErrors + '</span>');
+			$(header.get(0)).html('<span class="badge badge-danger">' + nErrors + '</span>');
 			if (!this.loading) {
 				this.sendNotification('Mudpuppy Error', nErrors + ' Error(s) logged in your request', 8000);
 			}
 		} else {
-			$(header.get(0)).append('<span class="label label-success">OK</span>');
+			$(header.get(0)).html('<span class="label label-success">OK</span>');
 		}
 		$(header.get(1)).html(labelIt(log.responseCode, 400, 500, '', ''));
 		$(header.get(2)).text(log.requestMethod);
@@ -186,9 +186,9 @@
 		// fill in request data
 		var tabs = container.find('.nav-tabs li a');
 		$(tabs[0]).attr('href', '#t0' + log.id);
-		$(tabs[1]).attr('href', '#t1' + log.id).find('span').text(nErrors);
-		$(tabs[2]).attr('href', '#t2' + log.id).find('span').text(nLogs);
-		$(tabs[3]).attr('href', '#t3' + log.id).find('span').text(nQueries);
+		$(tabs[1]).attr('href', '#t1' + log.id).find('div').text(nErrors);
+		$(tabs[2]).attr('href', '#t2' + log.id).find('div').text(nLogs);
+		$(tabs[3]).attr('href', '#t3' + log.id).find('div').text(nQueries);
 
 		var content = container.find('.tab-content > div');
 		$(content[0]).attr('id', 't0' + log.id).html('<pre class="prettyprint">' + JSON.stringify(log.request, undefined,
@@ -222,7 +222,7 @@
 		}
 
 		if (value >= error) {
-			return '<span class="label label-important">' + value + postfix + '</span>';
+			return '<span class="label label-danger">' + value + postfix + '</span>';
 		}
 		if (value >= warning) {
 			return '<span class="label label-warning">' + value + postfix + '</span>';

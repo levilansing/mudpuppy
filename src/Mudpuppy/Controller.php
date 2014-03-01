@@ -5,8 +5,6 @@
 
 namespace Mudpuppy;
 
-use App\Config;
-
 defined('MUDPUPPY') or die('Restricted');
 
 abstract class Controller {
@@ -18,7 +16,7 @@ abstract class Controller {
 	 * @return Controller|PageController|DataObjectController
 	 * @throws PageNotFoundException if no controller exists
 	 */
-	public static function getController() {
+		public static function getController() {
 		// Carve up the path info into an array of parts
 		$path = pathinfo($_SERVER['PATH_INFO']);
 		if (isset($path['dirname']) && strlen($path['dirname']) > 1) {

@@ -1,5 +1,5 @@
 <?php
-use App\Config;
+use Mudpuppy\Config;
 use Mudpuppy\App;
 
 $controller = App::getPageController();
@@ -15,49 +15,48 @@ $controller = App::getPageController();
 </div>
 <br/>
 <div class="container-fluid" style="margin: auto; max-width: 1000px">
-	<div class="row-fluid appListHeader">
-		<div class="span4">
+	<div class="row appListHeader">
+		<div class="col-sm-4">
 			<span class="title">Files</span>
 			<a id="newFile" title="Create a new file from a template"><span class="fileIcon fileAdd white"></span></a>
-			<a id="newFolder" title="Create a new folder"><span class="fileIcon folderAdd white"></span></a>
+			<a id="newFolder" title="Create a new namespace"><span class="fileIcon folderAdd white"></span></a>
 		</div>
-		<div class="span8"><span class="title">Details</span></div>
+		<div class="col-sm-8"><span class="title">Details</span></div>
 	</div>
-	<div class="row-fluid">
-		<div class="span4">
-			<ul id="structureList" class="noSelect"></ul>
-		</div>
-		<div class="span8" id="details"></div>
+	<div class="row">
+		<ul id="structureList" class="col-sm-4 noSelect"></ul>
+		<div class="col-sm-8" id="details"></div>
 	</div>
 </div>
 
 <div style="display: none;">
 	<div id="dialog" class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-hidden="true">
 		<div class="modal-dialog">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-				<h4 class="modal-title"></h4>
-			</div>
 			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<h4 class="modal-title"></h4>
+				</div>
 				<div class="modal-body"></div>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
 			</div>
 		</div>
 	</div>
 
 	<div id="newFolderDialog">
 		<form class="form-horizontal">
-			<div class="control-group">
-				<label class="control-label">Folder Name</label>
-				<div class="controls">
-					<input type="text" id="folderName" value="" placeholder="App/">
+			<div class="form-group">
+				<label for="folderName" class="col-sm-3 control-label">Namespace</label>
+				<div class="col-sm-9">
+					<input type="text" class="form-control" id="folderName" value="" placeholder="App\">
 				</div>
 			</div>
-			<div class="control-group">
-				<div class="controls">
-					<button id="createNewFolder" class="btn btn-info">Create</button>
+			<div class="form-group">
+				<div class="col-sm-3"></div>
+				<div class="col-sm-9">
+					<button id="createNewFolder" class="btn btn-primary">Create</button>
 				</div>
 			</div>
 		</form>
@@ -65,36 +64,45 @@ $controller = App::getPageController();
 
 	<div id="newFileDialog">
 		<form class="form-horizontal">
-			<div class="control-group">
-				<label class="control-label">Namespace</label>
-				<div class="controls">
-					<input type="text" id="objectNamespace" value="">
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Namespace</label>
+				<div class="col-sm-9">
+					<input type="text" class="form-control" id="objectNamespace" value="">
 				</div>
 			</div>
-			<div class="control-group">
-				<label class="control-label" for="objectName">Object Name</label>
-				<div class="controls">
-					<input type="text" id="objectName" placeholder="Name of Class">
+			<div class="form-group">
+				<label class="col-sm-3 control-label" for="objectName">Object Name</label>
+				<div class="col-sm-9">
+					<input type="text" class="form-control" id="objectName" placeholder="Name of Class">
 				</div>
 			</div>
-			<div class="control-group">
-				<label class="control-label" for="objectType">Object Type</label>
-				<div class="controls">
-					<select id="objectType">
+			<div class="form-group">
+				<label class="col-sm-3 control-label" for="objectType">Object Type</label>
+				<div class="col-sm-9">
+					<select id="objectType" class="form-control">
 						<option value="Controller">Controller</option>
 						<option value="View">View</option>
 					</select>
-				</div>
-				<div id="ControllerOptions" class="controls">
-					<label for="objectPageController"><input type="checkbox" id="objectPageController"/> Page
-						Controller</label>
-					<label for="objectDataObjectController"><input type="checkbox" id="objectDataObjectController"/> Data
-						Object Controller</label>
+					<div id="ControllerOptions">
+						<div class="checkbox">
+							<label for="objectPageController">
+								<input type="checkbox" id="objectPageController"/>
+								Page Controller
+							</label>
+						</div>
+						<div class="checkbox">
+							<label for="objectDataObjectController">
+								<input type="checkbox" id="objectDataObjectController"/>
+								Data Object Controller
+							</label>
+						</div>
+					</div>
 				</div>
 			</div>
-			<div class="control-group">
-				<div class="controls">
-					<button id="createNewFile" class="btn btn-info">Create</button>
+			<div class="form-group">
+				<div class="col-sm-3"></div>
+				<div class="col-sm-9">
+					<button id="createNewFile" class="btn btn-primary">Create</button>
 				</div>
 			</div>
 		</form>
@@ -103,34 +111,34 @@ $controller = App::getPageController();
 	<div id="objectTemplate" class="objectDetails">
 		<h2 id="objectName"></h2>
 		<div class="form-horizontal">
-			<div class="control-group">
-				<label class="control-label">File</label>
-				<div class="controls">
-					<div id="objectFile"></div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">File</label>
+				<div class="col-sm-9">
+					<p class="form-control-static" id="objectFile"></p>
 				</div>
 			</div>
-			<div class="control-group">
-				<label class="control-label">Traits</label>
-				<div class="controls">
-					<div id="objectTraits"></div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Traits</label>
+				<div class="col-sm-9">
+					<p class="form-control-static" id="objectTraits"></p>
 				</div>
 			</div>
-			<div class="control-group">
-				<label class="control-label">Actions</label>
-				<div class="controls">
-					<div id="objectActions"></div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Actions</label>
+				<div class="col-sm-9">
+					<p class="form-control-static" id="objectActions"></p>
 				</div>
 			</div>
-			<div class="control-group">
-				<label class="control-label">Permissions</label>
-				<div class="controls">
-					<pre id="objectPermissions"></pre>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Permissions</label>
+				<div class="col-sm-9">
+					<pre class="form-control-static" id="objectPermissions">&nbsp;</pre>
 				</div>
 			</div>
-			<div class="control-group">
-				<label class="control-label">Allowable Paths</label>
-				<div class="controls">
-					<pre id="objectPaths"></pre>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Allowable Paths</label>
+				<div class="col-sm-9">
+					<pre class="form-control-static" id="objectPaths">&nbsp;</pre>
 				</div>
 			</div>
 		</div>
@@ -139,54 +147,60 @@ $controller = App::getPageController();
 	<div id="basicAuthTemplate" class="basicAuthDetails">
 		<h2>BasicAuth.json</h2>
 		<div class="form-horizontal">
-			<legend>
-				Authorization Realms
-				<select id="realms">
-					<option value="" selected>--- Create New ---</option>
-				</select>
-			</legend>
-			<div class="control-group">
-				<label class="control-label">Realm Name</label>
-				<div class="controls">
-					<input id="realmName" type="text"/>
+			<legend>Authorization Realms</legend>
+			<div class="form-group">
+				<div class="col-sm-3"></div>
+				<div class="col-sm-9">
+					<select class="form-control" id="realms">
+						<option value="" selected>--- Create New ---</option>
+					</select>
 				</div>
 			</div>
-			<div class="control-group">
-				<label class="control-label">Path Pattern</label>
-				<div class="controls">
-					<input id="pathPattern" type="text"/>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Realm Name</label>
+				<div class="col-sm-9">
+					<input class="form-control" id="realmName" type="text"/>
 				</div>
 			</div>
-			<div class="control-group">
-				<label class="control-label"></label>
-				<div class="controls">
-					<button id="saveRealm" class="btn">Save</button>
-					<button id="deleteRealm" class="btn">Delete</button>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Path Pattern</label>
+				<div class="col-sm-9">
+					<input class="form-control" id="pathPattern" type="text"/>
 				</div>
 			</div>
-			<legend>
-				Associated Credentials
-				<select id="credentials" disabled>
-					<option value="" selected>--- Create New ---</option>
-				</select>
-			</legend>
-			<div class="control-group">
-				<label class="control-label">Username</label>
-				<div class="controls">
-					<input id="username" type="text"/>
+			<div class="form-group">
+				<div class="col-sm-3"></div>
+				<div class="col-sm-9">
+					<button id="saveRealm" class="btn btn-primary">Save</button>
+					<button id="deleteRealm" class="btn btn-default">Delete</button>
 				</div>
 			</div>
-			<div class="control-group">
-				<label class="control-label">Password</label>
-				<div class="controls">
-					<input id="password" type="password"/>
+			<legend>Associated Credentials</legend>
+			<div class="form-group">
+				<div class="col-sm-3"></div>
+				<div class="col-sm-9">
+					<select class="form-control" id="credentials" disabled>
+						<option value="" selected>--- Create New ---</option>
+					</select>
 				</div>
 			</div>
-			<div class="control-group">
-				<label class="control-label"></label>
-				<div class="controls">
-					<button id="saveCredential" class="btn">Save</button>
-					<button id="deleteCredential" class="btn">Delete</button>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Username</label>
+				<div class="col-sm-9">
+					<input class="form-control" id="username" type="text"/>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Password</label>
+				<div class="col-sm-9">
+					<input class="form-control" id="password" type="password"/>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-3"></div>
+				<div class="col-sm-9">
+					<button id="saveCredential" class="btn btn-primary">Save</button>
+					<button id="deleteCredential" class="btn btn-default">Delete</button>
 				</div>
 			</div>
 		</div>

@@ -5,7 +5,6 @@
 
 namespace Mudpuppy;
 
-use App\Config;
 use Mudpuppy\Model\DebugLog;
 
 defined('MUDPUPPY') or die('Restricted');

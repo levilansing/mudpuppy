@@ -5,8 +5,6 @@
 
 namespace Mudpuppy;
 
-use App\Config;
-
 defined('MUDPUPPY') or die('Restricted');
 
 class App {
@@ -75,38 +73,49 @@ class App {
 			Config::$logToDatabase = false;
 		}
 
-		// Do any application-specific startup tasks
-		forward_static_call(array('App\\' . Config::$appClass, 'initialize'));
-
 		/** @var Security $security */
-		$security = self::$security = forward_static_call(array('App\\' . Config::$appClass, 'getSecurity'));
+		$security = null;
 
-		// Refresh login, check for session expiration
-		$security->refreshLogin();
+		// The app class must be configured, otherwise we need to run the installer
+		if (!empty(Config::$appClass)) {
+			// Do any application-specific startup tasks
+			forward_static_call(array('App\\' . Config::$appClass, 'initialize'));
+
+			// Get the security class
+			$security = self::$security = forward_static_call(array('App\\' . Config::$appClass, 'getSecurity'));
+
+			// Refresh login, check for session expiration
+			$security->refreshLogin();
+		} else if (!preg_match('#^/mudpuppy/install/#i', $_SERVER['PATH_INFO'])) {
+			// Redirect to the installer if there's no configured app class (and we're not already in the installer)
+			self::redirect('/mudpuppy/Install/');
+		}
 
 		// Handle HTTP Basic Auth if needed
-		$authenticatedRealms = Session::get('authenticatedRealms', []);
-		foreach (json_decode(file_get_contents('App/BasicAuth.json'), true) as $realm => $authInfo) {
-			$pathPattern = $authInfo['pathPattern'];
-			if (preg_match($pathPattern, $_SERVER['PATH_INFO'])) {
-				if (!in_array($realm, $authenticatedRealms) &&
-					(!isset($_SERVER['PHP_AUTH_USER']) || !isset($authInfo['credentials'][$_SERVER['PHP_AUTH_USER']])
-						|| !$security->verifyPassword($_SERVER['PHP_AUTH_PW'], $authInfo['credentials'][$_SERVER['PHP_AUTH_USER']]))
-				) {
-					header("WWW-Authenticate: Basic realm=\"$realm\"");
-					header('HTTP/1.0 401 Unauthorized');
-					Log::dontWrite();
-					App::cleanExit(true);
+		if (file_exists('App/BasicAuth.json')) {
+			$authenticatedRealms = Session::get('authenticatedRealms', []);
+			foreach (json_decode(file_get_contents('App/BasicAuth.json'), true) as $realm => $authInfo) {
+				$pathPattern = $authInfo['pathPattern'];
+				if (preg_match($pathPattern, $_SERVER['PATH_INFO'])) {
+					if (!in_array($realm, $authenticatedRealms) &&
+						(!isset($_SERVER['PHP_AUTH_USER']) || !isset($authInfo['credentials'][$_SERVER['PHP_AUTH_USER']])
+							|| !Security::verifyPassword($_SERVER['PHP_AUTH_PW'], $authInfo['credentials'][$_SERVER['PHP_AUTH_USER']]))
+					) {
+						header("WWW-Authenticate: Basic realm=\"$realm\"");
+						header('HTTP/1.0 401 Unauthorized');
+						Log::dontWrite();
+						App::cleanExit(true);
+					}
+					$authenticatedRealms[] = $realm;
+					Session::set('authenticatedRealms', $authenticatedRealms);
+					break;
 				}
-				$authenticatedRealms[] = $realm;
-				Session::set('authenticatedRealms', $authenticatedRealms);
-				break;
 			}
 		}
 
 		// Get the page controller and verify the user has permission to proceed
 		self::$pageController = Controller::getController();
-		if (!$security->hasPermissions(self::$pageController->getRequiredPermissions())) {
+		if ($security != null && !$security->hasPermissions(self::$pageController->getRequiredPermissions())) {
 			$reflectionApp = new \ReflectionClass('App\\' . Config::$appClass);
 			if ($reflectionApp->hasMethod('permissionDenied')) {
 				forward_static_call(array('App\\' . Config::$appClass, 'permissionDenied'));
