@@ -14,11 +14,10 @@ use Mudpuppy\Config;
 	<title><?php print Config::$appTitle; ?> | Admin</title>
 	<link rel="stylesheet" href="/mudpuppy/content/bootstrap/css/bootstrap.min.css"/>
 	<link rel="stylesheet" href="/mudpuppy/content/bootstrap/css/bootstrap-theme.min.css"/>
-	<link href="/mudpuppy/content/css/styles.css" rel="stylesheet" media="screen"/>
+	<link rel="stylesheet" href="/mudpuppy/content/css/styles.css"/>
 	<script src="/mudpuppy/content/js/jquery-1.10.0.min.js"></script>
 	<script src="/mudpuppy/content/bootstrap/js/bootstrap.min.js"></script>
 	<script src="/mudpuppy/content/js/AdminPage.js"></script>
-	<script></script>
 </head>
 <body>
 <div class="pageHeader">

@@ -5,7 +5,7 @@
 
 namespace Mudpuppy\Admin\Install;
 
-use Mudpuppy\Config;
+use Mudpuppy\App;
 use Mudpuppy\Controller;
 use Mudpuppy\Log;
 use Mudpuppy\PageController;
@@ -17,7 +17,6 @@ class InstallController extends Controller {
 
 	public function __construct($pathOptions) {
 		Log::dontWrite();
-		$this->pageTitle = Config::$appTitle . ' | Install';
 		parent::__construct($pathOptions);
 	}
 
@@ -26,24 +25,14 @@ class InstallController extends Controller {
 		return array();
 	}
 
-	public function getScripts() {
-		return [
-			'js' => [
-				'/mudpuppy/content/js/jquery-1.10.0.min.js',
-				'/mudpuppy/content/bootstrap/js/bootstrap.min.js'
-			],
-			'css' => [
-				'/mudpuppy/content/bootstrap/css/bootstrap.min.css',
-				'/mudpuppy/content/css/styles.css'
-			]
-		];
-	}
-
 	/**
 	 * Renders the page body.
 	 */
 	public function render() {
+		// Abort the default template, use the install view for the entire page
+		ob_clean();
 		include('Mudpuppy/Admin/Install/InstallView.php');
+		App::cleanExit();
 	}
 
 }

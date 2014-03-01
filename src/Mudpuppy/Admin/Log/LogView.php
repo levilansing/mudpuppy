@@ -15,7 +15,7 @@ use Mudpuppy\Config;
 	<link rel="stylesheet" href="/mudpuppy/content/bootstrap/css/bootstrap.min.css"/>
 	<link rel="stylesheet" href="/mudpuppy/content/bootstrap/css/bootstrap-theme.min.css"/>
 	<link rel="stylesheet" href="/mudpuppy/content/css/prettify.css"/>
-	<link href="/mudpuppy/content/css/styles.css" rel="stylesheet"/>
+	<link rel="stylesheet" href="/mudpuppy/content/css/styles.css"/>
 	<script src="/mudpuppy/content/js/jquery-1.10.0.min.js"></script>
 	<script src="/mudpuppy/content/js/desktop-notify-min.js"></script>
 	<script src="/mudpuppy/content/bootstrap/js/bootstrap.min.js"></script>

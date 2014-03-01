@@ -86,7 +86,7 @@ class App {
 
 			// Refresh login, check for session expiration
 			$security->refreshLogin();
-		} else if (!preg_match('#^/mudpuppy/install/#i', $_SERVER['PATH_INFO'])) {
+		} else if (!preg_match('#^/mudpuppy/(install|content)/#i', $_SERVER['PATH_INFO'])) {
 			// Redirect to the installer if there's no configured app class (and we're not already in the installer)
 			self::redirect('/mudpuppy/Install/');
 		}
