@@ -178,10 +178,9 @@ class Request {
 		return $var;
 	}
 
-	//
 	/**
-	 * Clean an input value
-	 * accepts types: int, num, cmd, path, date
+	 * Cleans an input value. Accepts the follow types: str, int, num, cmd, path, abspath, host, date
+	 *
 	 * @param $var
 	 * @param $default
 	 * @param $type
@@ -193,7 +192,6 @@ class Request {
 		}
 
 		if (is_array($var)) {
-			//return array_map(array('Request','cleanValue'),$var,array($default,$type));
 			foreach ($var as &$v) {
 				$v = self::cleanValue($v, $default, $type);
 			}
@@ -204,13 +202,21 @@ class Request {
 		switch ($type) {
 		case 'int':
 		case 'num':
-			$pat = '#(\-?[0-9]*\.?[0-9]*)#';
+			$pat = '#^(\-?[0-9]*\.?[0-9]*)$#';
 			break;
 		case 'cmd':
-			$pat = '#[a-zA-Z_][a-zA-Z_0-9]*#';
+			$pat = '#^[a-zA-Z_][a-zA-Z_0-9]*$#';
 			break;
 		case 'path':
-			$pat = '#([a-zA-Z_\- 0-9])(/?\.?[a-zA-Z_\- 0-9]+?)+#'; // accepts a . but not a .. to avoid ../
+			$var = str_replace('\\', '/', $var);
+			$pat = '#^([a-zA-Z_\- 0-9])(/?\.?[a-zA-Z_\- 0-9]+?)+$#'; // accepts a . but not a .. to avoid ../
+			break;
+		case 'abspath':
+			$var = str_replace('\\', '/', $var);
+			$pat = '#^([a-zA-Z]:)?/[a-zA-Z_\- 0-9\./]*$#';
+			break;
+		case 'host':
+			$pat = '#^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$#';
 			break;
 		case 'date':
 			if (empty($var)) {

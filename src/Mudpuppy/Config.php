@@ -39,6 +39,9 @@ class Config {
 	// AWS configuration
 	public static $awsConfig = '';
 
+	// Custom application settings (user-defined associative array of properties)
+	public static $custom = [];
+
 	public static function load($file) {
 		if (file_exists($file)) {
 			$options = json_decode(file_get_contents($file), true);
@@ -58,9 +61,6 @@ class Config {
 
 	private static function applySettings($settings) {
 		// Database settings
-		if (isset($settings['dbProtocol'])) {
-			self::$dbProtocol = self::getSettingValue($settings['dbProtocol']);
-		}
 		if (isset($settings['dbHost'])) {
 			self::$dbHost = self::getSettingValue($settings['dbHost']);
 		}
@@ -125,6 +125,13 @@ class Config {
 		// AWS configuration
 		if (isset($settings['awsConfig'])) {
 			self::$awsConfig = self::getSettingValue($settings['awsConfig']);
+		}
+
+		// Custom application settings
+		if (isset($settings['custom'])) {
+			foreach ($settings as $key => $customSetting) {
+				self::$custom[$key] = self::getSettingValue($customSetting);
+			}
 		}
 	}
 

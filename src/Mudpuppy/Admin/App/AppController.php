@@ -344,8 +344,10 @@ class AppController extends Controller {
 		if (empty($oldName)) {
 			$realms[$newName] = ['pathPattern' => $pathPattern, 'credentials' => []];
 		} else if (isset($realms[$oldName])) {
-			$realms[$newName] = $realms[$oldName];
-			unset($realms[$oldName]);
+			if ($newName != $oldName) {
+				$realms[$newName] = $realms[$oldName];
+				unset($realms[$oldName]);
+			}
 			$realms[$newName]['pathPattern'] = $pathPattern;
 		} else {
 			throw new InvalidInputException(null, "Unknown realm \"$oldName\"");

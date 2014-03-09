@@ -302,3 +302,6 @@ pre {
 .panel-heading {
   cursor: pointer;
 }
+input[type=checkbox] {
+  margin-top: 2px;
+}

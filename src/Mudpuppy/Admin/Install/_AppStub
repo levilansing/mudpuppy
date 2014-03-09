@@ -12,7 +12,7 @@ abstract class ___CLASS_NAME___ {
 	private static $security = null;
 
 	public static function initialize() {
-		// TODO: perform any application-specific startup tasks here
+		// Perform any application-specific startup tasks here
 	}
 
 	public static function getSecurity() {
