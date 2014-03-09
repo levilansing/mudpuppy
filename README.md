@@ -12,9 +12,7 @@ Note that it must be run from the site root (ie, not a sub-directory of the doma
 
 For optimal support on Windows and Mac development environments, and to prevent potential compatibility issues when later deploying to Linux, you should adjust MySQL's table name casing mode by setting `lower_case_table_names = 2`. Please see [MySQL Case Settings](https://github.com/levilansing/mudpuppy/wiki/MySQL-Case-Settings) for details. 
 
-Finally, to run the included sample application, you will need to create a new MySQL database named `MudpuppySample`. The default configuration assumes the MySQL user and password are both `root`, so if that is not the case for your setup, or if you use a non-standard port, you will need to update the database connection settings in `App/Config.php`.
-
-Once everything is setup, navigate your browser to `localhost` (or the virtual host name you configured). You should see a sample home page with a few links to explore. If not, please double-check your MySQL settings, virtual host setup, PHP version, etc, and try again.
+Once your environment is configured, navigate your browser to `localhost` (or the virtual host name you configured). You should be redirected to the installer. Choose your options, then click `Install`. If everything is successful, you will be redirected to the sample home page with a few links to explore. If not, please double-check your AMP stack, virtual host setup, etc, and try again.
 
 ### Basic Concepts
 
@@ -26,7 +24,7 @@ There are two core concepts/constructs that you need to understand to use Mudpup
 
 ### Admin Area
 
-The admin area is only available in debug mode and is protect by default with HTTP Basic Authentication. The default user and password are both `admin`. This can be changed or disabled by selecting **Manage App Structure** then **BasicAuth.json**. 
+The admin area is only available in debug mode and may be protected with HTTP Basic Authentication (chosen during installation). Authentication settings can be changed by selecting **Manage App Structure** then **BasicAuth.json**. 
 
 ## Architecture
 
