@@ -52,7 +52,7 @@ class AppController extends Controller {
 
 	private function generateFileListing($directory) {
 		$list = [];
-		foreach (File::getFiles($directory, '#(\.php|^BasicAuth.json)$#') as $file) {
+		foreach (File::getFiles($directory, '#(\.php|^BasicAuth.json|^Config.json)$#') as $file) {
 			$namespace = implode('\\', explode('/', $directory));
 			$type = 'phpClass';
 			$properties = [];
@@ -84,8 +84,9 @@ class AppController extends Controller {
 					$properties['realms'] = array_keys(json_decode(file_get_contents('App/BasicAuth.json'), true));
 					break;
 
-				case 'Config.php':
+				case 'Config.json':
 					$type = 'config';
+					$properties['config'] = json_decode(file_get_contents('App/Config.json', true));
 					break;
 
 				case Config::$appClass . '.php':
