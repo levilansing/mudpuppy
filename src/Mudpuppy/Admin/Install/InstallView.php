@@ -50,7 +50,7 @@ use Mudpuppy\Config;
 		</div>
 		<div class="form-group">
 			<label for="dbPort">Port</label>
-			<input type="number" class="form-control dbField" id="dbPort" name="dbPort" value="3306"/>
+			<input type="text" class="form-control dbField" id="dbPort" name="dbPort" value="3306"/>
 		</div>
 		<div class="form-group">
 			<label for="dbDatabase">Database Name</label>
