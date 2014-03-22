@@ -45,7 +45,8 @@ class Manage {
 	 */
 	public function action_getJson($title, $message = '1') {
 		return array('title' => $title, 'message' => $message);
-	}}
+	}
+}
 ```
 
 
@@ -63,20 +64,22 @@ Actions should throw exceptions whenever a problem occurs. By throwing a `Mudpup
  */
 public function action_example($id) {
 	if ($id < 0) {
-		throw new Mudpuppy\InvalidInputException("id can't be negative");	}
-	...}
+		throw new Mudpuppy\InvalidInputException("id can't be negative");
+	}
+	...
+}
 ```
 
 In this example, if you call `/example/?id=-1`, assuming you have debug enabled, the response will be:
 
 ```json
-{ error: 400, message: "id can't be negative" }
+{ "error": 400, "message": "id can't be negative" }
 ```
 
 However, if debug is off (in the case of production), the response will be
 
 ```json
-{ error: 400, message: "Invalid Input" }
+{ "error": 400, "message": "Invalid Input" }
 ```
 
 To send an explicit message to the user, you must provide a second parameter to the exception:
