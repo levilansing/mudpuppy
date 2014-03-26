@@ -294,7 +294,7 @@ abstract class Controller {
 			$isArray = false;
 			if (!$className) {
 				// Use the doc comments to clean the input parameter
-				if (!preg_match('/\*\s+@param\s+(\w+)(\[\])?\s+\$' . $parameterName . '\s/i', $documentation, $matches)) {
+				if (!preg_match('/\*\s+@param\s+([\w\\\\]+)(\[\])?\s+\$' . $parameterName . '\s+/i', $documentation, $matches)) {
 					throw new InvalidInputException("{$reflection->getName()}::{$method->getName()}($$parameterName) is not documented with proper types");
 				}
 				// $matches[1] is the type name
@@ -388,9 +388,10 @@ abstract class Controller {
 		}
 
 		// create the DataObject and load from the specified id
-		/** @var DataObject $param */
-		$dataObject = new $className((int)$className);
-		if (!$param->load()) {
+		/** @var DataObject $dataObject */
+		$dataObject = new $className();
+		$dataObject->id = (int)$id;
+		if (!$dataObject->load()) {
 			return null;
 		}
 

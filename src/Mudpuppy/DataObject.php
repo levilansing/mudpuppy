@@ -321,7 +321,7 @@ abstract class DataObject implements \JsonSerializable {
 
 		if ($bNeedLoad) {
 			$db = App::getDBO();
-			$db->prepare('SELECT `' . implode('`,`', $cols) . '` FROM ' . self::getTableName() . ' WHERE id=?');
+			$db->prepare('SELECT `' . implode('`,`', $cols) . '` FROM ' . static::getTableName() . ' WHERE id=?');
 			$db->bindValue(1, $id, \PDO::PARAM_INT);
 			$db->execute();
 
@@ -353,7 +353,7 @@ abstract class DataObject implements \JsonSerializable {
 		}
 
 		$db = App::getDBO();
-		$db->prepare('DELETE FROM ' . $this->getTableName() . ' WHERE id=?');
+		$db->prepare('DELETE FROM ' . static::getTableName() . ' WHERE id=?');
 		$db->bindValue(1, $this->getId(), \PDO::PARAM_INT);
 		if ($db->execute()) {
 			// if we got here, the delete was successful
@@ -418,7 +418,7 @@ abstract class DataObject implements \JsonSerializable {
 	 */
 	private function insertOrUpdate($fields) {
 		$db = App::getDBO();
-		$table = $this->getTableName();
+		$table = static::getTableName();
 		$id = $this->getId();
 		if (sizeof($fields) == 0) {
 			if ($id == 0)
@@ -509,7 +509,7 @@ abstract class DataObject implements \JsonSerializable {
 		$objectClass = get_called_class();
 
 		$db = App::getDBO();
-		$db->prepare('SELECT * FROM `' . $objectClass::getTableName() . '` WHERE id=?');
+		$db->prepare('SELECT * FROM `' . static::getTableName() . '` WHERE id=?');
 		$db->bindValue(1, $id, \PDO::PARAM_INT);
 		$db->execute();
 		if ($db->execute()) {
@@ -548,7 +548,7 @@ abstract class DataObject implements \JsonSerializable {
 
 		// build query
 		/** @var DataObject $objectClass */
-		$query = 'SELECT * FROM `' . $objectClass::getTableName() . '` WHERE ';
+		$query = 'SELECT * FROM `' . static::getTableName() . '` WHERE ';
 		if (!empty($fieldSet)) {
 			$query .= '(`' . implode('`=? AND `', array_keys($fieldSet)) . '`=?' . ')';
 		}
@@ -605,7 +605,7 @@ abstract class DataObject implements \JsonSerializable {
 				return null;
 			}
 
-			$db->prepare('SELECT * FROM `' . forward_static_call([$objectClass, 'getTableName']) . '` WHERE id=?');
+			$db->prepare('SELECT * FROM `' . static::getTableName() . '` WHERE id=?');
 			$db->bindValue(1, $criteria, \PDO::PARAM_INT);
 			$db->execute();
 			return $db->fetch($objectClass);
@@ -621,7 +621,7 @@ abstract class DataObject implements \JsonSerializable {
 
 			// build the query
 			/** @var DataObject $objectClass */
-			$query = 'SELECT * FROM `' . $objectClass::getTableName() . '`';
+			$query = 'SELECT * FROM `' . static::getTableName() . '`';
 			if (!empty($fieldSet)) {
 				$query .= ' WHERE (`' . implode('`=? AND `', array_keys($fieldSet)) . '`=?' . ')';
 				foreach ($fieldSet as $field => $value) {
