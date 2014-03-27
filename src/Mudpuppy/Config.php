@@ -129,7 +129,7 @@ class Config {
 
 		// Custom application settings
 		if (isset($settings['custom'])) {
-			foreach ($settings as $key => $customSetting) {
+			foreach ($settings['custom'] as $key => $customSetting) {
 				self::$custom[$key] = self::getSettingValue($customSetting);
 			}
 		}
