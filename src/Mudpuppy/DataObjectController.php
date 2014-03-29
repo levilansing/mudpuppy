@@ -147,11 +147,12 @@ trait DataObjectController {
 	 * @throws MudpuppyException if the object fails to delete
 	 */
 	public function delete($id) {
-		/** @var $dataObject DataObject */
+		/** @var DataObject $dataObjectClass */
 		$dataObjectClass = $this->getDataObjectName();
 		if (!$dataObjectClass::exists($id)) {
 			throw new ObjectNotFoundException("No object found for id: $id");
 		}
+		/** @var $dataObject DataObject */
 		$dataObject = new $dataObjectClass();
 		$dataObject->id = $id;
 		if (!$dataObject->delete()) {
@@ -185,6 +186,8 @@ trait DataObjectController {
 	 * @return array
 	 */
 	protected function getStructureDefinition() {
+		// if data object definition doesn't exist, load it first
+		DataObject::ensureDefaults($this->getDataObjectName());
 		return call_user_func(array($this->getDataObjectName(), 'getStructureDefinition'));
 	}
 

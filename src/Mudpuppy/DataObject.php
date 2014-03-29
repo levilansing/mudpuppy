@@ -132,6 +132,12 @@ abstract class DataObject implements \JsonSerializable {
 		}
 	}
 
+	public static function ensureDefaults($dataObjectClassName) {
+		if (!isset(self::$_defaults[$dataObjectClassName])) {
+			new $dataObjectClassName();
+		}
+	}
+
 	/////////////////////////////////////////////////////////////////
 	// these functions are to be implemented by child class
 
@@ -974,6 +980,10 @@ abstract class DataObject implements \JsonSerializable {
 				'required' => $required
 			);
 		}
+
+		// id should not be required or else you cannot validate when creating
+		$definition['id']['required'] = false;
+
 		return $definition;
 	}
 
