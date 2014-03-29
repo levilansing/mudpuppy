@@ -587,6 +587,23 @@ abstract class DataObject implements \JsonSerializable {
 	}
 
 	/**
+	 * Check if a row exists by id
+	 * note: each call performs a query
+	 * @param int $id
+	 * @return bool
+	 */
+	public static function exists($id) {
+		$db = App::getDBO();
+
+		$db->prepare('SELECT COUNT(*) FROM `' . static::getTableName() . '` WHERE id=?');
+		$db->bindValue(1, $id, \PDO::PARAM_INT);
+		$db->execute();
+
+		return $db->fetchFirstValue() != 0;
+	}
+
+
+	/**
 	 * Fetch by an id or key value pair map
 	 * @param int|array $criteria the integer id or an array of column value pairs
 	 * @param array $order an array of column direction pairs ['column'=>'ASC']

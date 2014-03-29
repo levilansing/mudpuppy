@@ -101,9 +101,11 @@ trait DataObjectController {
 		foreach ($object as $field => $value) {
 			$dataObject->$field = $value;
 		}
-		if ($dataObject->exists()) {
+
+		if (forward_static_call([$this->dataObjectName, 'exists'], $dataObject->id)) {
 			throw new ObjectNotFoundException('The specified object already exists');
 		}
+
 		if (!$dataObject->save()) {
 			throw new MudpuppyException('Failed to create object');
 		}
@@ -147,10 +149,11 @@ trait DataObjectController {
 	public function delete($id) {
 		/** @var $dataObject DataObject */
 		$dataObjectClass = $this->getDataObjectName();
-		$dataObject = new $dataObjectClass($id);
-		if (!$dataObject->exists()) {
+		if (!$dataObjectClass::exists($id)) {
 			throw new ObjectNotFoundException("No object found for id: $id");
 		}
+		$dataObject = new $dataObjectClass();
+		$dataObject->id = $id;
 		if (!$dataObject->delete()) {
 			throw new MudpuppyException("Failed to delete object with id: $id");
 		}
