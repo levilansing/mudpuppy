@@ -24,7 +24,7 @@ trait PageController {
 		$title = $this->pageTitle ? $this->pageTitle : Config::$appTitle;
 		print "<title>$title</title>\n";
 		$scripts = $this->getScripts();
-		if (isset($scripts['css'])) {
+		if (isset($scripts['js'])) {
 			foreach ($scripts['js'] as $script) {
 				echo "\t<script type=\"text/javascript\" src=\"$script\"></script>\n";
 			}

@@ -18,7 +18,7 @@ class Security extends Mudpuppy\Security {
 	 * @return bool|string true if successful, error message otherwise
 	 */
 	public function login($username, $password) {
-		return "Security login method incomplete";
+		throw new Mudpuppy\MudpuppyException('Security::login Not Implemented');
 
 		/*****************************************************************************************************************
 		* Example Implementation

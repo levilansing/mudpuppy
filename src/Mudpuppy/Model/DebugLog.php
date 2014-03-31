@@ -94,7 +94,7 @@ class DebugLog extends DataObject {
 	 */
 	public static function getLast() {
 		$db = App::getDBO();
-		$db->prepare("SELECT * FROM " . self::getTableName() . " ORDER BY id DESC LIMIT 100");
+		$db->prepare("SELECT * FROM " . static::getTableName() . " ORDER BY id DESC LIMIT 100");
 		$result = $db->execute();
 		$dataObject = null;
 		if ($result && ($row = $result->fetch(\PDO::FETCH_ASSOC))) {
@@ -104,7 +104,7 @@ class DebugLog extends DataObject {
 	}
 
 	public static function deleteAll() {
-		App::getDBO()->prepare('DELETE FROM ' . self::getTableName() . ' WHERE 1=1');
+		App::getDBO()->prepare('DELETE FROM ' . static::getTableName() . ' WHERE 1=1');
 		return App::getDBO()->execute() !== false;
 	}
 
