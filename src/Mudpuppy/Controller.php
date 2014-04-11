@@ -210,7 +210,7 @@ abstract class Controller {
 
 					// try json decode first
 					$params = json_decode($input, true);
-					if ($params !== null) {
+					if (!empty($params)) {
 						Request::setParams($params);
 					} else {
 						// attempt URL decode next
@@ -218,7 +218,7 @@ abstract class Controller {
 						foreach (explode('&', $input) as $chunk) {
 							$param = explode("=", $chunk);
 
-							if ($param) {
+							if (count($param) == 2) {
 								$params[urldecode($param[0])] = urldecode($param[1]);
 							}
 						}
@@ -236,6 +236,15 @@ abstract class Controller {
 					throw new UnsupportedMethodException("Request method $method is invalid for this URL");
 				}
 			}
+
+			header('Content-type: application/json');
+			$output = json_encode($response);
+			if ($error = json_last_error()) {
+				throw new MudpuppyException("JSON Encoding error: (#$error) " . json_last_error_msg());
+			} else {
+				print $output;
+			}
+
 		} catch (\Exception $e) {
 			Log::exception($e);
 			$db = App::getDBO();
@@ -254,12 +263,18 @@ abstract class Controller {
 				}
 			}
 			$response = array('error' => $statusCode, 'message' => $message);
+
+			header('Content-type: application/json');
+			$output = json_encode($response);
+			if ($error = json_last_error()) {
+				Log::error("JSON Encoding error: (#$error) " . json_last_error_msg());
+				print '{"error": 500, "message" : "Internal Server Error"}';
+			} else {
+				print $output;
+			}
+
 		}
 
-		header('Content-type: application/json');
-		if ($response !== null) {
-			print json_encode($response);
-		}
 		App::cleanExit(true);
 	}
 
