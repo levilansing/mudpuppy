@@ -124,11 +124,11 @@ class InstallController extends Controller {
 		if (!File::putContents("App/$appClass.php", str_replace('___CLASS_NAME___', $appClass, file_get_contents('Mudpuppy/Admin/Install/_AppStub')))) {
 			throw new MudpuppyException(null, "Error creating file: App/$appClass.php");
 		}
-		if (!File::putContents('App/Config.json', json_encode(['base' => $baseConfig]))) {
+		if (!File::putContents('App/Config.json', json_encode(['base' => $baseConfig], JSON_PRETTY_PRINT))) {
 			unlink("App/$appClass.php");
 			throw new MudpuppyException(null, 'Error creating file: App/Config.json');
 		}
-		if ($basicAuthRealms != null && !File::putContents('App/BasicAuth.json', json_encode($basicAuthRealms))) {
+		if ($basicAuthRealms != null && !File::putContents('App/BasicAuth.json', json_encode($basicAuthRealms, JSON_PRETTY_PRINT))) {
 			unlink("App/$appClass.php");
 			unlink("App/Config.json");
 			throw new MudpuppyException(null, 'Error creating file: App/BasicAuth.json');

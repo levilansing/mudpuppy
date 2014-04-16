@@ -2,6 +2,8 @@
 // This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
 //======================================================================================================================
 
+@boxHeight: 620px;
+
 .appListHeader {
 	background: #333;
 	color: #fff;
@@ -21,8 +23,9 @@
 	margin: 0;
 	background: #f2f2f2;
 	border-right: 1px solid #ddd;
-	height: 600px;
+	height: @boxHeight;
 	overflow: auto;
+	white-space: nowrap;
 
 	li {
 		position: relative;
@@ -103,7 +106,7 @@
 }
 
 #details {
-	height: 620px;
+	height: @boxHeight;
 	overflow: auto;
 }
 
@@ -140,4 +143,14 @@ a#newFolder, a#newFile {
 
 .modal-title {
 	font-weight: bold;
+}
+
+.basicAuthDetails, .configDetails {
+	padding-top: 12px;
+}
+
+.configDetails {
+	.tab-pane {
+		padding-top: 20px;
+	}
 }

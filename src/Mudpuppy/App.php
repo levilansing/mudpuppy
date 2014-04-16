@@ -53,7 +53,7 @@ class App {
 		Session::start();
 
 		// Setup the database if desired
-		if (Config::$dbHost) {
+		if (!empty(Config::$dbHost)) {
 			// Create database object
 			self::$dbo = new Database();
 

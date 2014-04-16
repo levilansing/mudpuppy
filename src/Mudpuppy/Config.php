@@ -36,11 +36,80 @@ class Config {
 	// Path to directory for storing local log files (must include trailing slash). Leave blank or null to disable.
 	public static $logFileDir = '';
 
-	// AWS configuration
-	public static $awsConfig = '';
-
 	// Custom application settings (user-defined associative array of properties)
 	public static $custom = [];
+
+	public static function validateSchema($config) {
+		$requiredField = [
+			'type' => 'array',
+			'required' => true,
+			'keys' => [
+				'type' => ['type' => 'string', 'required' => true],
+				'value' => ['type' => 'string', 'required' => true]
+			]
+		];
+		$optionalField = $requiredField;
+		$optionalField['required'] = false;
+		return DataObjectController::cleanArray($config, [
+			'base' => [
+				'type' => 'array',
+				'required' => true,
+				'keys' => [
+					'dbHost' => $optionalField,
+					'dbPort' => $optionalField,
+					'dbDatabase' => $optionalField,
+					'dbUser' => $optionalField,
+					'dbPass' => $optionalField,
+					'appTitle' => $optionalField,
+					'timezone' => $optionalField,
+					'dateTimeFormat' => $optionalField,
+					'dateOnlyFormat' => $optionalField,
+					'appClass' => $requiredField,
+					'rootControllerName' => $optionalField,
+					'randomSeedOffset' => $requiredField,
+					'debug' => $optionalField,
+					'logQueries' => $optionalField,
+					'logLevel' => $optionalField,
+					'logToDatabase' => $optionalField,
+					'logFileDir' => $optionalField,
+					'custom' => [
+						'type' => 'array',
+						'required' => false,
+						'children' => $optionalField
+					]
+				]
+			],
+			'controlVar' => ['type' => 'string', 'required' => false],
+			'environments' => [
+				'type' => 'array',
+				'required' => false,
+				'children' => [
+					'type' => 'array',
+					'keys' => [
+						'dbHost' => $optionalField,
+						'dbPort' => $optionalField,
+						'dbDatabase' => $optionalField,
+						'dbUser' => $optionalField,
+						'dbPass' => $optionalField,
+						'appTitle' => $optionalField,
+						'timezone' => $optionalField,
+						'dateTimeFormat' => $optionalField,
+						'dateOnlyFormat' => $optionalField,
+						'debug' => $optionalField,
+						'logQueries' => $optionalField,
+						'logLevel' => $optionalField,
+						'logToDatabase' => $optionalField,
+						'logFileDir' => $optionalField,
+						'custom' => [
+							'type' => 'array',
+							'required' => false,
+							'children' => $optionalField
+						]
+					]
+				]
+			]
+		]);
+	}
 
 	public static function load($file) {
 		if (file_exists($file)) {
@@ -48,10 +117,10 @@ class Config {
 			if (isset($options['base'])) {
 				self::applySettings($options['base']);
 			}
-			if (isset($options['envVar']) && isset($_SERVER[$options['envVar']]) && isset($options['envs'])) {
-				foreach ($options['envs'] as $envVal) {
-					if ($_SERVER[$options['envVar']] == $envVal) {
-						self::applySettings($options['envs'][$envVal]);
+			if (isset($options['controlVar']) && isset($_SERVER[$options['controlVar']]) && isset($options['environments'])) {
+				foreach ($options['environments'] as $controlVal => $envSettings) {
+					if ($_SERVER[$options['controlVar']] == $controlVal) {
+						self::applySettings($envSettings);
 						break;
 					}
 				}
@@ -65,12 +134,12 @@ class Config {
 			self::$dbHost = self::getSettingValue($settings['dbHost']);
 		}
 		if (isset($settings['dbPort'])) {
-			self::$dbPort = self::getSettingValue($settings['dbPort']);
+			self::$dbPort = (int)self::getSettingValue($settings['dbPort']);
 		}
 		if (isset($settings['dbDatabase'])) {
 			self::$dbDatabase = self::getSettingValue($settings['dbDatabase']);
 		}
-		if (isset($settings['dbDatabase'])) {
+		if (isset($settings['dbUser'])) {
 			self::$dbUser = self::getSettingValue($settings['dbUser']);
 		}
 		if (isset($settings['dbPass'])) {
@@ -101,30 +170,22 @@ class Config {
 		if (isset($settings['randomSeedOffset'])) {
 			self::$randomSeedOffset = self::getSettingValue($settings['randomSeedOffset']);
 		}
-		if (isset($settings['autoloadFolders'])) {
-			self::$autoloadFolders = self::getSettingValue($settings['autoloadFolders']);
-		}
 
 		// Debugging
 		if (isset($settings['debug'])) {
-			self::$debug = self::getSettingValue($settings['debug']);
+			self::$debug = (bool)self::getSettingValue($settings['debug']);
 		}
 		if (isset($settings['logQueries'])) {
-			self::$logQueries = self::getSettingValue($settings['logQueries']);
+			self::$logQueries = (bool)self::getSettingValue($settings['logQueries']);
 		}
 		if (isset($settings['logLevel'])) {
-			self::$logLevel = self::getSettingValue($settings['logLevel']);
+			self::$logLevel = (int)self::getSettingValue($settings['logLevel']);
 		}
 		if (isset($settings['logToDatabase'])) {
-			self::$logToDatabase = self::getSettingValue($settings['logToDatabase']);
+			self::$logToDatabase = (bool)self::getSettingValue($settings['logToDatabase']);
 		}
 		if (isset($settings['logFileDir'])) {
 			self::$logFileDir = self::getSettingValue($settings['logFileDir']);
-		}
-
-		// AWS configuration
-		if (isset($settings['awsConfig'])) {
-			self::$awsConfig = self::getSettingValue($settings['awsConfig']);
 		}
 
 		// Custom application settings
@@ -137,12 +198,18 @@ class Config {
 
 	private static function getSettingValue($setting) {
 		if (isset($setting['type']) && isset($setting['value'])) {
-			if ($setting['type'] == 'envVar') {
+			if ($setting['type'] == 'constant') {
+				return $setting['value'];
+			}
+			if ($setting['type'] == 'variable') {
 				return $_SERVER[$setting['value']];
 			}
-			return $setting['value'];
 		}
 		return null;
+	}
+
+	private static function parseBool($value) {
+		return ((bool)$value && (strtolower($value) != 'false'));
 	}
 
 }

@@ -28,16 +28,16 @@ use Mudpuppy\Config;
 <br/>
 <div class="container-fluid" style="margin: auto; max-width: 1000px">
 	<div class="row appListHeader">
-		<div class="col-sm-4">
+		<div class="col-sm-3">
 			<span class="title">Files</span>
 			<a id="newFile" title="Create a new file from a template"><span class="fileIcon fileAdd white"></span></a>
 			<a id="newFolder" title="Create a new namespace"><span class="fileIcon folderAdd white"></span></a>
 		</div>
-		<div class="col-sm-8"><span class="title">Details</span></div>
+		<div class="col-sm-9"><span class="title">Details</span></div>
 	</div>
 	<div class="row">
-		<ul id="structureList" class="col-sm-4 noSelect"></ul>
-		<div class="col-sm-8" id="details"></div>
+		<ul id="structureList" class="col-sm-3 noSelect"></ul>
+		<div class="col-sm-9" id="details"></div>
 	</div>
 </div>
 
@@ -157,7 +157,6 @@ use Mudpuppy\Config;
 	</div>
 
 	<div id="basicAuthTemplate" class="basicAuthDetails">
-		<h2>BasicAuth.json</h2>
 		<div class="form-horizontal">
 			<legend>Authorization Realms</legend>
 			<div class="form-group">
@@ -183,8 +182,10 @@ use Mudpuppy\Config;
 			<div class="form-group">
 				<div class="col-sm-3"></div>
 				<div class="col-sm-9">
-					<button id="saveRealm" class="btn btn-primary">Save</button>
-					<button id="deleteRealm" class="btn btn-default">Delete</button>
+					<div class="pull-right">
+						<button id="saveRealm" class="btn btn-primary">Save</button>
+						<button id="deleteRealm" class="btn btn-default">Delete</button>
+					</div>
 				</div>
 			</div>
 			<legend>Associated Credentials</legend>
@@ -213,6 +214,300 @@ use Mudpuppy\Config;
 				<div class="col-sm-9">
 					<button id="saveCredential" class="btn btn-primary">Save</button>
 					<button id="deleteCredential" class="btn btn-default">Delete</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="configTemplate" class="configDetails">
+		<div class="form-horizontal">
+			<legend>Operational Environment</legend>
+			<div class="form-group">
+				<div class="col-sm-3"></div>
+				<div class="col-sm-9">
+					<select class="form-control" id="environment">
+						<option value="base" selected>--- Base Config ---</option>
+						<option value="">--- Create New ---</option>
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Control Variable</label>
+				<div class="col-sm-9">
+					<input class="form-control" id="controlVar" type="text"/>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">Control Value</label>
+				<div class="col-sm-9">
+					<input class="form-control" id="controlVal" type="text"/>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-3"></div>
+				<div class="col-sm-9">
+					<div class="pull-right">
+						<button id="saveEnv" class="btn btn-primary">Save</button>
+						<button id="deleteEnv" class="btn btn-default">Delete</button>
+					</div>
+				</div>
+			</div>
+			<legend>Environment-Specific Configuration</legend>
+		</div>
+		<ul class="nav nav-tabs">
+			<li class="active"><a href="#configSite" data-toggle="tab">Site Options</a></li>
+			<li><a href="#configDatabase" data-toggle="tab">Database Setup</a></li>
+			<li><a href="#configLogging" data-toggle="tab">Debug &amp; Logging</a></li>
+			<li><a href="#configCustom" data-toggle="tab">Custom Properties</a></li>
+		</ul>
+		<div class="tab-content">
+			<div class="tab-pane active" id="configSite">
+				<div class="form-horizontal">
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Title</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="appTitleType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-control" id="appTitleValue" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Time Zone</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="timezoneType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<select id="timezoneConstant" class="form-control"></select>
+							<input class="form-control" id="timezoneVariable" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Date Time Format</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="dateTimeFormatType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-control" id="dateTimeFormatValue" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Date Only Format</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="dateOnlyFormatType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-control" id="dateOnlyFormatValue" type="text"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="tab-pane" id="configDatabase">
+				<div class="form-horizontal">
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Host</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="dbHostType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-control" id="dbHostValue" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Port</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="dbPortType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-control" id="dbPortValue" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Database Name</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="dbDatabaseType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-control" id="dbDatabaseValue" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Username</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="dbUserType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-control" id="dbUserValue" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Password</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="dbPassType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-control" id="dbPassConstant" type="password"/>
+							<input class="form-control" id="dbPassVariable" type="text"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="tab-pane" id="configLogging">
+				<div class="form-horizontal">
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Debug Mode</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="debugType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<label class="checkbox-inline">
+								<input id="debugConstant" type="checkbox"/>
+							</label>
+							<input class="form-control" id="debugVariable" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Log Level</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="logLevelType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<select id="logLevelConstant" class="form-control">
+								<option value="3" selected>Always write logs</option>
+								<option value="2">Only write logs when an error occurs</option>
+								<option value="1">Never write logs</option>
+							</select>
+							<input class="form-control" id="logLevelVariable" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Log Queries</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="logQueriesType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<label class="checkbox-inline">
+								<input id="logQueriesConstant" type="checkbox"/>
+							</label>
+							<input class="form-control" id="logQueriesVariable" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Log to Database</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="logToDatabaseType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<label class="checkbox-inline">
+								<input id="logToDatabaseConstant" type="checkbox"/>
+							</label>
+							<input class="form-control" id="logToDatabaseVariable" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Log File Directory</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="logFileDirType">
+								<option value="default" selected>Inherit</option>
+								<option value="constant">Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-control" id="logFileDirValue" type="text"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="tab-pane" id="configCustom">
+				<div class="form-horizontal">
+					<div class="form-group">
+						<div class="col-sm-3"></div>
+						<div class="col-sm-9">
+							<select class="form-control" id="customProp">
+								<option value="">--- Create New ---</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Property Key</label>
+						<div class="col-sm-9">
+							<input class="form-control" id="propKey" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label">Property Value</label>
+						<div class="col-sm-3">
+							<select class="form-control typeSelect" id="propValType">
+								<option value="constant" selected>Constant</option>
+								<option value="variable">Variable</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-control" id="propValValue" type="text"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-3"></div>
+						<div class="col-sm-9">
+							<div class="pull-right">
+								<button id="saveProp" class="btn btn-primary">Save</button>
+								<button id="deleteProp" class="btn btn-default">Delete</button>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

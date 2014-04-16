@@ -12,8 +12,9 @@
   margin: 0;
   background: #f2f2f2;
   border-right: 1px solid #ddd;
-  height: 600px;
+  height: 620px;
   overflow: auto;
+  white-space: nowrap;
 }
 #structureList,
 #structureList ul {
@@ -178,4 +179,11 @@ a#newFile:hover {
 }
 .modal-title {
   font-weight: bold;
+}
+.basicAuthDetails,
+.configDetails {
+  padding-top: 12px;
+}
+.configDetails .tab-pane {
+  padding-top: 20px;
 }

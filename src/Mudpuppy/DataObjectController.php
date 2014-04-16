@@ -217,18 +217,18 @@ trait DataObjectController {
 	 * 'required' and 'default' fields are irrelevant in this case). For associative arrays with specific keys, the
 	 * 'keys' field must be a nested structure definition array. Any level of array nesting is allowed. For example:
 	 *
-	 * $structure = array(
-	 *   'foo' => array('type'=>'int','default'=>10),
-	 *   'bar' => array('type'=>'string','required'=>true),
-	 *   'boo' => array('type'=>'array','children'=>array('type'=>'double','default'=>5.7)),
-	 *   'far' => array('type'=>'array','required'=>'true','keys'=>array(
-	 *      'fooBar' => array('type'=>'bool','default'=>false),
-	 *      'booFar' => array('type'=>'array','keys'=>array(
-	 *         'barFoo' => array('type'=>'int'),
-	 *         'farBoo' => array('type'=>'array','children'=>array('type'=>'date'))
-	 *      ))
-	 *   ))
-	 * )
+	 * $structure = [
+	 *   'foo' => ['type'=>'int','default'=>10],
+	 *   'bar' => ['type'=>'string','required'=>true],
+	 *   'boo' => ['type'=>'array','children'=>['type'=>'double']],
+	 *   'far' => ['type'=>'array','required'=>'true','keys'=>[
+	 *      'fooBar' => ['type'=>'bool','default'=>false],
+	 *      'booFar' => ['type'=>'array','keys'=>[
+	 *         'barFoo' => ['type'=>'int'],
+	 *         'farBoo' => ['type'=>'array','children'=>['type'=>'date']]
+	 *      ]]
+	 *   ]]
+	 * ]
 	 *
 	 * @param array $input input array
 	 * @param array $structure structure definition array

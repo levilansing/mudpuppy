@@ -8,6 +8,7 @@ namespace Mudpuppy\Admin\App;
 use Mudpuppy\App;
 use Mudpuppy\Config;
 use Mudpuppy\Controller;
+use Mudpuppy\DataObjectController;
 use Mudpuppy\File;
 use Mudpuppy\InvalidInputException;
 use Mudpuppy\Log;
@@ -353,7 +354,7 @@ class AppController extends Controller {
 		} else {
 			throw new InvalidInputException(null, "Unknown realm \"$oldName\"");
 		}
-		file_put_contents('App/BasicAuth.json', json_encode($realms));
+		file_put_contents('App/BasicAuth.json', json_encode($realms, JSON_PRETTY_PRINT));
 		return ['realms' => array_keys($realms)];
 	}
 
@@ -369,7 +370,7 @@ class AppController extends Controller {
 			throw new InvalidInputException(null, "Unknown realm \"$name\"");
 		}
 		unset($realms[$name]);
-		file_put_contents('App/BasicAuth.json', json_encode($realms));
+		file_put_contents('App/BasicAuth.json', json_encode($realms, JSON_PRETTY_PRINT));
 		return ['realms' => array_keys($realms)];
 	}
 
@@ -404,7 +405,7 @@ class AppController extends Controller {
 		} else {
 			throw new InvalidInputException(null, "Unknown credential \"$oldUsername\"");
 		}
-		file_put_contents('App/BasicAuth.json', json_encode($realms));
+		file_put_contents('App/BasicAuth.json', json_encode($realms, JSON_PRETTY_PRINT));
 		return ['credentials' => array_keys($realms[$realmName]['credentials'])];
 	}
 
@@ -422,8 +423,17 @@ class AppController extends Controller {
 			throw new InvalidInputException(null, "Unknown realm \"$realmName\"");
 		}
 		unset($realms[$realmName]['credentials'][$username]);
-		file_put_contents('App/BasicAuth.json', json_encode($realms));
+		file_put_contents('App/BasicAuth.json', json_encode($realms, JSON_PRETTY_PRINT));
 		return ['credentials' => array_keys($realms[$realmName]['credentials'])];
+	}
+
+	/**
+	 * @param array $config
+	 * @return array
+	 */
+	public function action_storeConfig($config) {
+		file_put_contents('App/Config.json', json_encode(Config::validateSchema($config), JSON_PRETTY_PRINT));
+		return [];
 	}
 
 }

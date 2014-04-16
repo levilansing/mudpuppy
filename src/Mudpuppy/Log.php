@@ -296,7 +296,7 @@ class Log {
 		$tend = microtime();
 
 		$nErrors = sizeof(self::$errors);
-		if (!Config::$logQueries || !Config::$dbHost) {
+		if (!Config::$logQueries || empty(Config::$dbHost)) {
 			$nQueries = "Log Queries Off";
 		} else {
 			$nQueries = sizeof(Database::$queryLog) . " Queries";
@@ -321,7 +321,7 @@ class Log {
 		print "<br />\n";
 
 		// print queries n such
-		if (Config::$logQueries && Config::$dbHost) {
+		if (Config::$logQueries && !empty(Config::$dbHost)) {
 			print "<h3>SQL</h3>\n";
 			$totalt = 0;
 			foreach (Database::$queryLog as $q) {
