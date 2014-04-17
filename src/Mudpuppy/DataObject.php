@@ -659,7 +659,7 @@ abstract class DataObject implements \JsonSerializable {
 					MPAssert(strcasecmp($direction, 'asc') == 0 || strcasecmp($direction, 'DESC') == 0);
 					$orderFields[] = "`$field` $direction";
 				}
-				$query .= ' ORDER BY ';
+				$query .= ' ORDER BY '.implode(", ",$orderFields);
 			}
 
 			if ($limit != 0) {
