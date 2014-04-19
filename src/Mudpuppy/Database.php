@@ -346,11 +346,11 @@ class Database {
 	 * @param array $params
 	 * @param int[] $types
 	 * @return bool
-	 * @throws MudpuppyException
+	 * @throws DatabaseException
 	 */
 	public function bindParams($params, $types=null) {
 		if ($types && count($types) != count($params))
-			throw new MudpuppyException('length of $params and $types must be the same');
+			throw new DatabaseException('length of $params and $types must be the same');
 		if (isset($params[0])) {
 			for ($i=0; $i<count($params); $i++) {
 				if (!$this->bindParam($i+1, $params[$i], $types ? $types[$i] : \PDO::PARAM_STR))

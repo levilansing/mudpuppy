@@ -27,7 +27,7 @@ class DataValue {
 		$this->maxLength = $maxLength;
 	}
 
-	function isEmpty() {
+	function isUnloadedOrChanged() {
 		return !($this->flags & (DATAFLAG_LOADED | DATAFLAG_CHANGED));
 	}
 
@@ -203,7 +203,13 @@ abstract class DataObject implements \JsonSerializable {
 		return array_keys($this->_data);
 	}
 
-	function createLookup($column, $name, $type) {
+	/**
+	 * For internal use only
+	 * @param $column
+	 * @param $name
+	 * @param $type
+	 */
+	protected function createLookup($column, $name, $type) {
 		self::$_lookups[$this->getObjectName()][$name] = new DataLookup($type, $column);
 	}
 
@@ -212,7 +218,7 @@ abstract class DataObject implements \JsonSerializable {
 	 * @param null $objectClass
 	 * @return \Mudpuppy\DataValue[]
 	 */
-	protected static function getColumnDefaults($objectClass=null) {
+	protected static function getColumnDefaults($objectClass = null) {
 		if (empty($objectClass)) {
 			$objectClass = get_called_class();
 		}
@@ -234,6 +240,7 @@ abstract class DataObject implements \JsonSerializable {
 	/**
 	 * save changes to database (if there are any)
 	 * update id if this is an insert
+	 * @throws DatabaseException if error occurs when updating or saving data
 	 * @return bool
 	 */
 	function save() {
@@ -254,31 +261,37 @@ abstract class DataObject implements \JsonSerializable {
 
 		// insert or update database
 		if (!$this->insertOrUpdate($fields)) {
-			return false;
+			throw new DatabaseException('Database error when attempting to save data object');
 		}
 
-		// if we got here, the save was successful
-
+		// the save was successful, remove changed flag
 		foreach ($this->_data as &$value) {
-			if (($value->flags & DATAFLAG_CHANGED)) // we just saved/updated values that were changed
-			{
+			if (($value->flags & DATAFLAG_CHANGED)) {
 				$value->flags &= ~DATAFLAG_CHANGED;
-			} // remove changed flag
+			}
 		}
 
 		return true;
 	}
 
+	/**
+	 * Copy a data object into a new object with id=0
+	 * @return DataObject
+	 */
 	function copy() {
 		$copy = clone $this;
 		$copy->id = 0;
+		// set changed flags for all values
 		foreach ($copy->_data as &$value) {
 			$value->flags |= DATAFLAG_CHANGED;
-		} // set changed flags
+		}
 
 		return $copy;
 	}
 
+	/**
+	 * Reload any changed fields from the database
+	 */
 	function reload() {
 		$fields = array();
 		foreach ($this->_data as $col => $value) {
@@ -293,28 +306,34 @@ abstract class DataObject implements \JsonSerializable {
 		}
 	}
 
+	/**
+	 * load the specified columns (or all if not specified) from the database
+	 * assumes the data object has an id
+	 * @param array $cols
+	 * @return bool
+	 * @throws MudpuppyException if id=0 or columns are requested that do not exist
+	 */
 	function load($cols = array()) {
 		if (!is_array($cols)) {
 			$cols = array($cols);
 		}
 		$id = $this->getId();
-		if (Config::$debug) {
-			// make sure we have an id
-			if ($id == 0) {
-				throw new MudpuppyException("Assertion Error: Cannot load a data object (" . get_called_class() . ") with an id of 0");
-			}
+		// make sure we have an id
+		if ($id == 0) {
+			throw new MudpuppyException("Assertion Error: Cannot load a data object (" . get_called_class() . ") with an id of 0");
+		}
 
-			// verify we asked only for existing columns
-			foreach ($cols as $col) {
-				if (!isset($this->_data[$col])) {
-					throw new MudpuppyException("Column '$col' of DataObject '" . $this->getObjectName() . "' not defined in load().");
-				}
+		// verify we asked only for existing columns
+		foreach ($cols as $col) {
+			if (!isset($this->_data[$col])) {
+				throw new MudpuppyException("Column '$col' of DataObject '" . $this->getObjectName() . "' not defined in load().");
 			}
 		}
 
+		// load all columns if not specified
 		if (sizeof($cols) == 0) {
 			$cols = array_keys($this->_data);
-		} // load all cols
+		}
 
 		$bNeedLoad = false;
 		foreach ($cols as $col) {
@@ -340,10 +359,14 @@ abstract class DataObject implements \JsonSerializable {
 		return true;
 	}
 
-	function loadMissing() {
+	/**
+	 * load any columns that have not yet been loaded
+	 * @return bool
+	 */
+	public function loadMissing() {
 		$cols = array();
 		foreach ($this->_data as $k => $data) {
-			if ($data->isEmpty()) {
+			if ($data->isUnloadedOrChanged()) {
 				$cols[] = $k;
 			}
 		}
@@ -353,30 +376,41 @@ abstract class DataObject implements \JsonSerializable {
 		return $this->load($cols);
 	}
 
-	function delete() {
+	/**
+	 * Delete the row from the database
+	 * @return bool
+	 * @throws DatabaseException if delete fails or if id == 0
+	 */
+	public function delete() {
 		if ($this->getId() == 0) {
-			return true;
+			throw new DatabaseException('Attempting to delete item with id 0 (DNE)');
 		}
 
 		$db = App::getDBO();
 		$db->prepare('DELETE FROM ' . static::getTableName() . ' WHERE id=?');
 		$db->bindValue(1, $this->getId(), \PDO::PARAM_INT);
 		if ($db->execute()) {
-			// if we got here, the delete was successful
-			$this->id = 0; // set the id to 0 because it's been deleted
+			// the delete was successful
+			// set the id to 0 because it's been deleted
+			$this->id = 0;
 			foreach ($this->_data as &$value) {
+				// flag all valid data as changed & not loaded
 				if ($value->flags & DATAFLAG_LOADED) {
 					$value->flags &= ~DATAFLAG_LOADED;
 					$value->flags |= DATAFLAG_CHANGED;
-				} // flag all valid data as changed & not loaded
+				}
 			}
 			return true;
 		}
 
-		return false;
+		throw new DatabaseException('Delete failed on ' . static::getTableName() . ' id=' . $this->getId());
 	}
 
-	function loadFromRow($row) {
+	/**
+	 * Load the data object from an array
+	 * @param $row
+	 */
+	public function loadFromRow($row) {
 		if (!$row) {
 			return;
 		}
@@ -427,10 +461,11 @@ abstract class DataObject implements \JsonSerializable {
 		$table = static::getTableName();
 		$id = $this->getId();
 		if (sizeof($fields) == 0) {
-			if ($id == 0)
+			if ($id == 0) {
 				$db->prepare("INSERT INTO `$table` () VALUES ()");
-			else
+			} else {
 				return true;
+			}
 		} else {
 			// insert, return new id
 			$columns = [];
@@ -439,10 +474,11 @@ abstract class DataObject implements \JsonSerializable {
 				$columns[] = $val->getColumn();
 				$questionMarks[] = '?';
 			}
-			if ($id == 0)
+			if ($id == 0) {
 				$db->prepare("INSERT INTO `$table` (`" . implode('`,`', $columns) . '`) VALUES (' . implode(',', $questionMarks) . ')');
-			else
+			} else {
 				$db->prepare("UPDATE `$table` SET `" . implode('`=?,`', $columns) . '`=? WHERE id=?');
+			}
 
 			$i = 1;
 			foreach ($fields as $val) {
@@ -474,8 +510,9 @@ abstract class DataObject implements \JsonSerializable {
 				$i++;
 			}
 
-			if ($id != 0)
+			if ($id != 0) {
 				$db->bindValue($i, $id, \PDO::PARAM_INT);
+			}
 		}
 
 		try {
@@ -493,9 +530,8 @@ abstract class DataObject implements \JsonSerializable {
 				}
 			}
 
-			throw new \Exception("DataObject::insertOrUpdate failed.");
+			throw new \Exception('DataObject::insertOrUpdate failed.');
 		} catch (\Exception $e) {
-			Log::exception($e);
 			return false;
 		}
 	}
@@ -608,7 +644,6 @@ abstract class DataObject implements \JsonSerializable {
 		return $db->fetchFirstValue() != 0;
 	}
 
-
 	/**
 	 * Fetch by an id or key value pair map
 	 * @param int|array $criteria the integer id or an array of column value pairs
@@ -648,18 +683,18 @@ abstract class DataObject implements \JsonSerializable {
 			if (!empty($fieldSet)) {
 				$query .= ' WHERE (`' . implode('`=? AND `', array_keys($fieldSet)) . '`=?' . ')';
 				foreach ($fieldSet as $field => $value) {
-					MPAssert(array_key_exists($field, $columnDefaults), 'DataObject::fetch Invalid field '.$field);
+					MPAssert(array_key_exists($field, $columnDefaults), 'DataObject::fetch Invalid field ' . $field);
 				}
 			}
 
 			if (is_array($order) && count($order) > 0) {
 				$orderFields = [];
 				foreach ($order as $field => $direction) {
-					MPAssert(array_key_exists($field, $columnDefaults), 'DataObject::fetch Invalid order field '.$field);
+					MPAssert(array_key_exists($field, $columnDefaults), 'DataObject::fetch Invalid order field ' . $field);
 					MPAssert(strcasecmp($direction, 'asc') == 0 || strcasecmp($direction, 'DESC') == 0);
 					$orderFields[] = "`$field` $direction";
 				}
-				$query .= ' ORDER BY '.implode(", ",$orderFields);
+				$query .= ' ORDER BY ' . implode(", ", $orderFields);
 			}
 
 			if ($limit != 0) {

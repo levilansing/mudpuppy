@@ -8,7 +8,7 @@ namespace Mudpuppy;
 defined('MUDPUPPY') or die('Restricted');
 
 class MudpuppyException extends \Exception {
-	/** @var string $productionMessage will be sent to the browser if Config::$debug == false */
+	/** @var string $productionMessage will be sent to the client if Config::$debug == false */
 	protected $responseMessage = 'Internal server error';
 
 	public function __construct($internalMessage = 'Internal server error', $responseMessage = null, $statusCode = 500) {
@@ -32,8 +32,8 @@ class MudpuppyException extends \Exception {
 
 class InvalidInputException extends MudpuppyException {
 	/**
-	 * @param string $internalMessage The internal exception message to be logged but not returned to the browser
-	 * @param null $responseMessage An optional message that will be returned to the browser
+	 * @param string $internalMessage The internal exception message to be logged but not returned to the client
+	 * @param null $responseMessage An optional message that will be returned to the client
 	 */
 	public function __construct($internalMessage = 'Invalid input', $responseMessage = null) {
 		$this->responseMessage = 'Invalid Input';
@@ -43,8 +43,8 @@ class InvalidInputException extends MudpuppyException {
 
 class UnauthorizedException extends MudpuppyException {
 	/**
-	 * @param string $internalMessage The internal exception message to be logged but not returned to the browser
-	 * @param null $responseMessage An optional message that will be returned to the browser
+	 * @param string $internalMessage The internal exception message to be logged but not returned to the client
+	 * @param null $responseMessage An optional message that will be returned to the client
 	 */
 	public function __construct($internalMessage = 'Authentication is required to perform this request', $responseMessage = null) {
 		$this->responseMessage = 'Authentication is required to perform this request';
@@ -54,8 +54,8 @@ class UnauthorizedException extends MudpuppyException {
 
 class PermissionDeniedException extends MudpuppyException {
 	/**
-	 * @param string $internalMessage The internal exception message to be logged but not returned to the browser
-	 * @param null $responseMessage An optional message that will be returned to the browser
+	 * @param string $internalMessage The internal exception message to be logged but not returned to the client
+	 * @param null $responseMessage An optional message that will be returned to the client
 	 */
 	public function __construct($internalMessage = 'You do not have permission to perform this request', $responseMessage = null) {
 		$this->responseMessage = 'You do not have permission to perform this request';
@@ -65,8 +65,8 @@ class PermissionDeniedException extends MudpuppyException {
 
 class ObjectNotFoundException extends MudpuppyException {
 	/**
-	 * @param string $internalMessage The internal exception message to be logged but not returned to the browser
-	 * @param null $responseMessage An optional message that will be returned to the browser
+	 * @param string $internalMessage The internal exception message to be logged but not returned to the client
+	 * @param null $responseMessage An optional message that will be returned to the client
 	 */
 	public function __construct($internalMessage = 'Object not found', $responseMessage = null) {
 		$this->responseMessage = 'Object not found';
@@ -77,8 +77,8 @@ class ObjectNotFoundException extends MudpuppyException {
 class PageNotFoundException extends MudpuppyException {
 	public function __construct($internalMessage = 'Page not found', $responseMessage = null) {
 		/**
-		 * @param string $internalMessage The internal exception message to be logged but not returned to the browser
-		 * @param null $responseMessage An optional message that will be returned to the browser
+		 * @param string $internalMessage The internal exception message to be logged but not returned to the client
+		 * @param null $responseMessage An optional message that will be returned to the client
 		 */
 		$this->responseMessage = 'Page not found';
 		parent::__construct($internalMessage, $responseMessage, 404);
@@ -87,12 +87,23 @@ class PageNotFoundException extends MudpuppyException {
 
 class UnsupportedMethodException extends MudpuppyException {
 	/**
-	 * @param string $internalMessage The internal exception message to be logged but not returned to the browser
-	 * @param null $responseMessage An optional message that will be returned to the browser
+	 * @param string $internalMessage The internal exception message to be logged but not returned to the client
+	 * @param null $responseMessage An optional message that will be returned to the client
 	 */
 	public function __construct($internalMessage = 'Request method not supported in this context', $responseMessage = null) {
 		$this->responseMessage = 'Request method not supported in this context';
 		parent::__construct($internalMessage, $responseMessage, 405);
+	}
+}
+
+class DatabaseException extends MudpuppyException {
+	/**
+	 * @param string $internalMessage The internal exception message to be logged but not returned to the client
+	 * @param null $responseMessage An optional message that will be returned to the client
+	 */
+	public function __construct($internalMessage = 'Unexpected Database Error', $responseMessage = null) {
+		$this->responseMessage = 'Internal Server Error';
+		parent::__construct($internalMessage, $responseMessage, 500);
 	}
 }
 

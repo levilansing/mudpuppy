@@ -43,24 +43,24 @@ $users = User::fetch([], ['lastName' => 'ASC', 'firstName' => 'ASC'], 10, 25);
 
 ##Inserting and Updating
 
-DataObjects are saved using the `save()` method on the object. To insert a new row into a database table, create a new instance of the data object and call `save`.
+DataObjects are saved using the `save()` method on the object. To insert a new row into a database table, create a new instance of the data object and call `save`. **\*NEW\*** `save` and `delete` calls throw exceptions instead of returning false on failure. In many places (often API calls) you do not need to catch the exceptions as Mudpuppy will handle them for you.
 
 ```php
 $user = new User();
 $user->name = "Sample User";
 $user->email = "sample@sample.com"
-if (!$user->save()) {
+try {	$user->save();
+} catch (DatabaseException $exception) {
 	// write failed, you can use App::getDBO()->getLastError() for details if necessary}
 ```
 
-Updating an object follows the same form. First fetch an existing object from the database, then update any necessary values and call `save`.
+Updating an object follows the same form. First fetch an existing object from the database, then update any necessary values and call `save`. Once again, you may need to handle exceptions thrown during save if your app should continue after an error.
 
 ```php
 // fetch an existing user from the database
 $user = User::fetchOne(15);
 $user->lastLoginTime = time();
-if (!$user->save()) {
-	// update failed, you can use App::getDBO()->getLastError() for details if necessary}
+$user->save();
 ```
 
 ##Custom Queries
@@ -195,4 +195,4 @@ $note->save();
 ###Notes
 Foreign key references are cached throughout each request. So there is little cost to runtime if you reference the foreign key property multiple times, even accross multiple objects.
 
-The side effect is that object may not stay up to date if you modify the row using a separate instance of that object. For example, if you accessed a foreign key property for a user, then **separately** fetched that same object, updated it, and saved it, should you access a foreign key property again, its data would be out of date. However, if instead of separately fetching the object, if you modified the object returned by the foreign key reference, updated and saved it, the next time you access that same object from another foreign key reference, it will be up to date.
+The side effect is that object may not stay up to date if you modify the row using a separate instance of that object. For example, if you accessed a foreign key property for a user, then **separately** fetched that same object, updated it, and saved it, should you access a foreign key property again during the same request, its data would be out of date. However, if instead of separately fetching the object, if you modified the object returned by the foreign key reference, updated and saved it, the next time you access that same object from another foreign key reference, it will be up to date. If necessary, you can clear the cached version for a specific foreign key reference by calling unset on the foreign key lookup, for the example above, you would do this with `unset($note->recordedBy)`, which would clear only the cache for this specific user id.
