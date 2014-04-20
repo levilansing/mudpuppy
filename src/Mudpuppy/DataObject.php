@@ -985,7 +985,6 @@ abstract class DataObject implements \JsonSerializable {
 	}
 
 	/**
-	 * todo issue #27 also affects the structure definition here
 	 * Generates a structure definition recognizable by the Module/API system
 	 * @return array structure definition
 	 */
@@ -996,7 +995,9 @@ abstract class DataObject implements \JsonSerializable {
 
 		/** @var DataValue $d */
 		foreach ($objectDef as $k => &$d) {
-			if ($d->dataType == DATATYPE_DATETIME || $d->dataType == DATATYPE_DATE) {
+			if ($d->dataType == DATATYPE_DATETIME) {
+				$type = 'datetime';
+			} else if ($d->dataType == DATATYPE_DATE) {
 				$type = 'date';
 			} else if ($d->dataType == DATATYPE_BOOL) {
 				$type = 'bool';

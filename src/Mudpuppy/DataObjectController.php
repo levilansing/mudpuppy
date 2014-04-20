@@ -32,9 +32,10 @@ trait DataObjectController {
 	public function getDataObjectName() {
 		if ($this->dataObjectName == null) {
 			$className = explode('\\', get_called_class());
-			$className = 'Model\\'.end($className);
-			if (strrpos($className, 'Controller') == strlen($className) - 10)
+			$className = 'Model\\' . end($className);
+			if (strrpos($className, 'Controller') == strlen($className) - 10) {
 				$className = substr($className, 0, -10);
+			}
 
 			$this->dataObjectName = $className;
 		}
@@ -206,16 +207,16 @@ trait DataObjectController {
 	 */
 	protected abstract function sanitize($object);
 
-
 	/**
 	 * Gets a cleaned version of the given associative array, according to the given structure. The structure definition
 	 * is an associative array with the top level keys indicating the expected parameter names. The value for each key
 	 * is an array or metadata that must define the 'type' of the parameter, and optionally the 'default' value and
-	 * whether it is 'required'. Supported types are: 'string', 'int', 'double', 'bool', 'date', and 'array'. For
-	 * 'array's, one of two additional fields is required. For generic arrays (indexed arrays or associative arrays with
-	 * no specific key requirements), the 'children' field must define the structure of all child elements (note, the
-	 * 'required' and 'default' fields are irrelevant in this case). For associative arrays with specific keys, the
-	 * 'keys' field must be a nested structure definition array. Any level of array nesting is allowed. For example:
+	 * whether it is 'required'. Supported types are: 'string', 'int', 'double', 'bool', 'datetime', 'date', and
+	 * 'array'. For 'array's, one of two additional fields is required. For generic arrays (indexed arrays or
+	 * associative arrays with no specific key requirements), the 'children' field must define the structure of all
+	 * child elements (note, the 'required' and 'default' fields are irrelevant in this case). For associative arrays
+	 * with specific keys, the 'keys' field must be a nested structure definition array. Any level of array nesting is
+	 * allowed. For example:
 	 *
 	 * $structure = [
 	 *   'foo' => ['type'=>'int','default'=>10],
@@ -263,6 +264,7 @@ trait DataObjectController {
 	/**
 	 * Gets a cleaned version of the given input value, according to the given structure definition. A child function of
 	 * the more general cleanArray, cleanValue deals with the individual field validation.
+	 *
 	 * @param mixed $value input value
 	 * @param array $meta structure definition for this field
 	 * @param string $fieldPath path string that fully identifies the field (used for error strings)
@@ -319,16 +321,21 @@ trait DataObjectController {
 			}
 			break;
 
-		// todo issue #27 allow time stamp? handle date vs datetime differently?
-		case 'date':
-			if (!empty($value)) {
-				$date = false;
-				if (!DateHelper::isValidPHPTimeStamp($value)) {
-					$date = strtotime($value);
-				}
+		case 'datetime':
+			if (!empty($value) && !DateHelper::isValidPHPTimeStamp($value)) {
+				$date = strtotime($value);
 				if ($date !== false) {
-					return date($date, Config::$dateTimeFormat);
+					return $date;
 				}
+			}
+			break;
+
+		case 'date':
+			if (preg_match('#\b(\d\d\d\d)-(\d\d)-(\d\d)\b#', $value, $matches) && checkdate($matches[2], $matches[3], $matches[1])) {
+				return strtotime($matches[1] . '-', $matches[2] . '-' . $matches[3]);
+			}
+			if (preg_match('#\b(\d\d)/(\d\d)/(\d\d\d\d)\b#', $value, $matches) && checkdate($matches[1], $matches[2], $matches[3])) {
+				return strtotime($matches[1] . '/', $matches[2] . '/' . $matches[3]);
 			}
 			break;
 
