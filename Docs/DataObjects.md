@@ -1,5 +1,44 @@
 #DataObject and Database
 
+Mudpuppy provides a basic ORM for accessing the database.
+
+##DataObjects and their corresponding table
+
+Classes that inherit from DataObject are generated in the `Model` namespace when you **Synchronize DataObjects** from the Admin panel. The data object classes represent a table, whereas an instance of said class represents a row of data. Best practices require you to use these classes when working with a database as much as possible. The classes provide a number of conveniences and make your code more readable.
+
+Designing your database for Mudpuppy to generate a data object from the synchronize button:
+
+- The table **must** have a single column primary key of type int named `id` with autoincrement enabled
+- The table should be named as the plural form. The data object will be named in the singular form.
+- The table should be named with PascalCase
+- The column names should be named in the camelCaseFormat
+
+The data object will be generated with all the columns represented as properties of an appropriate type. You set and retrieve values from the row using those properties. For example:
+
+```php
+$user = new \Model\User();
+$user->name = "Bob";
+$user->save();		// insert Bob into the table
+print $user->id;		// print the auto-generated id from the insert
+```
+
+###Special Types
+
+Dates are expected to be PHP timestamps within the data object and are automatically converted between PHP timestamps and the string format required for MySQL. Mudpuppy sets the database timezone to match the server timezone so inserting and fetching dates will not corrupt the date. (NOTE: You are responsible for maintaining date/time integrity when passing to and from your client. I recommend using GMT time).
+
+```php
+$user->lastLogin = time();
+```
+
+Data objects support all the standard MySQL data types, but also support an automated JSON type. To use JSON in a table, set the field type to a text/varchar type of your choice and set the **COMMENT** for the field to `JSON` and then treat the property of the data object as an associative array or other valid JSON type.
+
+```php
+$user->settings = [
+	'itemsPerPage' => 100,
+	'theme' => 'darkness'
+];
+```
+
 ##Fetching DataObjects from the database
 
 There are two shorthand functions to fetch data objects with simple criteria. 
@@ -25,7 +64,7 @@ There are two shorthand functions to fetch data objects with simple criteria.
 ```
 
 ###Examples
-For the following examples, assume you have a table in your database called Users. Mudpuppy autogenerates the class `Model\User` which extends DataObject.
+For the following examples, assume you have a table in your database called Users. Mudpuppy autogenerates the class `Model\User` which extends `DataObject`.
 
 ```php
 // fetch the user with id = 15
