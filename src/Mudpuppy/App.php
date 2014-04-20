@@ -50,7 +50,12 @@ class App {
 		// Buffer the output (see App::cleanExit() for the reason)
 		ob_start();
 
-		// Start the session
+		if (!empty(Config::$appClass) && method_exists('\App\\' . Config::$appClass, 'configure')) {
+			// Do any application-specific configuration, such as configuring dynamo db sessions
+			forward_static_call(array('\App\\' . Config::$appClass, 'configure'));
+		}
+
+			// Start the session
 		Session::start();
 
 		// Setup the database if desired
@@ -80,7 +85,7 @@ class App {
 		// The app class must be configured, otherwise we need to run the installer
 		if (!empty(Config::$appClass)) {
 			// Do any application-specific startup tasks
-			forward_static_call(array('App\\' . Config::$appClass, 'initialize'));
+			forward_static_call(array('\App\\' . Config::$appClass, 'initialize'));
 
 			// Get the security class
 			$security = self::$security = forward_static_call(array('App\\' . Config::$appClass, 'getSecurity'));
@@ -129,7 +134,7 @@ class App {
 
 		// If we got here, there is no request to process. Continue to load the page.
 		if (!self::$pageController->validatePathOptions()) {
-			throw new PageNotFoundException("PathOptions are not valid");
+			throw new PageNotFoundException(get_class(self::$pageController) . ' says these PathOptions are not valid');
 		}
 	}
 

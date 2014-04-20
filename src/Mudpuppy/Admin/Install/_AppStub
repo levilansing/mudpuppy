@@ -11,8 +11,14 @@ abstract class ___CLASS_NAME___ {
 
 	private static $security = null;
 
+	public static function configure() {
+		// Perform any application-specific configuration here
+		// Note: Mudpuppy has not yet connected to the database OR started the Session
+	}
+
 	public static function initialize() {
 		// Perform any application-specific startup tasks here
+		// Note: Mudpuppy has connected to the database and started the Session
 	}
 
 	public static function getSecurity() {
