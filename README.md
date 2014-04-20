@@ -33,7 +33,7 @@ Your controllers can be created from the Mudpuppy App Structure admin page and c
 - **DataObjectController**: creates an automated interface for fetching and saving data objects
 
 
-See [Docs/Controllers.md](Docs/Controlllers.md) for a more detailed explanation of controllers.
+See [Docs/Controllers.md](Docs/Controllers.md) for a more detailed explanation of controllers.
 
 #### Data Objects
 
