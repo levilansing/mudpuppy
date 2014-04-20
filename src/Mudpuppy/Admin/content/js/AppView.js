@@ -40,7 +40,7 @@
 		$.ajax({
 			method: 'post',
 			dataType: 'json',
-			url: '/mudpuppy/App/' + action,
+			url: '/mudpuppy/app/' + action,
 			data: JSON.stringify(params),
 			success: success,
 			error: function(result) {

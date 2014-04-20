@@ -47,7 +47,7 @@ InstallView.prototype.init = function() {
 InstallView.prototype.callAction = function(action, params, success) {
 	$.ajax({
 		dataType: 'json',
-		url: '/mudpuppy/Install/' + action,
+		url: '/mudpuppy/install/' + action,
 		data: params,
 		success: success,
 		error: function(result) {

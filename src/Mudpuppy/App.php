@@ -89,7 +89,7 @@ class App {
 			$security->refreshLogin();
 		} else if (!preg_match('#^/mudpuppy/(install|content)/#i', $_SERVER['PATH_INFO'])) {
 			// Redirect to the installer if there's no configured app class (and we're not already in the installer)
-			self::redirect('/mudpuppy/Install/');
+			self::redirect('/mudpuppy/install/');
 		}
 
 		// Handle HTTP Basic Auth if needed
