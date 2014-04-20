@@ -12,6 +12,13 @@
 		this.request = null;
 		this.lastId = null;
 		this.logTemplate = $('#logTemplate').attr('id', null);
+		this.logTemplate.find('.panel-toggle').mousedown(function(e) {
+			if (e.which == 1) {
+				var $container = $(this).parent().next();
+				prettyPrint(null, $container[0]);
+				$container.find('.prettyprint').removeClass('prettyprint');
+			}
+		});
 
 		this.loading = true;
 		this.pull();
@@ -155,7 +162,7 @@
 	};
 
 	DebugLog.prototype.displayLog = function(log) {
-		var container = this.logTemplate.clone();
+		var container = this.logTemplate.clone(true);
 		container.find('.panel-toggle').attr('href', '#log' + log.id);
 		container.find('.panel-body').attr('id', 'log' + log.id);
 
@@ -211,9 +218,6 @@
 		for (var i = 100; i < logs.length; i++) {
 			logs[i].remove();
 		}
-		window.prettyPrint && prettyPrint();
-		// we don't update these elements, so no need to re-prettify them
-		$('.prettyprint').removeClass('prettyprint');
 	};
 
 	function labelIt(value, warning, error, postfix, singularPostfix) {
