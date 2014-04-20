@@ -301,6 +301,14 @@ pre {
 }
 .panel-heading {
   cursor: pointer;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.panel-toggle {
+  line-height: 40px;
+}
+.panel-body {
+  padding: 0;
 }
 input[type=checkbox] {
   margin-top: 2px;
