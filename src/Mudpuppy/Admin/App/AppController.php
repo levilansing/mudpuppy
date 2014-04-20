@@ -278,6 +278,8 @@ class AppController extends Controller {
 			throw new MudpuppyException(null, 'Unable to create file. May not have appropriate file permissions.');
 		}
 
+		App::refreshAutoloadClassList();
+
 		return [];
 	}
 

@@ -15,15 +15,16 @@ chdir('../');
 // Report all errors
 error_reporting(E_ALL);
 
-// Add in a couple compatibility fixes if needed
+// Add in compatibility fixes if needed
 if (!defined('PASSWORD_DEFAULT')) {
 	require_once('Mudpuppy/Compatibility/password.php');
 }
 
-// Load the configuration, logging system, file system helper, and Database (required by Log)
+// Load the configuration, logging system, file system helper, and Database (required by Log), and App
 require_once('Mudpuppy/Log.php');
 require_once('Mudpuppy/Config.php');
 require_once('Mudpuppy/File.php');
+require_once('Mudpuppy/App.php');
 require_once('Mudpuppy/Database.php');
 
 // Load the configuration overrides
@@ -58,49 +59,41 @@ assert_options(ASSERT_WARNING, 0);
 assert_options(ASSERT_QUIET_EVAL, 1);
 
 // Setup error/assertion handlers (functions at bottom of file)
-assert_options(ASSERT_CALLBACK, '_assert_handler');
-set_exception_handler('Mudpuppy\exception_handler');
-set_error_handler('Mudpuppy\error_handler');
-register_shutdown_function('Mudpuppy\shutdown_handler');
+assert_options(ASSERT_CALLBACK, '\Mudpuppy\assert_handler');
+set_exception_handler('\Mudpuppy\exception_handler');
+set_error_handler('\Mudpuppy\error_handler');
+register_shutdown_function('\Mudpuppy\shutdown_handler');
 
 // Register the autoloader function
-spl_autoload_register('Mudpuppy\MPAutoLoad');
+spl_autoload_register('\Mudpuppy\MPAutoLoad');
 
 // Pre-load the DebugLog and Request classes to ensure they're available during shutdown
-MPAutoLoad('Mudpuppy\Model\DebugLog');
-MPAutoLoad('Mudpuppy\Request');
+MPAutoLoad('\Mudpuppy\Model\DebugLog');
+MPAutoLoad('\Mudpuppy\Request');
 
 // Also pre-load the exceptions, which are kind of special because they're combined in a single file
-MPAutoLoad('Mudpuppy\MudpuppyException');
+MPAutoLoad('\Mudpuppy\MudpuppyException');
 
 // Initialize the application
 App::start();
 
 //======================================================================================================================
-// Automatic class loading functions
+// Automatic class loading
 //======================================================================================================================
 
 function MPAutoLoad($className) {
-
-	// attempt to load the requested class
-	static $classes = null;
-	static $reloadedCache = false;
-	static $cacheDir = 'Mudpuppy/cache';
-	if (!file_exists($cacheDir)) {
-		mkdir($cacheDir);
+	if (substr($className, 0, 1) == '\\') {
+		$className = substr($className, 1);
 	}
-	$classCacheFile = "$cacheDir/ClassLocationCache.json";
 
 	// break className into namespace parts
 	$parts = explode('\\', $className);
 	$class = strtolower($parts[sizeof($parts) - 1]);
 	array_pop($parts);
-	$namespace = strtolower(implode('/', $parts));
+	$namespace = strtolower(implode('\\', $parts));
 
-	// Load class location cache
-	if (is_null($classes) && file_exists($classCacheFile)) {
-		$classes = json_decode(file_get_contents($classCacheFile), true);
-	}
+	// Load class locations
+	$classes = App::getAutoloadClassList();
 
 	// Automatically load aws.phar if we're trying to use a class from the AWS SDK
 	if (sizeof($parts) > 0 && in_array(strtolower($parts[0]), array('aws', 'guzzle', 'symfony', 'doctrine', 'psr', 'monolog'))) {
@@ -111,21 +104,26 @@ function MPAutoLoad($className) {
 		return false;
 	}
 
-	// Refresh the class cache if we can't find the class
-	if ((($namespace && (!isset($classes[$namespace]) || !isset($classes[$namespace][$class]) || !file_exists($classes[$namespace][$class])))
-			|| (!$namespace && (!isset($classes[$class]) || !file_exists($classes[$class])))) && !$reloadedCache && Config::$debug
-	) {
-		Log::add('Refreshing auto-load cache for class ' . $className);
-		File::putContents($classCacheFile, _refreshAutoLoadClasses($classes));
-		$reloadedCache = true;
-	}
-
 	// Try to locate the class file
 	$file = null;
 	if ($namespace && isset($classes[$namespace]) && isset($classes[$namespace][$class]) && file_exists($classes[$namespace][$class])) {
 		$file = $classes[$namespace][$class];
 	} else if (isset($classes[$class]) && file_exists($classes[$class])) {
 		$file = $classes[$class];
+	}
+
+	if (!$file || !file_exists($file)) {
+		if (App::isAutoloadNamespace($namespace) && App::refreshAutoloadClassList()) {
+			$classes = App::getAutoloadClassList();
+			$file = null;
+
+			// try to locate the class again
+			if ($namespace && isset($classes[$namespace]) && isset($classes[$namespace][$class]) && file_exists($classes[$namespace][$class])) {
+				$file = $classes[$namespace][$class];
+			} else if (isset($classes[$class]) && file_exists($classes[$class])) {
+				$file = $classes[$class];
+			}
+		}
 	}
 
 	// And load it if found
@@ -139,83 +137,15 @@ function MPAutoLoad($className) {
 
 }
 
-/**
- * reload the class cache by scanning the filesystem
- * @param $classes
- * @return string
- */
-function _refreshAutoLoadClasses(&$classes) {
-	$classes = array();
-
-	function _parseFiles(&$classes, &$files, $folder) {
-		foreach ($files as $file) {
-			$class = strtolower(File::getTitle($file, false));
-			if ($class) {
-				$classes[strtolower($class)] = $folder . $file;
-			}
-		}
-	}
-
-	$autoloadFolders = array_merge(Config::$autoloadFolders, array(
-		'Mudpuppy' => 'Mudpuppy/',
-		'Mudpuppy/Model' => 'Mudpuppy/Model/',
-		'Mudpuppy/Admin' => 'Mudpuppy/Admin/*',
-		'App' => 'App/*',
-		'Model' => 'Model/*'
-	));
-
-	// global/non-namespaced classes should be listed without a key or with an integer key
-	$globalFolders = array_intersect_key(array_filter(array_keys($autoloadFolders), 'is_numeric'), $autoloadFolders);
-
-	// Standard non-namespaced classes, optionally in a directory structure (if * is specified for recursive loading)
-	foreach ($globalFolders as $folder) {
-		if (substr($folder, -1) == '*') {
-			$folder = substr($folder, 0, -1);
-			$files = File::getFilesRecursive($folder, '#.*\.php$#');
-		} else {
-			$files = File::getFiles($folder, '#.*\.php$#');
-		}
-		_parseFiles($classes, $files, $folder);
-	}
-
-	// Namespaced classes are in the form namespace => folder
-	$namespaceFolders = array_diff_key($autoloadFolders, $globalFolders);
-
-	foreach ($namespaceFolders as $folder) {
-		if (substr($folder, -1) == '*') {
-			$folder = substr($folder, 0, -1);
-			$paths = array_merge([''], File::getFoldersRecursive($folder));
-		} else {
-			$paths = [''];
-		}
-
-		if ($folder && substr($folder, -1) != '/') {
-			$folder .= '/';
-		}
-
-		foreach ($paths as $path) {
-			$path = $folder . $path;
-			if (substr($path, -1) == '/') {
-				$path = substr($path, 0, -1);
-			}
-			$nsClasses = array();
-			$files = File::getFiles($path, '#.*\.php$#');
-			_parseFiles($nsClasses, $files, $path . '/');
-			$classes[strtolower($path)] = $nsClasses;
-		}
-	}
-
-	return json_encode($classes, JSON_PRETTY_PRINT);
-}
 
 //======================================================================================================================
 // Error handling functions
 //======================================================================================================================
 
 // Assertion handler function
-function _assert_handler($file, $line, $code) {
+function assert_handler($file, $line, $code) {
 	if (Config::$debug) {
-		throw(new MudpuppyException("Assertion failed in file $file($line).\nCode: $code"));
+		throw new MudpuppyException("Assertion failed in file $file($line).\nCode: $code");
 	}
 }
 
@@ -280,17 +210,17 @@ function shutdown_handler() {
 	$error = error_get_last();
 	if ($error !== null) {
 		Log::error('SHUTDOWN: ' . $error['file'] . '(' . $error['line'] . ') ' . $error['message']);
-		if (Config::$debug) {
-			// We want to display the full log on the page for shutdowns in debug mode. The Log::write() function already
-			// does this if logs are not being stored anywhere. So if they are stored somewhere, we need to explicitly
-			// show the full log here.
-			if (Log::hasStorageOption()) {
-				Log::displayFullLog();
-			}
-			App::cleanExit();
-		} else {
-			App::abort(500);
-		}
+
+		// clear any content that may have already been output
+		ob_end_clean();
+		ob_start();
+
+		http_response_code(500);
+
+		// during shutdown we can't load external files, so we can't display the normal 500 error message
+		print 'Internal Server Error';
+
+		App::cleanExit(true);
 	}
 }
 

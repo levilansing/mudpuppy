@@ -11,13 +11,14 @@ class App {
 	private static $instance = null;
 	private static $dbo = null;
 	private static $exited = false;
-	private static $completionHandlers = array();
+	private static $completionHandlers = [];
 	/** @var Controller|PageController */
 	private static $pageController = null;
 	/** @var Security */
 	private static $security = null;
+	private static $autoloadClasses = null;
 
-	public function __construct() {
+	private function __construct() {
 		if (self::$instance) {
 			throw new MudpuppyException('App is a static class; cannot instantiate.');
 		}
@@ -144,6 +145,139 @@ class App {
 	 */
 	public static function getSecurity() {
 		return self::$security;
+	}
+
+	/**
+	 * Get the list of classes organized by namespace used during autoload
+	 * Useful to determine if a class does not exist without causing a cache refresh
+	 * @return null
+	 */
+	public static function getAutoloadClassList() {
+		if (!self::$autoloadClasses) {
+			self::$autoloadClasses = json_decode(file_get_contents('Mudpuppy/cache/autoload.json'), true);
+		}
+		return self::$autoloadClasses;
+	}
+
+	/**
+	 * Check if a namespace should be within the autoload list
+	 * @param $namespace
+	 * @return bool
+	 */
+	public static function isAutoloadNamespace($namespace) {
+		// clean the namespace to ensure it starts with \ and doesn't end with one
+		if (substr($namespace, 0, 1) != '\\')
+			$namespace = '\\' . $namespace;
+		if (substr($namespace, -1, 1) == '\\')
+			$namespace = substr($namespace, 0, -1);
+
+		foreach (self::getAutoloadFolders() as $baseNamespace => $folder) {
+			if (is_numeric($baseNamespace)) {
+				continue;
+			}
+
+			if (substr($folder, -1, 1) == '*') {
+				// if the folder ends in an asterisk, just try to match the base namespace
+				if (strncasecmp($namespace, $baseNamespace, strlen($baseNamespace)) == 0) {
+					return true;
+				}
+			} else {
+				// otherwise the full namespace must match
+				if (strcasecmp($namespace, $baseNamespace) == 0) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	private static function getAutoloadFolders() {
+		static $autoloadFolders = null;
+		if (!$autoloadFolders) {
+			$autoloadFolders = array_merge(Config::$autoloadFolders, array(
+				'\\Mudpuppy' => 'Mudpuppy/',
+				'\\Mudpuppy\\Model' => 'Mudpuppy/Model/',
+				'\\Mudpuppy\\Admin' => 'Mudpuppy/Admin/*',
+				'\\App' => 'App/*',
+				'\\Model' => 'Model/*'
+			));
+		}
+		return $autoloadFolders;
+	}
+
+	/**
+	 * reload the autoload cache by scanning the filesystem
+	 * returns false if it has already reloaded or if we are not in debug
+	 * @return bool
+	 */
+	public static function refreshAutoloadClassList() {
+		static $reloaded = false;
+		if ($reloaded || Config::$debug == false) {
+			return false;
+		}
+		$reloaded = true;
+
+		$classes = array();
+
+		function _parseFiles(&$classes, &$files, $folder) {
+			foreach ($files as $file) {
+				$class = str_replace('/', '\\', strtolower(File::getTitle($file, false)));
+				if ($class) {
+					$classes[strtolower($class)] = $folder . $file;
+				}
+			}
+		}
+
+		$autoloadFolders = self::getAutoloadFolders();
+
+		// global/non-namespaced classes should be listed without a key or with an integer key
+		$globalFolders = array_intersect_key(array_filter(array_keys($autoloadFolders), 'is_numeric'), $autoloadFolders);
+
+		// Standard non-namespaced classes, optionally in a directory structure (if * is specified for recursive loading)
+		foreach ($globalFolders as $folder) {
+			if (substr($folder, -1) == '*') {
+				$folder = substr($folder, 0, -1);
+				$files = File::getFilesRecursive($folder, '#.*\.php$#');
+			} else {
+				$files = File::getFiles($folder, '#.*\.php$#');
+			}
+			_parseFiles($classes, $files, $folder);
+		}
+
+		// Namespaced classes are in the form namespace => folder
+		$namespaceFolders = array_diff_key($autoloadFolders, $globalFolders);
+
+		foreach ($namespaceFolders as $folder) {
+			if (substr($folder, -1) == '*') {
+				$folder = substr($folder, 0, -1);
+				$paths = array_merge([''], File::getFoldersRecursive($folder));
+			} else {
+				$paths = [''];
+			}
+
+			if ($folder && substr($folder, -1) != '/') {
+				$folder .= '/';
+			}
+
+			foreach ($paths as $path) {
+				$path = $folder . $path;
+				if (substr($path, -1) == '/') {
+					$path = substr($path, 0, -1);
+				}
+				$nsClasses = array();
+				$files = File::getFiles($path, '#.*\.php$#');
+				_parseFiles($nsClasses, $files, $path . '/');
+				$classes[strtolower(str_replace('/', '\\', $path))] = $nsClasses;
+			}
+		}
+
+		self::$autoloadClasses = $classes;
+		file_put_contents('Mudpuppy/cache/autoload.json', json_encode($classes, JSON_PRETTY_PRINT));
+
+		Log::error('autoload.json had to be reloaded. This is expected if you recently modified your application structure or added a lib.');
+
+		return true;
 	}
 
 	/**

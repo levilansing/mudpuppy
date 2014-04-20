@@ -6,7 +6,7 @@
 namespace Mudpuppy;
 
 defined('MUDPUPPY') or die('Restricted');
-MPAutoLoad('Mudpuppy\DateHelper');
+require_once('DateHelper.php');
 
 // dataTypes that can be used with db when using automated functions
 define('DATATYPE_BOOL', 0);

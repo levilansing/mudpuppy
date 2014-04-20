@@ -16,7 +16,7 @@ abstract class Controller {
 	 * @return Controller|PageController|DataObjectController
 	 * @throws PageNotFoundException if no controller exists
 	 */
-		public static function getController() {
+	public static function getController() {
 		// Carve up the path info into an array of parts
 		$path = pathinfo($_SERVER['PATH_INFO']);
 		if (isset($path['dirname']) && strlen($path['dirname']) > 1) {
@@ -30,50 +30,55 @@ abstract class Controller {
 
 		// Try to find the controller
 		$controllerName = 'App\\' . Config::$rootControllerName . 'Controller';
+		$classes = App::getAutoloadClassList();
 		$options = [];
 		$nameIndex = -1;
 		if (count($parts) > 0 && $parts[0] != '') {
-
 			$namespace = 'App';
-			$searchPath = 'App/';
 
 			// Check if we are viewing the admin area
-			if (strtolower($parts[0]) == 'mudpuppy') {
+			if (strcasecmp($parts[0], 'mudpuppy') == 0) {
 				if (!Config::$debug) {
 					throw new PageNotFoundException();
 				}
 				$namespace = 'Mudpuppy';
-				$searchPath = 'Mudpuppy/';
 				array_splice($parts, 0, 1, ['Admin']);
 			}
 
 			for ($i = 0; $i < count($parts); $i++) {
 				// Give precedence to existing directories
-				if (file_exists($searchPath . $parts[$i] . '/')) {
+				if (isset($classes[strtolower($namespace . '\\' . $parts[$i])])) {
 					// Append that directory to the current search and continue along
-					$searchPath .= $parts[$i] . '/';
+					$namespace .= '\\' . ucfirst($parts[$i]);
 				} else {
-					// Otherwise, check for the class file
-					if (file_exists($searchPath . ucfirst($parts[$i]) . 'Controller.php')) {
-						// Use that fully qualified class name, in which directories equal namespaces
-						$controllerName = implode('\\', array_merge([$namespace], array_slice($parts, 0, $i), [ucfirst($parts[$i] . 'Controller')]));
-						$nameIndex = $i;
-					}
-					// And stop the search either way
 					break;
 				}
 			}
 
-			// If we didn't find a class, walk backwards and check each folder of the search path for its own controller
-			if ($nameIndex == -1) {
-				for (--$i; $i >= 0; $i--) {
-					if (file_exists($searchPath . ucfirst($parts[$i]) . 'Controller.php')) {
-						// Use that fully qualified class name, in which directories equal namespaces
-						$controllerName = implode('\\', array_merge([$namespace], array_slice($parts, 0, $i + 1), [ucfirst($parts[$i] . 'Controller')]));
-						$nameIndex = $i;
+			// Walk backwards and check each folder for its own controller
+			for (--$i; $i >= 0; $i--) {
+				if (isset($classes[strtolower($namespace)]) && isset($classes[strtolower($namespace)][strtolower($parts[$i]) . 'controller'])) {
+					// Use the fully qualified class name, where directories equal namespaces
+					$controllerName = $namespace . '\\' . ucfirst($parts[$i]) . 'Controller';
+					$nameIndex = $i;
+					break;
+				}
+				$namespace = substr($namespace, 0, strlen($namespace) - strlen($parts[$i]) - 1);
+			}
+
+			// only when in debug
+			// if the controller still can't be found, determine if we should refresh the autoload and try again
+			if ($nameIndex == -1 && Config::$debug) {
+				$folder = $namespace;
+				for ($i = 0; $i < count($parts); $i++) {
+					$part = $parts[$i];
+					if (file_exists($folder . '/' . ucfirst($part) . '/' . ucfirst($part) . 'Controller.php')) {
+						if (App::refreshAutoloadClassList()) {
+							return self::getController();
+						}
 						break;
 					}
-					$searchPath = substr($searchPath, 0, strlen($searchPath) - strlen($parts[$i]) - 1);
+					$folder .= '/' . ucfirst($part);
 				}
 			}
 		}
