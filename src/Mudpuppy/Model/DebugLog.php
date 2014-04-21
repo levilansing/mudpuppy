@@ -78,7 +78,7 @@ class DebugLog extends DataObject {
 	 * @return DebugLog[]
 	 */
 	public static function fetch($criteria, $order = null, $limit = 0, $offset = 0) {
-		return forward_static_call(['Mudpuppy\DataObject', 'fetch'], $criteria, $limit, $offset);
+		return forward_static_call(['Mudpuppy\DataObject', 'fetch'], $criteria, $order, $limit, $offset);
 	}
 
 	/**

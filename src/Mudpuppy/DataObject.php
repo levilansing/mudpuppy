@@ -746,7 +746,7 @@ abstract class DataObject implements \JsonSerializable {
 	 * @return DataObject|null
 	 */
 	public static function fetchOne($criteria) {
-		$result = self::fetch($criteria, 1, 0);
+		$result = self::fetch($criteria, null, 1, 0);
 		if (is_array($result)) {
 			if (count($result) > 0) {
 				return $result[0];
