@@ -5,18 +5,17 @@
 
 namespace Mudpuppy\Admin;
 
-use Mudpuppy\Controller;
-use Mudpuppy\PageController;
 use Mudpuppy\App;
-use Mudpuppy\Log;
 use Mudpuppy\File;
+use Mudpuppy\Inflector;
+use Mudpuppy\Log;
+use Mudpuppy\PageController;
 use Mudpuppy\PageNotFoundException;
 use Mudpuppy\Request;
-use Mudpuppy\Inflector;
 
 defined('MUDPUPPY') or die('Restricted');
 
-class AdminController extends Controller {
+class Controller extends \Mudpuppy\Controller {
 	use PageController;
 
 	public function __construct($options) {
@@ -40,7 +39,7 @@ class AdminController extends Controller {
 			throw new PageNotFoundException();
 		}
 
-		include('Mudpuppy/Admin/AdminView.php');
+		include('Mudpuppy/Admin/View.php');
 		App::cleanExit();
 	}
 
@@ -202,7 +201,7 @@ class AdminController extends Controller {
 			} else {
 				$index = array_search($type, $stringTypes);
 				if ($index !== false) {
-					$length = pow(2, ((int)($index/2)+1)*8);
+					$length = pow(2, ((int)($index / 2) + 1) * 8);
 				}
 			}
 			$type = self::getDbDataType($col['Type'], $col['Comment']);

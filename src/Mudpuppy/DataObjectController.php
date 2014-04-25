@@ -15,7 +15,7 @@ defined('MUDPUPPY') or die('Restricted');
  * updating), and sanitize objects (prior to returning to the user). Many objects may not need to perform any special
  * validation or sanitization, but no default implementation is provided in order to force the implementer to consider
  * such situations.
- * In addition to the core methods, the DataObjectcontroller implements an action called 'schema' that
+ * In addition to the core methods, the DataObjectController implements an action called 'schema' that
  * returns the data object's structure definition (or schema).
  */
 trait DataObjectController {
@@ -31,13 +31,10 @@ trait DataObjectController {
 
 	public function getDataObjectName() {
 		if ($this->dataObjectName == null) {
-			$className = explode('\\', get_called_class());
-			$className = 'Model\\' . end($className);
-			if (strrpos($className, 'Controller') == strlen($className) - 10) {
-				$className = substr($className, 0, -10);
-			}
-
-			$this->dataObjectName = $className;
+			// By default, we assume that the immediate namespace is the name of the data object, eg:
+			// App\Foo\Bar\MyDataObject\Controller => Model\MyDataObject
+			$classParts = explode('\\', get_called_class());
+			$this->dataObjectName = 'Model\\' . $classParts[count($classParts) - 2];
 		}
 		return $this->dataObjectName;
 	}

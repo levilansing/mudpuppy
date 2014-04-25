@@ -7,7 +7,6 @@ namespace Mudpuppy\Admin\log;
 
 use Mudpuppy\Config;
 use Mudpuppy\App;
-use Mudpuppy\Controller;
 use Mudpuppy\DataObject;
 use Mudpuppy\File;
 use Mudpuppy\Log;
@@ -17,7 +16,7 @@ use Mudpuppy\Request;
 
 defined('MUDPUPPY') or die('Restricted');
 
-class LogController extends Controller {
+class Controller extends \Mudpuppy\Controller {
 	use PageController;
 
 	public function __construct($pathOptions) {
@@ -41,7 +40,7 @@ class LogController extends Controller {
 	public function render() {
 		// Abort the default template, use the debug log view for the entire page
 		ob_clean();
-		include('Mudpuppy/Admin/Log/LogView.php');
+		include('Mudpuppy/Admin/Log/View.php');
 		App::cleanExit();
 	}
 

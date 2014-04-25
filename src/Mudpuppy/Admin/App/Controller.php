@@ -7,19 +7,17 @@ namespace Mudpuppy\Admin\App;
 
 use Mudpuppy\App;
 use Mudpuppy\Config;
-use Mudpuppy\Controller;
 use Mudpuppy\DataObjectController;
 use Mudpuppy\File;
 use Mudpuppy\InvalidInputException;
 use Mudpuppy\Log;
 use Mudpuppy\MudpuppyException;
 use Mudpuppy\PageController;
-use Mudpuppy\Request;
 use Mudpuppy\Security;
 
 defined('MUDPUPPY') or die('Restricted');
 
-class AppController extends Controller {
+class Controller extends \Mudpuppy\Controller {
 	use PageController;
 
 	public function __construct($pathOptions) {
@@ -38,7 +36,7 @@ class AppController extends Controller {
 	public function render() {
 		// Abort the default template, use the app view for the entire page
 		ob_clean();
-		include('Mudpuppy/Admin/App/AppView.php');
+		include('Mudpuppy/Admin/App/View.php');
 		App::cleanExit();
 	}
 
@@ -57,7 +55,7 @@ class AppController extends Controller {
 			$namespace = implode('\\', explode('/', $directory));
 			$type = 'phpClass';
 			$properties = [];
-			if (strcasecmp(substr($file, -strlen('Controller.php')), 'Controller.php') == 0) {
+			if (strcasecmp($file, 'Controller.php') == 0) {
 				$type = 'controller';
 				$properties = $this->getControllerProperties($namespace, File::getTitle($file, false));
 				$pageController = in_array('Mudpuppy\PageController', $properties['traits']);
@@ -68,7 +66,7 @@ class AppController extends Controller {
 					$type = 'dataObjectController';
 				}
 			}
-			if (strcasecmp(substr($file, -strlen('View.php')), 'View.php') == 0) {
+			if (strcasecmp($file, 'View.php') == 0) {
 				$type = 'view';
 				$properties = ['namespace' => $namespace];
 			}
@@ -177,29 +175,16 @@ class AppController extends Controller {
 	}
 
 	/**
-	 * Create a new controller or view
+	 * Create a new controller (and associated view if needed)
 	 *
 	 * @param string $namespace
-	 * @param string $name
-	 * @param string $type
 	 * @param bool $isPageController
 	 * @param bool $isDataObjectController
 	 * @throws \Mudpuppy\MudpuppyException
 	 * @throws \Mudpuppy\InvalidInputException
 	 * @return array
 	 */
-	public function action_createFile($namespace, $name, $type, $isPageController, $isDataObjectController) {
-		$name = Request::cleanValue($name, '', 'cmd');
-		if (substr($namespace, -1) == '\\') {
-			$namespace = substr($namespace, 0, -1);
-		}
-
-		if (empty($name)) {
-			throw new InvalidInputException(null, "Object Name is invalid");
-		}
-
-		$name = ucfirst($name);
-
+	public function action_createController($namespace, $isPageController, $isDataObjectController) {
 		$folders = explode('\\', $namespace);
 		if (count($folders) == 0 || $folders[0] != 'App') {
 			throw new InvalidInputException(null, "Namespace must begin with App");
@@ -213,57 +198,38 @@ class AppController extends Controller {
 			$currentFolder .= $folder . '/';
 		}
 
-		if ($type == 'Controller') {
-			$fileName = str_replace('.php', '', $name);
-			if (substr($fileName, -10) != 'Controller') {
-				$fileName .= 'Controller';
-			}
-
-			if (file_exists($currentFolder . $fileName . '.php')) {
-				throw new InvalidInputException(null, "Object already exists");
-			}
-
-			$stubFile = '_';
-			if ($isDataObjectController) {
-				$stubFile .= 'Data';
-			}
-			if ($isPageController) {
-				$stubFile .= 'Page';
-			}
-			$stubFile .= 'ControllerStub';
-
-			$stub = file_get_contents('Mudpuppy/Admin/App/' . $stubFile);
-			if (!$stub) {
-				throw new MudpuppyException(null, 'Controller stub is missing: ' . $stubFile);
-			}
-
-			// populate stub file
-			$stub = str_replace('___NAMESPACE___', $namespace, $stub);
-			$stub = str_replace('___CLASS_NAME___', $fileName, $stub);
-			$stub = str_replace('___VIEW_FILE_PATH___', implode('/', explode('\\', $namespace)) . '/' . substr($fileName, 0, -10) . 'View.php', $stub);
-
-			if (file_put_contents($currentFolder . $fileName . '.php', $stub) === false) {
-				throw new MudpuppyException(null, 'Unable to create file. May not have appropriate file permissions.');
-			}
-
-			// if it's not a page controller, we're done
-			if (!$isPageController) {
-				return [];
-			}
-
-			// update $name so we can create a view for the page controller
-			$name = substr($fileName, 0, -10) . 'View';
+		if (file_exists($currentFolder . 'Controller.php')) {
+			throw new InvalidInputException(null, "Controller already exists");
 		}
 
-		// create a view
+		$stubFile = '_';
+		if ($isDataObjectController) {
+			$stubFile .= 'Data';
+		}
+		if ($isPageController) {
+			$stubFile .= 'Page';
+		}
+		$stubFile .= 'ControllerStub';
 
-		$fileName = str_replace('.php', '', $name);
-		if (substr($fileName, -4) != 'View') {
-			$fileName .= 'View';
+		$stub = file_get_contents('Mudpuppy/Admin/App/' . $stubFile);
+		if (!$stub) {
+			throw new MudpuppyException(null, 'Controller stub is missing: ' . $stubFile);
 		}
 
-		if (file_exists($currentFolder . $fileName . '.php')) {
-			throw new InvalidInputException(null, "Object already exists");
+		// populate stub file
+		$stub = str_replace('___NAMESPACE___', $namespace, $stub);
+		$stub = str_replace('___VIEW_FILE_PATH___', implode('/', explode('\\', $namespace)) . '/View.php', $stub);
+		if (file_put_contents($currentFolder . 'Controller.php', $stub) === false) {
+			throw new MudpuppyException(null, 'Unable to create controller file. May not have appropriate file permissions.');
+		}
+
+		// if it's not a page controller, we're done
+		if (!$isPageController) {
+			return [];
+		}
+
+		if (file_exists($currentFolder . 'View.php')) {
+			throw new InvalidInputException(null, "View already exists");
 		}
 
 		$stubFile = 'Mudpuppy/Admin/App/_ViewStub';
@@ -273,9 +239,9 @@ class AppController extends Controller {
 		}
 
 		// populate stub file
-
-		if (file_put_contents($currentFolder . $fileName . '.php', $stub) === false) {
-			throw new MudpuppyException(null, 'Unable to create file. May not have appropriate file permissions.');
+		$stub = str_replace('___NAMESPACE___', $namespace, $stub);
+		if (file_put_contents($currentFolder . 'View.php', $stub) === false) {
+			throw new MudpuppyException(null, 'Unable to create view file. May not have appropriate file permissions.');
 		}
 
 		App::refreshAutoloadClassList();
@@ -284,18 +250,19 @@ class AppController extends Controller {
 	}
 
 	/**
-	 * create a new folder in the app namespace
-	 * @param string $name
+	 * Create a new namespace inside of App
+	 *
+	 * @param string $namespace
 	 * @throws \Mudpuppy\MudpuppyException
 	 * @throws \Mudpuppy\InvalidInputException
 	 * @return array
 	 */
-	public function action_createFolder($name) {
-		$name = File::cleanPath($name);
+	public function action_createNamespace($namespace) {
+		$namespace = File::cleanPath($namespace);
 
-		$folders = preg_split('#[\\\\/]#', $name);
+		$folders = preg_split('#[\\\\/]#', $namespace);
 		if (empty($folders) || $folders[0] != 'App') {
-			throw new InvalidInputException(null, "Folder name is invalid. It must start with 'App\\': " . $name);
+			throw new InvalidInputException(null, "Namespace is invalid. It must start with 'App\\': " . $namespace);
 		}
 
 		$currentFolder = '';

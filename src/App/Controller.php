@@ -4,13 +4,11 @@
 //======================================================================================================================
 
 namespace App;
-use Mudpuppy\Controller;
 use Mudpuppy\PageController;
-use Mudpuppy\PageNotFoundException;
 
 defined('MUDPUPPY') or die('Restricted');
 
-class RootController extends Controller {
+class Controller extends \Mudpuppy\Controller {
 	use PageController;
 
 	public function getRequiredPermissions() {
@@ -25,7 +23,7 @@ class RootController extends Controller {
 	}
 
 	public function render() {
-		include('App/RootView.php');
+		include('App/View.php');
 	}
 
 	/**

@@ -22,9 +22,9 @@ There are two core concepts/constructs that you need to understand to use Mudpup
 
 Controllers are the bridge between a URL and your application. Consider the App folder your site root and use the fully qualified class name as the location of your controller. For example:
 
-- **/** => App\RootController.php
-- **/profile/** => App\Profile\ProfileController.php
-- **/profile/edit/** => App\Profile\Edit\EditController.php
+- **/** => App\Controller.php
+- **/profile/** => App\Profile\Controller.php
+- **/profile/edit/** => App\Profile\Edit\Controller.php
 
 Your controllers can be created from the Mudpuppy App Structure admin page and can use traits to expand their functionality:
 

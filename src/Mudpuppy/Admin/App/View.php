@@ -30,8 +30,13 @@ use Mudpuppy\Config;
 	<div class="row appListHeader">
 		<div class="col-sm-3">
 			<span class="title">Files</span>
-			<a id="newFile" title="Create a new file from a template"><span class="fileIcon fileAdd white"></span></a>
-			<a id="newFolder" title="Create a new namespace"><span class="fileIcon folderAdd white"></span></a>
+			<a id="newController" title="Create a new controller from a template"><span class="fileIcon fileAdd white"></span></a>
+			<!--
+			The ability to create new folders separately from creating controllers seems irrelevant now that there can
+			only be a single controller per namespace. Commented out for now in case we need it back for some reason
+			in the future. Can't think of any reason why at this point, but just in case.
+			-->
+			<!--<a id="newNamespace" title="Create a new namespace"><span class="fileIcon folderAdd white"></span></a>-->
 		</div>
 		<div class="col-sm-9"><span class="title">Details</span></div>
 	</div>
@@ -57,54 +62,44 @@ use Mudpuppy\Config;
 		</div>
 	</div>
 
-	<div id="newFolderDialog">
+	<div id="newNamespaceDialog">
 		<form class="form-horizontal">
 			<div class="form-group">
 				<label for="folderName" class="col-sm-3 control-label">Namespace</label>
 				<div class="col-sm-9">
-					<input type="text" class="form-control" id="folderName" value="" placeholder="App\">
+					<input type="text" class="form-control" id="namespace" value="" placeholder="App\">
 				</div>
 			</div>
 			<div class="form-group">
 				<div class="col-sm-3"></div>
 				<div class="col-sm-9">
-					<button id="createNewFolder" class="btn btn-primary">Create</button>
+					<button id="createNewNamespace" class="btn btn-primary">Create</button>
 				</div>
 			</div>
 		</form>
 	</div>
 
-	<div id="newFileDialog">
+	<div id="newControllerDialog">
 		<form class="form-horizontal">
 			<div class="form-group">
 				<label class="col-sm-3 control-label">Namespace</label>
 				<div class="col-sm-9">
-					<input type="text" class="form-control" id="objectNamespace" value="">
+					<input type="text" class="form-control" id="controllerNamespace" value="">
 				</div>
 			</div>
 			<div class="form-group">
-				<label class="col-sm-3 control-label" for="objectName">Object Name</label>
+				<label class="col-sm-3 control-label">Traits</label>
 				<div class="col-sm-9">
-					<input type="text" class="form-control" id="objectName" placeholder="Name of Class">
-				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-3 control-label" for="objectType">Object Type</label>
-				<div class="col-sm-9">
-					<select id="objectType" class="form-control">
-						<option value="Controller">Controller</option>
-						<option value="View">View</option>
-					</select>
 					<div id="ControllerOptions">
 						<div class="checkbox">
 							<label for="objectPageController">
-								<input type="checkbox" id="objectPageController"/>
-								Page Controller
+								<input type="checkbox" id="isPageController"/>
+								Page Controller (with associated View)
 							</label>
 						</div>
 						<div class="checkbox">
 							<label for="objectDataObjectController">
-								<input type="checkbox" id="objectDataObjectController"/>
+								<input type="checkbox" id="isDataObjectController"/>
 								Data Object Controller
 							</label>
 						</div>
@@ -114,43 +109,43 @@ use Mudpuppy\Config;
 			<div class="form-group">
 				<div class="col-sm-3"></div>
 				<div class="col-sm-9">
-					<button id="createNewFile" class="btn btn-primary">Create</button>
+					<button id="createNewController" class="btn btn-primary">Create</button>
 				</div>
 			</div>
 		</form>
 	</div>
 
-	<div id="objectTemplate" class="objectDetails">
-		<h2 id="objectName"></h2>
+	<div id="controllerTemplate" class="controllerDetails">
+		<h2 id="controllerName"></h2>
 		<div class="form-horizontal">
 			<div class="form-group">
 				<label class="col-sm-3 control-label">File</label>
 				<div class="col-sm-9">
-					<p class="form-control-static" id="objectFile"></p>
+					<p class="form-control-static" id="controllerFile"></p>
 				</div>
 			</div>
 			<div class="form-group">
 				<label class="col-sm-3 control-label">Traits</label>
 				<div class="col-sm-9">
-					<p class="form-control-static" id="objectTraits"></p>
+					<p class="form-control-static" id="controllerTraits"></p>
 				</div>
 			</div>
 			<div class="form-group">
 				<label class="col-sm-3 control-label">Actions</label>
 				<div class="col-sm-9">
-					<p class="form-control-static" id="objectActions"></p>
+					<p class="form-control-static" id="controllerActions"></p>
 				</div>
 			</div>
 			<div class="form-group">
 				<label class="col-sm-3 control-label">Permissions</label>
 				<div class="col-sm-9">
-					<pre class="form-control-static" id="objectPermissions">&nbsp;</pre>
+					<pre class="form-control-static" id="controllerPermissions">&nbsp;</pre>
 				</div>
 			</div>
 			<div class="form-group">
 				<label class="col-sm-3 control-label">Allowable Paths</label>
 				<div class="col-sm-9">
-					<pre class="form-control-static" id="objectPaths">&nbsp;</pre>
+					<pre class="form-control-static" id="controllerPaths">&nbsp;</pre>
 				</div>
 			</div>
 		</div>

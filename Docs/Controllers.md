@@ -1,5 +1,5 @@
 #Controllers
-The Mudpuppy `Controller` class provides the necessary base functionality to receive requests and execute actions if necessary. Controllers can inherit from either or both `PageController` or `DataObjectController`. When you subclass a `Controller`, you are required to implement the following:
+The Mudpuppy `Controller` class provides the necessary base functionality to receive requests and execute actions if necessary. Controllers can use either or both of the `PageController` and `DataObjectController` traits. When you subclass a `Controller`, you are required to implement the following:
 
 
 ```php
@@ -10,7 +10,7 @@ The Mudpuppy `Controller` class provides the necessary base functionality to rec
 
 This getRequiredPermissions method should return an array of permissions as defined in the `App\Permissions` class. This array is checked in `App\Security` which is stubbed out and should be implemented.
 
-A controller is accessed by using part of the namespace as the url. For example, a controller named `App\Profile\Manage` is accessed by navigating to `http://yoursite/profile/manage/`. What you can do from there depends on the traits the page implements and the actions that are defined.
+All controllers are named and accessed according to the following fully qualified class name structure `App\<path>\<to>\Controller`. For example, a controller named `App\Profile\Manage\Controller` is accessed by navigating to `http://yoursite/profile/manage/`. What you can do from there depends on the traits the page implements and the actions that are defined. Note that all controllers must live under the `App\` namespace, must be named `Controller`, and must inherit from `\Mudpuppy\Controller`. You should always use the admin panel to simplify creation of new controllers.
 
 Controllers can use **Path Options** as a means of accepting additional data through the URL. Any path parts of the URL that comes after the controller name are extracted and saved into `$pathOptions`. Call the `getOption(index)` method of the `Controller` to get one of the path options.
 
@@ -34,8 +34,8 @@ Ints and floats/doubles are type checked and casted to their respective type. St
 
 
 ```php
-namepsace App\Profile;
-class Manage {
+namepsace App\Profile\Manage;
+class Controller extends \Mudpuppy\Controller {
 	...
 	
 	/**
@@ -98,7 +98,7 @@ To send your own status codes, you can subclass or use the MudpuppyException dir
 
 ##Page Controllers
 
-Page Controllers are `Controllers` that inherit from a `PageController` trait. Page controllers typically include an accompanying view of the same name but may show any view based on the url page or other inputs. Page controllers should always exist in the namespace that corresponds to the desired url. This way the App folder structure mirrors the site map of your application.
+Page Controllers are `Controllers` that use the `PageController` trait. Page controllers typically include an accompanying `View.php` in the same namespace but may show any view based on the url page or other inputs. Page controllers must always exist in the namespace that corresponds to the desired url. This way the App folder structure mirrors the site map of your application.
 
 ```php
 
@@ -142,7 +142,7 @@ Mudpuppy is not a CMS and only provides a single template by default. If you nee
 
 ##DataObject Controllers
 
-DataObject Controllers are `Controllers` that inherit from a `DataObjectController` trait. These are intended to provide a standard REST based data object API to directly access rows in your database. Use of the `DataObjectController` trait should be carefully implemented to verify user permissions with every request.
+DataObject Controllers are `Controllers` that use a `DataObjectController` trait. These are intended to provide a standard REST based data object API to directly access rows in your database. Use of the `DataObjectController` trait should be carefully implemented to verify user permissions with every request.
 
 **[todo fill out this section]**
 

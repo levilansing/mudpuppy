@@ -149,32 +149,32 @@
   height: 620px;
   overflow: auto;
 }
-a#newFolder,
-a#newFile {
+a#newNamespace,
+a#newController {
   float: right;
   cursor: pointer;
   padding-left: .3em;
   margin-left: 4px;
 }
-a#newFolder.disabled,
-a#newFile.disabled {
+a#newNamespace.disabled,
+a#newController.disabled {
   opacity: 0.25;
 }
-a#newFolder:hover,
-a#newFile:hover {
+a#newNamespace:hover,
+a#newController:hover {
   background-color: #555;
 }
-.objectDetails label {
+.controllerDetails label {
   color: #555;
 }
-.objectDetails ul {
+.controllerDetails ul {
   margin: 0;
   padding: 0;
 }
-.objectDetails li {
+.controllerDetails li {
   list-style: none;
 }
-.objectDetails pre {
+.controllerDetails pre {
   font-size: 0.85em;
   font-weight: normal;
 }

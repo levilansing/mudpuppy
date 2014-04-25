@@ -23,7 +23,6 @@ class Config {
 
 	// Application configuration
 	public static $appClass = null;
-	public static $rootControllerName = 'Root';
 	public static $randomSeedOffset = 0x5C7474D1;
 	// Array of folders for global classes or key-value pairs for namespace => folder
 	public static $autoloadFolders = array();
@@ -65,7 +64,6 @@ class Config {
 					'dateTimeFormat' => $optionalField,
 					'dateOnlyFormat' => $optionalField,
 					'appClass' => $requiredField,
-					'rootControllerName' => $optionalField,
 					'randomSeedOffset' => $requiredField,
 					'debug' => $optionalField,
 					'logQueries' => $optionalField,
@@ -164,25 +162,22 @@ class Config {
 		if (isset($settings['appClass'])) {
 			self::$appClass = self::getSettingValue($settings['appClass']);
 		}
-		if (isset($settings['rootControllerName'])) {
-			self::$rootControllerName = self::getSettingValue($settings['rootControllerName']);
-		}
 		if (isset($settings['randomSeedOffset'])) {
 			self::$randomSeedOffset = self::getSettingValue($settings['randomSeedOffset']);
 		}
 
 		// Debugging
 		if (isset($settings['debug'])) {
-			self::$debug = (bool)self::getSettingValue($settings['debug']);
+			self::$debug = self::parseBool(self::getSettingValue($settings['debug']));
 		}
 		if (isset($settings['logQueries'])) {
-			self::$logQueries = (bool)self::getSettingValue($settings['logQueries']);
+			self::$logQueries = self::parseBool(self::getSettingValue($settings['logQueries']));
 		}
 		if (isset($settings['logLevel'])) {
 			self::$logLevel = (int)self::getSettingValue($settings['logLevel']);
 		}
 		if (isset($settings['logToDatabase'])) {
-			self::$logToDatabase = (bool)self::getSettingValue($settings['logToDatabase']);
+			self::$logToDatabase = self::parseBool(self::getSettingValue($settings['logToDatabase']));
 		}
 		if (isset($settings['logFileDir'])) {
 			self::$logFileDir = self::getSettingValue($settings['logFileDir']);

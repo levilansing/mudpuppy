@@ -5,12 +5,11 @@
 
 namespace ___NAMESPACE___;
 
-use Mudpuppy\Controller;
 use Mudpuppy\DataObjectController;
 
 defined('MUDPUPPY') or die('Restricted');
 
-class ___CLASS_NAME___ extends Controller {
+class Controller extends \Mudpuppy\Controller {
 	use DataObjectController;
 
 	public function getRequiredPermissions() {
@@ -50,7 +49,6 @@ class ___CLASS_NAME___ extends Controller {
 //	protected function retrieveDataObjects($params) {
 //		return call_user_func(array($this->getDataObjectName(), 'getAll'));
 //	}
-
 
 	// TODO add actions as desired
 

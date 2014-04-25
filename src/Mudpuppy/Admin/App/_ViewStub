@@ -1,9 +1,17 @@
 <?php
-defined('MUDPUPPY') or die('Restricted');
+//======================================================================================================================
+// This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
+//======================================================================================================================
+
+namespace ___NAMESPACE___;
 
 use Mudpuppy\App;
 
-// get the current page controller to provide data for rendering our view
+defined('MUDPUPPY') or die('Restricted');
+
+// Get the current page controller to provide data for rendering our view
+/** @var Controller $controller */
 $controller = App::getPageController();
 
 ?>
+<h1>This is your new view.</h1>

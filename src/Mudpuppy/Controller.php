@@ -29,7 +29,7 @@ abstract class Controller {
 		}
 
 		// Try to find the controller
-		$controllerName = 'App\\' . Config::$rootControllerName . 'Controller';
+		$controllerName = 'App\\Controller';
 		$classes = App::getAutoloadClassList();
 		$options = [];
 		$nameIndex = -1;
@@ -57,9 +57,9 @@ abstract class Controller {
 
 			// Walk backwards and check each folder for its own controller
 			for (--$i; $i >= 0; $i--) {
-				if (isset($classes[strtolower($namespace)]) && isset($classes[strtolower($namespace)][strtolower($parts[$i]) . 'controller'])) {
+				if (isset($classes[strtolower($namespace)]) && isset($classes[strtolower($namespace)]['controller'])) {
 					// Use the fully qualified class name, where directories equal namespaces
-					$controllerName = $namespace . '\\' . ucfirst($parts[$i]) . 'Controller';
+					$controllerName = $namespace . '\\Controller';
 					$nameIndex = $i;
 					break;
 				}
@@ -72,7 +72,7 @@ abstract class Controller {
 				$folder = $namespace;
 				for ($i = 0; $i < count($parts); $i++) {
 					$part = $parts[$i];
-					if (file_exists($folder . '/' . ucfirst($part) . '/' . ucfirst($part) . 'Controller.php')) {
+					if (file_exists($folder . '/' . ucfirst($part) . '/Controller.php')) {
 						if (App::refreshAutoloadClassList()) {
 							return self::getController();
 						}

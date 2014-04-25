@@ -2,7 +2,17 @@
 //======================================================================================================================
 // This file is part of the Mudpuppy PHP framework, released under the MIT License. See LICENSE for full details.
 //======================================================================================================================
+
+namespace App;
+
+use Mudpuppy\App;
+
 defined('MUDPUPPY') or die('Restricted');
+
+// Get the current page controller to provide data for rendering our view
+/** @var Controller $controller */
+$controller = App::getPageController();
+
 ?>
 <h1>Mudpuppy</h1><p>This is your home page.</p>
 <ul>

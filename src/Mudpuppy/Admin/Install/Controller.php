@@ -7,7 +7,6 @@ namespace Mudpuppy\Admin\Install;
 
 use Mudpuppy\App;
 use Mudpuppy\Config;
-use Mudpuppy\Controller;
 use Mudpuppy\Database;
 use Mudpuppy\File;
 use Mudpuppy\InvalidInputException;
@@ -21,7 +20,7 @@ use Mudpuppy\Session;
 
 defined('MUDPUPPY') or die('Restricted');
 
-class InstallController extends Controller {
+class Controller extends \Mudpuppy\Controller {
 	use PageController;
 
 	public function __construct($pathOptions) {
@@ -46,7 +45,7 @@ class InstallController extends Controller {
 	public function render() {
 		// Abort the default template, use the install view for the entire page
 		ob_clean();
-		include('Mudpuppy/Admin/Install/InstallView.php');
+		include('Mudpuppy/Admin/Install/View.php');
 		App::cleanExit();
 	}
 
@@ -96,7 +95,7 @@ class InstallController extends Controller {
 			$writableDirs[] = $logFileDir;
 		}
 
-		$basicAuthRealms = null;
+		$basicAuthRealms = [];
 		if ($adminBasicAuth) {
 			$adminUser = self::clean($adminUser, 'cmd', 'Admin Username');
 			$adminPass = self::clean($adminPass, 'str', 'Admin Password');
@@ -128,7 +127,7 @@ class InstallController extends Controller {
 			unlink("App/$appClass.php");
 			throw new MudpuppyException(null, 'Error creating file: App/Config.json');
 		}
-		if ($basicAuthRealms != null && !File::putContents('App/BasicAuth.json', json_encode($basicAuthRealms, JSON_PRETTY_PRINT))) {
+		if (!File::putContents('App/BasicAuth.json', json_encode($basicAuthRealms, JSON_PRETTY_PRINT))) {
 			unlink("App/$appClass.php");
 			unlink("App/Config.json");
 			throw new MudpuppyException(null, 'Error creating file: App/BasicAuth.json');

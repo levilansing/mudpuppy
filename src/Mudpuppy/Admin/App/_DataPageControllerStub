@@ -5,13 +5,12 @@
 
 namespace ___NAMESPACE___;
 
-use Mudpuppy\Controller;
 use Mudpuppy\PageController;
 use Mudpuppy\DataObjectController;
 
 defined('MUDPUPPY') or die('Restricted');
 
-class ___CLASS_NAME___ extends Controller {
+class Controller extends \Mudpuppy\Controller {
 	use PageController;
 	use DataObjectController;
 

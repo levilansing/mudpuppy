@@ -10,20 +10,13 @@
 			e.stopPropagation();
 		});
 		$.observer.registerForEvents(this, {
-			onNewFile: this.onNewFile,
-			onNewFolder: this.onNewFolder,
-			onCreateNewFile: this.onCreateNewFile,
-			onCreateNewFolder: this.onCreateNewFolder,
-			onObjectTypeChange: function(e, item) {
-				if ($(item).val() == 'Controller') {
-					$(item).parents('form').find('#ControllerOptions').show(300);
-				} else {
-					$(item).parents('form').find('#ControllerOptions').hide(300);
-				}
-			}
+			onNewController: this.onNewController,
+			onNewNamespace: this.onNewNamespace,
+			onCreateNewController: this.onCreateNewController,
+			onCreateNewNamespace: this.onCreateNewNamespace
 		});
-		this.newFolderDialog = $('#newFolderDialog').detach();
-		this.newFileDialog = $('#newFileDialog').detach();
+		this.newNamespaceDialog = $('#newNamespaceDialog').detach();
+		this.newControllerDialog = $('#newControllerDialog').detach();
 		var timeZones = $('#timezoneConstant');
 		var optionTemplate = $('<option value=""></option>');
 		for (var i = 0; i < AppView.timeZones.length; i++) {
@@ -132,25 +125,25 @@
 	};
 
 	AppView.prototype.setupControllerDetails = function(info) {
-		var $template = $('#objectTemplate').clone().attr('id', '');
+		var $template = $('#controllerTemplate').clone().attr('id', '');
 		var props = info.properties;
-		$template.find('#objectName').text(props.namespace + '\\' + props.className);
-		$template.find('#objectFile').text(info.file);
+		$template.find('#controllerName').text(props.namespace + '\\' + props.className);
+		$template.find('#controllerFile').text(info.file);
 
 		var $actions = $('<ul></ul>');
 		$.each(props.actions || {}, function(i, action) {
 			$actions.append($('<li></li>').text(action));
 		});
-		$template.find('#objectActions').append($actions);
+		$template.find('#controllerActions').append($actions);
 
 		var $traits = $('<ul></ul>');
 		$.each(props.traits || {}, function(i, trait) {
 			$traits.append($('<li></li>').text(trait));
 		});
-		$template.find('#objectTraits').append($traits);
+		$template.find('#controllerTraits').append($traits);
 
-		$template.find('#objectPermissions').append(props.permissions);
-		$template.find('#objectPaths').append(props.paths);
+		$template.find('#controllerPermissions').append(props.permissions);
+		$template.find('#controllerPaths').append(props.paths);
 		return $template;
 	};
 
@@ -504,53 +497,48 @@
 		dialog.modal();
 	};
 
-	AppView.prototype.onNewFile = function(e, item) {
+	AppView.prototype.onNewController = function(e, item) {
 		var info = this.getSelectedInfo();
 		var namespace = (info.properties && info.properties.namespace) || 'App\\';
 
-		var body = this.newFileDialog.clone(true);
+		var body = this.newControllerDialog.clone(true);
 		body.find('input').val('').prop('checked', false);
-		body.find('select#objectType').val('Controller').change();
-		body.find('#objectNamespace').val(namespace);
-		this.showModal("Create a New Object", body);
+		body.find('#controllerNamespace').val(namespace);
+		this.showModal("Create a New Controller", body);
 	};
 
-	AppView.prototype.onNewFolder = function(e, item) {
+	AppView.prototype.onNewNamespace = function(e, item) {
 		var info = this.getSelectedInfo();
 		var namespace = (info.properties && info.properties.namespace) || 'App\\';
 
-		var body = this.newFolderDialog.clone();
+		var body = this.newNamespaceDialog.clone();
 		this.showModal("Create a New Namespace", body);
 	};
 
-	AppView.prototype.onCreateNewFolder = function(e, item) {
+	AppView.prototype.onCreateNewNamespace = function(e, item) {
 		e.preventDefault();
 		var $form = $(item).parents('form');
-		var name = $form.find('#folderName').val();
+		var namespace = $form.find('#namespace').val();
 
 		var self = this;
-		this.callAction('createFolder', {name: name}, function(result) {
+		this.callAction('createNamespace', {namespace: namespace}, function(result) {
 			self.refresh();
 			$('#dialog').modal('hide');
 		});
 	};
 
-	AppView.prototype.onCreateNewFile = function(e, item) {
+	AppView.prototype.onCreateNewController = function(e, item) {
 		e.preventDefault();
 		var $form = $(item).parents('form');
-		var namespace = $form.find('#objectNamespace').val();
-		var name = $form.find('#objectName').val();
-		var type = $form.find('#objectType').val();
-		var traitPageController = $form.find('#objectPageController').prop('checked');
-		var traitDataObjectController = $form.find('#objectDataObjectController').prop('checked');
+		var namespace = $form.find('#controllerNamespace').val();
+		var isPageController = $form.find('#isPageController').prop('checked');
+		var isDataObjectController = $form.find('#isDataObjectController').prop('checked');
 
 		var self = this;
-		this.callAction('createFile', {
+		this.callAction('createController', {
 			namespace: namespace,
-			name: name,
-			type: type,
-			isPageController: traitPageController,
-			isDataObjectController: traitDataObjectController
+			isPageController: isPageController,
+			isDataObjectController: isDataObjectController
 		}, function(result) {
 			self.refresh();
 			$('#dialog').modal('hide');
