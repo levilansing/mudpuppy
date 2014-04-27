@@ -748,11 +748,10 @@ abstract class DataObject implements \JsonSerializable {
 	/**
 	 * Fetch by an id or key value pair map, but only return the first result or null
 	 * @param int|array $criteria
-	 * @param null $order an array of column direction pairs ['column'=>'ASC'] to sort by first
 	 * @return DataObject|null
 	 */
-	public static function fetchOne($criteria, $order=null) {
-		$result = self::fetch($criteria, $order, 1, 0);
+	public static function fetchOne($criteria) {
+		$result = self::fetch($criteria, null, 1, 0);
 		if (is_array($result)) {
 			if (count($result) > 0) {
 				return $result[0];
