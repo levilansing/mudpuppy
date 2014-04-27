@@ -73,6 +73,20 @@ $user = User::fetchOne(15);
 // fetch an array of users who are named "Bob Carson"
 $users = User::fetch(['firstName' => 'Bob', 'lastName' => 'Carson']);
 
+// use the Sql condition generator (compatible with fetch and fetchOne)
+// fetch an array of users who have not logged in
+$users = User::fetch(
+	Sql::isNull('lastLogin')
+);
+
+// fetch an array of users with first name "Bob" or last name that starts with "Cars"
+$users = User::fetch(
+	Sql::combineOr(
+		Sql::equals('firstName', 'Bob'), 
+		Sql::like('lastName' => 'Cars%')
+	)
+);
+
 // fetch the first 25 users alphabetically by last name, first name
 $users = User::fetch([], ['lastName' => 'ASC', 'firstName' => 'ASC'], 25);
 
@@ -104,7 +118,7 @@ $user->save();
 
 ##Custom Queries
 
-For more complex queries, to encourge proper security practices, the Database class requires you to use prepared statements.
+Please use the built in fetch methods whenever possible, however, for more complex queries that cannot be built using fetch conditions, to encourge proper security practices, the Database class requires you to use prepared statements.
 
 In the `Mudpuppy\Database` class:
 
@@ -134,7 +148,7 @@ In the `Mudpuppy\Database` class:
 	public function setStatementFetchMode($mode) {}
 ```
 
-And fetching from result sets:
+And fetching from database result sets:
 
 ```php
 	/**
@@ -168,15 +182,15 @@ $db->prepare("SELECT COUNT(*) FROM Users");
 $db->execute();
 $userCount = $db->fetchFirstValue();
 
-// Query for users who recently logged in
-$db->prepare("SELECT * FROM Users WHERE type = ? AND lastLogin > ?");
-$db->bindValue(1, ACCOUNT_TYPE, \PDO::PARAM_INT);
+// Query for users on a specific team who recently logged in
+$db->prepare("SELECT Users.* FROM Users JOIN Teams on Users.teamId=Teams.id WHERE Teasm.id = ? AND lastLogin > ?");
+$db->bindValue(1, RED_TEAM_ID, \PDO::PARAM_INT);
 $db->bindValue(2, $db->formatDate(time()-24*60*60));
 $db->execute();
 $users = $db->fetchAll('Model\User');
 
 // Query for a custom result set that is not for a DataObject
-$db->prepare("SELECT Users.name,Accounts.type FROM Users JOIN Accounts  ON Accounts.userId = Users.id WHERE Users.active=:isActive ORDER BY Users.name ASC LIMIT 10");
+$db->prepare("SELECT Users.name, Accounts.type FROM Users JOIN Accounts  ON Accounts.userId = Users.id WHERE Users.active=:isActive ORDER BY Users.name ASC LIMIT 10");
 $db->execute(['isActive'=>1]);
 foreach ($db->fetchAll() as $row) {
 	// do something with each result row

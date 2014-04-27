@@ -645,7 +645,7 @@ abstract class DataObject implements \JsonSerializable {
 	}
 
 	/**
-	 * Fetch by an id or key value pair map
+	 * Fetch by an id, key value pair map, or a condition created using the Sql class
 	 * @param int|array $criteria the integer id or an array of column value pairs
 	 * @param array $order an array of column direction pairs ['column'=>'ASC']
 	 * @param int $limit result limit
@@ -680,11 +680,16 @@ abstract class DataObject implements \JsonSerializable {
 			// build the query
 			/** @var DataObject $objectClass */
 			$query = 'SELECT * FROM `' . static::getTableName() . '`';
+			$values = [];
+			$fields = [];
 			if (!empty($fieldSet)) {
-				$query .= ' WHERE (`' . implode('`=? AND `', array_keys($fieldSet)) . '`=?' . ')';
-				foreach ($fieldSet as $field => $value) {
+				list($where, $fields, $values, $unmatchedFields) = Sql::_generateWhere($criteria);
+
+				foreach (array_merge($fields, $unmatchedFields) as $field) {
 					MPAssert(array_key_exists($field, $columnDefaults), 'DataObject::fetch Invalid field ' . $field);
 				}
+
+				$query .= ' WHERE ' . $where;
 			}
 
 			if (is_array($order) && count($order) > 0) {
@@ -707,10 +712,10 @@ abstract class DataObject implements \JsonSerializable {
 			$db->prepare($query);
 
 			// bind values
-			$i = 1;
-			foreach ($fieldSet as $field => $value) {
+			for ($i=0; $i < count($values); $i++) {
+				$value = $values[$i];
 				$type = \PDO::PARAM_STR;
-				$dataType = $columnDefaults[$field]->dataType;
+				$dataType = $columnDefaults[$fields[$i]]->dataType;
 				if (is_null($value)) {
 					$type = \PDO::PARAM_INT;
 				} else if ($dataType == DATATYPE_BOOL) {
@@ -729,7 +734,7 @@ abstract class DataObject implements \JsonSerializable {
 						$value = json_encode($value);
 					}
 				}
-				$db->bindValue($i++, $value, $type);
+				$db->bindValue($i+1, $value, $type);
 			}
 
 			// query
@@ -743,10 +748,11 @@ abstract class DataObject implements \JsonSerializable {
 	/**
 	 * Fetch by an id or key value pair map, but only return the first result or null
 	 * @param int|array $criteria
+	 * @param null $order an array of column direction pairs ['column'=>'ASC'] to sort by first
 	 * @return DataObject|null
 	 */
-	public static function fetchOne($criteria) {
-		$result = self::fetch($criteria, null, 1, 0);
+	public static function fetchOne($criteria, $order=null) {
+		$result = self::fetch($criteria, $order, 1, 0);
 		if (is_array($result)) {
 			if (count($result) > 0) {
 				return $result[0];
