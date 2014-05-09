@@ -61,8 +61,47 @@ class Log {
 	public static function add($text) {
 		if (count(self::$log) >= self::LOG_LIMIT) {
 			self::$additionalLogs++;
+			return;
 		}
 		self::$log[] = array('title' => $text, 'time' => self::getElapsedTime(), 'mem' => memory_get_usage());
+	}
+
+	/**
+	 * Log a variable in a human readable format
+	 * @param $variable
+	 * @param $label
+	 * @internal param string $text
+	 */
+	public static function logVariable($variable, $label='') {
+		if (count(self::$log) >= self::LOG_LIMIT) {
+			self::$additionalLogs++;
+			return;
+		}
+
+		$type = '';
+		if (is_null($variable)) {
+			$text = 'NULL';
+		} else if (is_array($variable)) {
+			$type = ' (array)';
+			ob_start();
+			print_r($variable);
+			$text = ob_get_clean();
+		} else if (is_string($variable)) {
+			$type = ' (string)';
+			$text = $variable;
+		} else if (is_numeric($variable)) {
+			$type = ' (numeric)';
+			$text = $variable;
+		} else if (is_object($variable) && method_exists($variable, '__toString')) {
+			$type = ' (' . get_class($variable) . ': __toString)';
+			$text = $variable;
+		} else {
+			$type = get_class($variable);
+			$type = ' (' . ($type ? $type : 'unknown type') . ')';
+			$text = var_export($variable, true);
+		}
+
+		self::$log[] = array('title' => $label . $type . ": " . $text, 'time' => self::getElapsedTime(), 'mem' => memory_get_usage());
 	}
 
 	/**
@@ -105,6 +144,7 @@ class Log {
 	public static function error($error) {
 		if (count(self::$errors) >= self::ERROR_LIMIT) {
 			self::$additionalErrors++;
+			return;
 		}
 		$error .= self::getBacktrace(2);
 		self::$errors[] = array('time' => self::getElapsedTime(), 'error' => $error);
@@ -117,6 +157,7 @@ class Log {
 	public static function exception(\Exception $e) {
 		if (count(self::$errors) >= self::ERROR_LIMIT) {
 			self::$additionalErrors++;
+			return;
 		}
 		$error = get_class($e) . ': ' . $e->getFile() . '(' . $e->getLine() . ') \'' . $e->getMessage() . '\'';
 		$error .= self::getBacktrace(0, $e->getTrace());

@@ -185,8 +185,8 @@
 		var nQueries = (log.queries && log.queries.queries ? log.queries.queries.length : 0);
 		$(header.get(5)).html(labelIt(nQueries, 25, 50, ' queries', ' query'));
 
-		var time = parseFloat(log.executionTime).toFixed(4) + 's';
-		$(header.get(6)).html(labelIt(time, 0.2, 0.5, '', ''));
+		var time = parseFloat(log.executionTime).toFixed(4);
+		$(header.get(6)).html(labelIt(time, 0.2, 0.5, 's', 's'));
 
 		var nLogs = (log.log && log.log.length) || 0;
 
@@ -221,30 +221,31 @@
 	};
 
 	function labelIt(value, warning, error, postfix, singularPostfix) {
-		if (value == 1 && singularPostfix !== undefined) {
+		var numericValue = parseFloat(value);
+		if (numericValue == 1 && singularPostfix !== undefined) {
 			postfix = singularPostfix;
 		}
 
-		if (value >= error) {
+		if (numericValue >= error) {
 			return '<span class="label label-danger">' + value + postfix + '</span>';
 		}
-		if (value >= warning) {
+		if (numericValue >= warning) {
 			return '<span class="label label-warning">' + value + postfix + '</span>';
 		}
 		return value + postfix;
 	}
 
 	function logsToList(log) {
-		if (!log || !log.log) {
+		if (!log) {
 			return '';
 		}
 
-		var logs = log.log;
+		var logs = log.log || [];
 		var ol = $('<ol></ol>');
 		for (var i = 0; i < logs.length; i++) {
 			var item = logs[i];
 			var time = item.time;
-			ol.append($('<li></li>').text(parseFloat(time).toFixed(4) + 's: ' + item.title));
+			ol.append($('<li></li>').append($('<pre class="prettyprint"></pre>').text(parseFloat(time).toFixed(4) + 's: ' + item.title)));
 		}
 
 		// log summary
