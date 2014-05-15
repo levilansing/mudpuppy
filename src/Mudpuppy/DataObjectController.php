@@ -87,7 +87,7 @@ trait DataObjectController {
 	 * @return array that represents the newly created object
 	 * @throws InvalidInputException if the input object does not validate
 	 * @throws ObjectNotFoundException if the object already exists
-	 * @throws MudpuppyException if the object fails to create
+	 * @throws DatabaseException if the object fails to create
 	 */
 	public function create($object) {
 		$object = self::cleanArray($object, $this->getStructureDefinition());
@@ -104,9 +104,8 @@ trait DataObjectController {
 			throw new ObjectNotFoundException('The specified object already exists');
 		}
 
-		if (!$dataObject->save()) {
-			throw new MudpuppyException('Failed to create object');
-		}
+		$dataObject->save();
+
 		return $this->sanitize($dataObject->toArray());
 	}
 
@@ -117,7 +116,7 @@ trait DataObjectController {
 	 * @return array that represents the updated object
 	 * @throws InvalidInputException if the input object does not validate
 	 * @throws ObjectNotFoundException if the object doesn't exists
-	 * @throws MudpuppyException if the object fails to update
+	 * @throws DatabaseException if the object fails to update
 	 */
 	public function update($id, $object) {
 		$object = self::cleanArray($object, $this->getStructureDefinition());
@@ -132,9 +131,9 @@ trait DataObjectController {
 		foreach ($object as $field => $value) {
 			$dataObject->$field = $value;
 		}
-		if (!$dataObject->save()) {
-			throw new MudpuppyException('Failed to update object');
-		}
+
+		$dataObject->save();
+
 		return $this->sanitize($dataObject->toArray());
 	}
 
@@ -142,7 +141,7 @@ trait DataObjectController {
 	 * Deletes a data object for the given id.
 	 * @param int $id the object id
 	 * @throws ObjectNotFoundException if no object is found for the given id
-	 * @throws MudpuppyException if the object fails to delete
+	 * @throws DatabaseException if the object fails to delete
 	 */
 	public function delete($id) {
 		/** @var DataObject $dataObjectClass */
@@ -153,9 +152,8 @@ trait DataObjectController {
 		/** @var $dataObject DataObject */
 		$dataObject = new $dataObjectClass();
 		$dataObject->id = $id;
-		if (!$dataObject->delete()) {
-			throw new MudpuppyException("Failed to delete object with id: $id");
-		}
+
+		$dataObject->delete();
 	}
 
 	/**

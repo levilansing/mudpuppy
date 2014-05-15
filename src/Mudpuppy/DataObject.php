@@ -261,7 +261,7 @@ abstract class DataObject implements \JsonSerializable {
 
 		// insert or update database
 		if (!$this->insertOrUpdate($fields)) {
-			throw new DatabaseException('Database error when attempting to save data object');
+			throw new DatabaseException('Database error when attempting to save data object of type ' . get_class($this));
 		}
 
 		// the save was successful, remove changed flag
