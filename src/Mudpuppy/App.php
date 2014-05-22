@@ -11,7 +11,7 @@ class App {
 	private static $instance = null;
 	private static $dbo = null;
 	private static $exited = false;
-	private static $completionHandlers = [];
+	private static $exitHandlers = [];
 	/** @var Controller|PageController */
 	private static $pageController = null;
 	/** @var Security */
@@ -309,7 +309,7 @@ class App {
 	 * @param {function} $handler
 	 */
 	public static function addExitHandler($handler) {
-		self::$completionHandlers[] = $handler;
+		self::$exitHandlers[] = $handler;
 	}
 
 	/**
@@ -341,7 +341,7 @@ class App {
 			}
 
 			// perform registered callbacks
-			foreach (self::$completionHandlers as $handler) {
+			foreach (self::$exitHandlers as $handler) {
 				$handler();
 			}
 
@@ -388,11 +388,7 @@ class App {
 		if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && $_SERVER['HTTPS'] != 'off') {
 			$url .= 's';
 		}
-		$url .= '://' . $_SERVER['HTTP_HOST'];
-		if ($_SERVER['SERVER_PORT'] != 80 && $_SERVER['SERVER_PORT'] != 443) {
-			$url .= ":$_SERVER[SERVER_PORT]";
-		}
-		$url .= '/';
+		$url .= '://' . $_SERVER['HTTP_HOST'] . '/';
 		return $url;
 	}
 
