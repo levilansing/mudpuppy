@@ -88,8 +88,11 @@ function MPAutoLoad($className) {
 
 	// break className into namespace parts
 	$parts = explode('\\', $className);
-	$class = strtolower($parts[sizeof($parts) - 1]);
-	array_pop($parts);
+	$class = strtolower(array_pop($parts));
+	if (strpos($class, '_') !== false) {
+		$parts = array_merge($parts, explode('_', $class));
+		$class = strtolower(array_pop($parts));
+	}
 	$namespace = strtolower(implode('\\', $parts));
 
 	// Load class locations
@@ -219,6 +222,10 @@ function shutdown_handler() {
 
 		// during shutdown we can't load external files, so we can't display the normal 500 error message
 		print 'Internal Server Error';
+
+		if (Config::$debug) {
+			Log::displayFullLog();
+		}
 
 		App::cleanExit(true);
 	}

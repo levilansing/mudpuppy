@@ -247,7 +247,7 @@ class Log {
 		if (Config::$logLevel == LOG_LEVEL_ALWAYS || !empty(self::$errors)) {
 			try {
 				// Delete old logs once in a while
-				if (rand(0, 10000) == 0) {
+				if (rand(0, 1000) == 0) {
 					$oldAge = strtotime('7 days ago');
 					if (Config::$logToDatabase) {
 						$db = App::getDBO();

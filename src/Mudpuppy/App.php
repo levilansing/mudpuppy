@@ -55,9 +55,6 @@ class App {
 			forward_static_call(array('\App\\' . Config::$appClass, 'configure'));
 		}
 
-			// Start the session
-		Session::start();
-
 		// Setup the database if desired
 		if (!empty(Config::$dbHost)) {
 			// Create database object
@@ -78,6 +75,9 @@ class App {
 		} else {
 			Config::$logToDatabase = false;
 		}
+
+		// Start the session
+		Session::start();
 
 		/** @var Security $security */
 		$security = null;
@@ -171,10 +171,12 @@ class App {
 	 */
 	public static function isAutoloadNamespace($namespace) {
 		// clean the namespace to ensure it starts with \ and doesn't end with one
-		if (substr($namespace, 0, 1) != '\\')
+		if (substr($namespace, 0, 1) != '\\') {
 			$namespace = '\\' . $namespace;
-		if (substr($namespace, -1, 1) == '\\')
+		}
+		if (substr($namespace, -1, 1) == '\\') {
 			$namespace = substr($namespace, 0, -1);
+		}
 
 		foreach (self::getAutoloadFolders() as $baseNamespace => $folder) {
 			if (is_numeric($baseNamespace)) {
@@ -317,6 +319,7 @@ class App {
 	 * @param bool $suppressAdditionalOutput if true, log will not be appended to the output in any case
 	 */
 	public static function cleanExit($suppressAdditionalOutput = false) {
+
 		// Make sure we only do this once, as it could potentially be triggered multiple times during termination
 		if (!self::$exited) {
 			self::$exited = true;
@@ -337,12 +340,20 @@ class App {
 
 			// close session
 			if (session_id()) {
-				session_write_close();
+				try {
+					session_write_close();
+				} catch(MudpuppyException $e) {
+					Log::exception($e);
+				}
 			}
 
 			// perform registered callbacks
 			foreach (self::$exitHandlers as $handler) {
-				$handler();
+				if (is_callable($handler)) {
+					call_user_func($handler);
+				} else {
+					$handler();
+				}
 			}
 
 			// Record errors to database (or S3 or local file, depending on configuration)

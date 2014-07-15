@@ -182,9 +182,10 @@ abstract class DataObject implements \JsonSerializable {
 	 * @param $type
 	 * @param null $dbDefault IGNORED allowing DB to set default value upon commit
 	 * @param bool $notNull
+	 * @param int $maxLength maximum length of field or 0 if not known or n/a
 	 */
-	protected function createColumn($col, $type, $dbDefault = null, $notNull = false) {
-		self::$_defaults[$this->getObjectName()][$col] = new DataValue($type, $dbDefault, $notNull);
+	protected function createColumn($col, $type, $dbDefault = null, $notNull = false, $maxLength = 0) {
+		self::$_defaults[$this->getObjectName()][$col] = new DataValue($type, $dbDefault, $notNull, $maxLength);
 	}
 
 	/**
@@ -227,6 +228,18 @@ abstract class DataObject implements \JsonSerializable {
 		}
 
 		return self::$_defaults[$objectClass];
+	}
+
+	/**
+	 * get the column defaults for the specified class
+	 * @param $column
+	 * @internal param null $objectClass
+	 * @return \Mudpuppy\DataValue
+	 */
+	public function getColumnInfo($column) {
+		$defaults = self::getcolumnDefaults(get_called_class());
+
+		return $defaults[$column];
 	}
 
 	/**
@@ -496,6 +509,7 @@ abstract class DataObject implements \JsonSerializable {
 				} else if ($type == DATATYPE_BINARY) {
 					$db->bindValue($i, $val->getValue(), \PDO::PARAM_LOB);
 				} else if ($type == DATATYPE_JSON) {
+					// note JSON cannot be auto-truncated
 					$value = $val->getValue();
 					if (empty($value)) {
 						$db->bindValue($i, null, \PDO::PARAM_INT);
@@ -505,7 +519,14 @@ abstract class DataObject implements \JsonSerializable {
 						$db->bindValue($i, json_encode($val->getValue()), \PDO::PARAM_STR);
 					}
 				} else {
-					$db->bindValue($i, $val->getValue(), \PDO::PARAM_STR);
+					$truncated = $val->getValue();
+					if (Database::$autoTruncate) {
+						$maxLen = $this->getColumnInfo($val->column)->maxLength;
+						if ($maxLen > 0) {
+							$truncated = substr($truncated, 0, $maxLen);
+						}
+					}
+					$db->bindValue($i, $truncated, \PDO::PARAM_STR);
 				}
 				$i++;
 			}

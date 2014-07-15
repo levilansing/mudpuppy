@@ -70,6 +70,7 @@ class Config {
 					'logLevel' => $optionalField,
 					'logToDatabase' => $optionalField,
 					'logFileDir' => $optionalField,
+					'autoloadFolders' => $optionalField,
 					'custom' => [
 						'type' => 'array',
 						'required' => false,
@@ -98,6 +99,7 @@ class Config {
 						'logLevel' => $optionalField,
 						'logToDatabase' => $optionalField,
 						'logFileDir' => $optionalField,
+						'autoloadFolders' => $optionalField,
 						'custom' => [
 							'type' => 'array',
 							'required' => false,
@@ -181,6 +183,12 @@ class Config {
 		}
 		if (isset($settings['logFileDir'])) {
 			self::$logFileDir = self::getSettingValue($settings['logFileDir']);
+		}
+		if (isset($settings['autoloadFolders'])) {
+			self::$autoloadFolders = json_decode(self::getSettingValue($settings['autoloadFolders']), true);
+			if (is_null(self::$autoloadFolders)) {
+				self::$autoloadFolders = [];
+			}
 		}
 
 		// Custom application settings

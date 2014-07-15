@@ -5,6 +5,8 @@
 
 namespace Mudpuppy\Model;
 use Mudpuppy\App;
+use Mudpuppy\Database;
+use Mudpuppy\DatabaseException;
 use Mudpuppy\DataObject;
 
 defined('MUDPUPPY') or die('Restricted');
@@ -109,10 +111,12 @@ class DebugLog extends DataObject {
 	}
 
 	public function save() {
-		if (!parent::save()) {
+		try {
+			parent::save();
+		} catch (DatabaseException $e) {
 			// Make sure the table exists
 			$db = App::getDBO();
-			if (preg_match("#Table '[^']*\\.DebugLogs' doesn't exist#i", $db->getLastError(), $matches) > 0) {
+			if (preg_match("#Table '[^']*\\.DebugLogs. doesn't exist#i", $db->getLastError(), $matches) > 0) {
 				$db->prepare("CREATE TABLE IF NOT EXISTS `DebugLogs` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '	',
   `date` datetime NOT NULL,

@@ -68,15 +68,17 @@ class DBColumnValue {
 
 }
 
-
 class Database {
 
 	/** @var \PDO */
 	private $pdo = null;
 
+	public static $autoTruncate = false;
 	public static $queryLog = array();
 	public static $additionalQueryLogs = 0;
 	const LOG_LIMIT = 999;
+
+	private $doNotLogNextQuery = false;
 
 	static $errorCount = 0;
 
@@ -141,6 +143,14 @@ class Database {
 			return;
 		}
 		Database::$queryLog[sizeof(Database::$queryLog) - 1]['error'] = $error;
+	}
+
+	/**
+	 * Tell the Database not to log the next query
+	 * (for sensitive queries that should never exist in the logs)
+	 */
+	public function doNotLogNextQuery() {
+		$this->doNotLogNextQuery = true;
 	}
 
 	private $pdoTypeList = [
@@ -252,9 +262,12 @@ class Database {
 	 * @return \PDOStatement|bool
 	 */
 	public function execute($bindArray = null) {
+		$allowLog = !$this->doNotLogNextQuery;
+		$this->doNotLogNextQuery = false;
+
 		try {
 
-			if (Config::$debug && Config::$logQueries) {
+			if (Config::$debug && Config::$logQueries && $allowLog) {
 				if ($bindArray != null) {
 					foreach ($bindArray as $label => $value) {
 						if (is_null($value) || is_int($value)) {
@@ -273,7 +286,7 @@ class Database {
 				$this->statement->execute();
 			}
 
-			if (Config::$debug && Config::$logQueries) {
+			if (Config::$debug && Config::$logQueries && $allowLog) {
 				self::logQueryEndTime();
 			}
 			$this->lastResult = $this->statement;
@@ -281,7 +294,7 @@ class Database {
 			if ($this->hasError()) {
 				$error = $this->getLastError();
 				Log::error($error);
-				if (Config::$debug && Config::$logQueries) {
+				if (Config::$debug && Config::$logQueries && $allowLog) {
 					self::logQueryError($error);
 					Database::$errorCount++;
 				} else if (Config::$debug) {
@@ -348,18 +361,21 @@ class Database {
 	 * @return bool
 	 * @throws DatabaseException
 	 */
-	public function bindParams($params, $types=null) {
-		if ($types && count($types) != count($params))
+	public function bindParams($params, $types = null) {
+		if ($types && count($types) != count($params)) {
 			throw new DatabaseException('length of $params and $types must be the same');
+		}
 		if (isset($params[0])) {
-			for ($i=0; $i<count($params); $i++) {
-				if (!$this->bindParam($i+1, $params[$i], $types ? $types[$i] : \PDO::PARAM_STR))
+			for ($i = 0; $i < count($params); $i++) {
+				if (!$this->bindParam($i + 1, $params[$i], $types ? $types[$i] : \PDO::PARAM_STR)) {
 					return false;
+				}
 			}
 		} else {
-			foreach ($params as $name=>$param) {
-				if (!$this->bindParam($name, $params[$name], $types ? $types[$name] : \PDO::PARAM_STR))
+			foreach ($params as $name => $param) {
+				if (!$this->bindParam($name, $params[$name], $types ? $types[$name] : \PDO::PARAM_STR)) {
 					return false;
+				}
 			}
 		}
 		return true;
@@ -498,7 +514,6 @@ class Database {
 	public function getPDO() {
 		return $this->pdo;
 	}
-
 
 	/**
 	 * Convert a date string from MySQL into a PHP timestamp
