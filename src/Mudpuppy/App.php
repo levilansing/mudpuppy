@@ -35,6 +35,11 @@ class App {
 	 * Called by Mudpuppy when the application starts up.
 	 */
 	public static function start() {
+		// Check for forwarded HTTPS (from load balancer)
+		if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+			$_SERVER['HTTPS'] = 'on';
+		}
+
 		// Setup the random number generators
 		function _createSeed() {
 			list($uSec, $sec) = explode(' ', microtime());
@@ -342,7 +347,7 @@ class App {
 			if (session_id()) {
 				try {
 					session_write_close();
-				} catch(MudpuppyException $e) {
+				} catch (MudpuppyException $e) {
 					Log::exception($e);
 				}
 			}
