@@ -223,7 +223,7 @@ function shutdown_handler() {
 		// during shutdown we can't load external files, so we can't display the normal 500 error message
 		print 'Internal Server Error';
 
-		if (Config::$debug) {
+		if (Config::$debug && Config::$logLevel == LOG_LEVEL_ALWAYS) {
 			Log::displayFullLog();
 		}
 
