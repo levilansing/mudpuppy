@@ -5,7 +5,6 @@
 
 namespace Mudpuppy\Model;
 use Mudpuppy\App;
-use Mudpuppy\Database;
 use Mudpuppy\DatabaseException;
 use Mudpuppy\DataObject;
 
@@ -42,19 +41,19 @@ class DebugLog extends DataObject {
 		// #BEGIN DEFAULTS
 		$this->createColumn('id', DATATYPE_INT, null, true);
 		$this->createColumn('date', DATATYPE_DATETIME, null, true);
-		$this->createColumn('requestMethod', DATATYPE_STRING, null, true);
-		$this->createColumn('requestPath', DATATYPE_STRING, null, true);
-		$this->createColumn('request', DATATYPE_JSON, null, false);
+		$this->createColumn('requestMethod', DATATYPE_STRING, null, true, 16);
+		$this->createColumn('requestPath', DATATYPE_STRING, null, true, 65535);
+		$this->createColumn('request', DATATYPE_JSON, null, 16777216);
 		$this->createColumn('https', DATATYPE_BOOL, null, true);
-		$this->createColumn('ip', DATATYPE_STRING, null, true);
-		$this->createColumn('userAgent', DATATYPE_STRING, null, true);
-		$this->createColumn('sessionHash', DATATYPE_STRING, null, true);
+		$this->createColumn('ip', DATATYPE_STRING, null, true, 50);
+		$this->createColumn('userAgent', DATATYPE_STRING, null, true, 65535);
+		$this->createColumn('sessionHash', DATATYPE_STRING, null, true, 32);
 		$this->createColumn('memoryUsage', DATATYPE_INT, null, true);
 		$this->createColumn('startTime', DATATYPE_DOUBLE, null, true);
 		$this->createColumn('executionTime', DATATYPE_DOUBLE, null, true);
-		$this->createColumn('queries', DATATYPE_JSON, null, false);
-		$this->createColumn('log', DATATYPE_JSON, null, false);
-		$this->createColumn('errors', DATATYPE_JSON, null, false);
+		$this->createColumn('queries', DATATYPE_JSON, null, false, 16777216);
+		$this->createColumn('log', DATATYPE_JSON, null, false, 16777216);
+		$this->createColumn('errors', DATATYPE_JSON, null, false, 16777216);
 		$this->createColumn('responseCode', DATATYPE_INT, null, true);
 
 		// Foreign Key Lookups
@@ -122,7 +121,7 @@ class DebugLog extends DataObject {
   `date` datetime NOT NULL,
   `requestMethod` varchar(16) NOT NULL,
   `requestPath` text NOT NULL,
-  `request` text COMMENT 'JSON',
+  `request` mediumtext COMMENT 'JSON',
   `https` bit NOT NULL,
   `ip` varchar(50) NOT NULL,
   `userAgent` text NOT NULL,
@@ -130,16 +129,20 @@ class DebugLog extends DataObject {
   `memoryUsage` int(11) NOT NULL,
   `startTime` double NOT NULL,
   `executionTime` double NOT NULL,
-  `queries` text COMMENT 'JSON',
-  `log` text COMMENT 'JSON',
-  `errors` text COMMENT 'JSON',
+  `queries` mediumtext COMMENT 'JSON',
+  `log` mediumtext COMMENT 'JSON',
+  `errors` mediumtext COMMENT 'JSON',
   `responseCode` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `ix_date` (`date`),
   KEY `ix_error` (`date`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;");
-				$db->execute();
-				return parent::save();
+				try {
+					parent::save();
+				} catch (DatabaseException $e) {
+					return false;
+				}
+				return  true;
 			}
 			return false;
 		}

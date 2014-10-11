@@ -18,7 +18,7 @@ use Mudpuppy\Config;
 	<link rel="stylesheet" href="/mudpuppy/content/css/app.css"/>
 	<script src="/mudpuppy/content/js/jquery-1.10.0.min.js"></script>
 	<script src="/mudpuppy/content/bootstrap/js/bootstrap.min.js"></script>
-	<script src="/mudpuppy/content/js/Observer.js"></script>
+	<script src="/mudpuppy/content/js/observer.js"></script>
 	<script src="/mudpuppy/content/js/AppView.js"></script>
 </head>
 <body>

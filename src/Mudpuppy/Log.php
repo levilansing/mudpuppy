@@ -20,8 +20,8 @@ class Log {
 	private static $writeCompleted = false;
 	private static $additionalLogs = 0;
 	private static $additionalErrors = 0;
-	const LOG_LIMIT = 999;
-	const ERROR_LIMIT = 99;
+	const LOG_LIMIT = 99;
+	const ERROR_LIMIT = 49;
 
 	/**
 	 * start up the log and record the start time (called automatically at bottom of this file)
@@ -215,7 +215,7 @@ class Log {
 
 		if (self::$additionalLogs > 0) {
 			self::$log[] = array(
-				'title' => 'More than 999 log entries have been added. An additional ' . self::$additionalLogs . ' logs were not recorded.',
+				'title' => 'More than ' . self::LOG_LIMIT . ' log entries have been added. An additional ' . self::$additionalLogs . ' logs were not recorded.',
 				'time' => self::getElapsedTime(), 'mem' => memory_get_usage()
 			);
 		}
@@ -223,7 +223,7 @@ class Log {
 		if (self::$additionalErrors > 0) {
 			self::$errors[] = array(
 				'time' => self::getElapsedTime(),
-				'error' => 'More than 99 errors reported. An additional ' . self::$additionalErrors . ' errors were not recorded.'
+				'error' => 'More than ' . self::ERROR_LIMIT . ' errors reported. An additional ' . self::$additionalErrors . ' errors were not recorded.'
 			);
 		}
 

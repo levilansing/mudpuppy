@@ -522,7 +522,7 @@ abstract class DataObject implements \JsonSerializable {
 					$truncated = $val->getValue();
 					if (Database::$autoTruncate) {
 						$maxLen = $this->getColumnInfo($val->column)->maxLength;
-						if ($maxLen > 0) {
+						if ($maxLen > 0 && strlen($truncated) > $maxLen) {
 							$truncated = substr($truncated, 0, $maxLen);
 						}
 					}
