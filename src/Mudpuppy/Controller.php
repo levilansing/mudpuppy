@@ -21,11 +21,12 @@ abstract class Controller {
 		$path = pathinfo($_SERVER['PATH_INFO']);
 		if (isset($path['dirname']) && strlen($path['dirname']) > 1) {
 			$parts = explode('/', substr($path['dirname'], 1));
+			$parts = array_map('urldecode', $parts);
 		} else {
 			$parts = [];
 		}
-		if (!isset($path['extension']) && isset($path['basename'])) {
-			$parts[] = $path['basename'];
+		if (isset($path['basename'])) {
+			$parts[] = urldecode($path['basename']);
 		}
 
 		// Try to find the controller
@@ -147,7 +148,7 @@ abstract class Controller {
 				default:
 					throw new UnsupportedMethodException("Request method $method is invalid for this URL");
 				}
-			} else if (preg_match('/[0-9]+/', $option)) {
+			} else if (preg_match('/^[0-9]+$/', $option)) {
 				if (!$isDataObject) {
 					if ($isPage) {
 						return;
@@ -195,15 +196,11 @@ abstract class Controller {
 					throw new UnsupportedMethodException("The method action_$actionName does not exist in {$reflection->getName()}");
 				}
 
-				if (count($this->pathOptions) > 1) {
-					throw new PageNotFoundException("Additional \$pathOptions are not allowed for action api calls");
-				}
-
 				switch ($method) {
 				case 'GET':
 					// Call an action: GET <module>/<action>?<params>
 					Request::setParams($_GET);
-					$response = $this->runAction($actionName, $_GET);
+					$response = $this->runAction($actionName);
 					break;
 				case 'POST':
 					// Call an action: POST <module>/<action>
@@ -234,7 +231,7 @@ abstract class Controller {
 						}
 					}
 
-					$response = $this->runAction($actionName, $params);
+					$response = $this->runAction($actionName);
 					$db && $db->commitTransaction();
 					break;
 				default:
@@ -299,14 +296,17 @@ abstract class Controller {
 
 		// Validate, clean, and list the parameters
 		$parameters = array();
+		$i = 1;
 		foreach ($method->getParameters() as $parameter) {
+			$default = $this->getOption($i++);
 			$parameterName = $parameter->getName();
-			$default = null;
-			if ($parameter->isDefaultValueAvailable()) {
-				$default = $parameter->getDefaultValue();
-			} else {
-				if (!Request::isParam($parameterName)) {
-					throw new InvalidInputException("call to {$reflection->getName()}::{$method->getName()}(...) is missing parameter '$parameterName'");
+			if (is_null($default)) {
+				if ($parameter->isDefaultValueAvailable()) {
+					$default = $parameter->getDefaultValue();
+				} else {
+					if (!Request::isParam($parameterName)) {
+						throw new InvalidInputException("call to {$reflection->getName()}::{$method->getName()}(...) is missing parameter '$parameterName'");
+					}
 				}
 			}
 
