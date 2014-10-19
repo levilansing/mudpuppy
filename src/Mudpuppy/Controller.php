@@ -86,9 +86,6 @@ abstract class Controller {
 
 		// Grab the input options
 		$options = array_slice($parts, $nameIndex + 1);
-		if (isset($path['extension'])) {
-			$options[] = $path['basename'];
-		}
 
 		// Have to filter out the index.php that comes in for root requests (thanks apache)
 		if (count($options) == 1 && ($options[0] == 'index.php' || $options[0] == '')) {
